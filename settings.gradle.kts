@@ -24,4 +24,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "XinChat"
 include(":app")
- 
+include(":core:designsystem")
+include(":core:ui")
+include(":feature:chat")
+include(":feature:auth")
+include(":feature:user")
+include(":core:navigation")
