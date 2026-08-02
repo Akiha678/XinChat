@@ -1,0 +1,27 @@
+<variant
+    name="devDebug"
+    package="com.seanchen.xinchat.feature.contact"
+    minSdkVersion="23"
+    targetSdkVersion="37.0"
+    debuggable="true"
+    mergedManifest="build/intermediates/merged_manifest/devDebug/processDevDebugManifest/AndroidManifest.xml"
+    partialResultsDir="build/intermediates/unit_test_lint_partial_results/devDebug/lintAnalyzeDevDebugUnitTest/out"
+    desugaredMethodsFiles="/Users/akiha/.gradle/caches/9.4.1/transforms/587cde5accb7ee2a8c10bc238e393bf8/transformed/desugar_jdk_libs_configuration-2.1.5-desugar-lint.txt:/Users/akiha/.gradle/caches/9.4.1/transforms/36e697cc3758adf5fea899ee4378d105/transformed/D8BackportedDesugaredMethods.txt">
+  <buildFeatures
+      coreLibraryDesugaring="true"/>
+  <sourceProviders>
+  </sourceProviders>
+  <testSourceProviders>
+    <sourceProvider
+        manifests="src/test/AndroidManifest.xml"
+        javaDirectories="src/test/java:src/testDev/java:src/testDebug/java:src/testDevDebug/java:src/test/kotlin:src/testDev/kotlin:src/testDebug/kotlin:src/testDevDebug/kotlin"
+        assetsDirectories="src/test/assets:src/testDev/assets:src/testDebug/assets:src/testDevDebug/assets"
+        keepRulesDirectories="src/test/keepRules:src/testDev/keepRules:src/testDebug/keepRules:src/testDevDebug/keepRules"
+        unitTest="true"/>
+  </testSourceProviders>
+  <testFixturesSourceProviders>
+  </testFixturesSourceProviders>
+  <artifact
+      type="UNIT_TEST">
+  </artifact>
+</variant>

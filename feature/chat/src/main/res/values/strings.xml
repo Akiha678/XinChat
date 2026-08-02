@@ -1,0 +1,5 @@
+<resources>
+    <string name="messages_title">消息</string>
+    <string name="messages_empty_title">暂无消息</string>
+    <string name="messages_empty_description">新的会话和通知会显示在这里。</string>
+</resources>

@@ -1,0 +1,5 @@
+R_DEF: Internal format may change without notice
+local
+string contacts_empty_description
+string contacts_empty_title
+string contacts_title

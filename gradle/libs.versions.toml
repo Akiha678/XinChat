@@ -70,11 +70,11 @@ ksp = "2.3.4"
 room = "2.8.4"
 
 # 封装的组件库
-commonWidget = "0.1.1"
+xinComponent = "0.1.1"
 
 [libraries]
 # 封装的组件库CommonWidget
-common-widget = { group = "com.seanchen.widget", name = "ui", version.ref = "commonWidget" }
+common-widget = { group = "com.github.Akiha678", name = "XinComponent", version.ref = "xinComponent" }
 
 # 依赖注入相关库
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }

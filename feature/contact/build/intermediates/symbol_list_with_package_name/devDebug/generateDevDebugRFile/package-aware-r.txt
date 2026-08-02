@@ -1,0 +1,4 @@
+com.seanchen.xinchat.feature.contact
+string contacts_empty_description
+string contacts_empty_title
+string contacts_title

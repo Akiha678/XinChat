@@ -23,15 +23,7 @@ dependencyResolutionManagement {
         mavenCentral()
 
         maven {
-            url = uri(
-                "https://maven.pkg.github.com/Akiha678/Android_Widget"
-            )
-
-            credentials {
-                username = System.getenv("GITHUB_USERNAME")
-
-                password = System.getenv("GITHUB_TOKEN")
-            }
+            url = uri("https://jitpack.io")
         }
     }
 }
@@ -41,6 +33,7 @@ include(":app")
 include(":core:designsystem")
 include(":core:ui")
 include(":feature:chat")
+include(":feature:contact")
 include(":feature:auth")
 include(":feature:user")
 include(":core:navigation")
