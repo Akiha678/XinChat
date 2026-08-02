@@ -14,7 +14,7 @@ internal fun Project.configureKotlinAndroid(
     commonExtension: CommonExtension,
 ){
     commonExtension.enableKotlin = true
-    commonExtension.compileSdk = libs.findLibrary("compileSdk").get().toString().toInt()
+    commonExtension.compileSdk = libs.findVersion("compileSdk").get().requiredVersion.toInt()
     commonExtension.defaultConfig.minSdk = libs.findVersion("minSdk").get().toString().toInt()
     // 统一启动 BuildConfig 生成
     commonExtension.buildFeatures.buildConfig = true

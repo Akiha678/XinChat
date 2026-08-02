@@ -34,14 +34,14 @@ class AndroidApplicationConventionPlugin : Plugin<Project>{
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
                 }
                 flavorDimensions += listOf("env")
-                productFlavors {
-                    create("dev") {
-                        dimension = "env"
-                    }
-                    create("prod"){
-                        dimension = "env"
-                    }
-                }
+//                productFlavors {
+//                    create("dev") {
+//                        dimension = "env"
+//                    }
+//                    create("prod"){
+//                        dimension = "env"
+//                    }
+//                }
             }
         }
     }

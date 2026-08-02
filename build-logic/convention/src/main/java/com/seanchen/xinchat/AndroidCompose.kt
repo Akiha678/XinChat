@@ -17,21 +17,21 @@ internal fun Project.configureAndroidCompose(
         "implementation"(platform(bom))
 
         // 核心 UI 组件
-        "implementation"(libs.findLibrary("androidx.ui").get())
-        "implementation"(libs.findLibrary("androidx.ui.graphics").get())
-        "implementation"(libs.findLibrary("androidx.ui.tooling.preview").get())
-        "implementation"(libs.findLibrary("androidx.material3").get())
+        "implementation"(libs.findLibrary("androidx.compose.ui").get())
+        "implementation"(libs.findLibrary("androidx.compose.ui.graphics").get())
+        "implementation"(libs.findLibrary("androidx.compose.ui.tooling.preview").get())
+        "implementation"(libs.findLibrary("androidx.compose.material3").get())
 
         // Compose 集成支持
         "implementation"(libs.findLibrary("androidx.activity.compose").get())
         "implementation"(libs.findLibrary("androidx.lifecycle.runtime.ktx").get())
 
         // 开发调试工具
-        "debugImplementation"(libs.findLibrary("androidx.ui.tooling").get())
-        "debugImplementation"(libs.findLibrary("androidx.ui.test.manifest").get())
+        "debugImplementation"(libs.findLibrary("androidx.compose.ui.tooling").get())
+        "debugImplementation"(libs.findLibrary("androidx.compose.ui.test.manifest").get())
 
         // 测试依赖
         "androidTestImplementation"(platform(bom))
-        "androidTestImplementation"(libs.findLibrary("androidx.ui.test.junit4").get())
+        "androidTestImplementation"(libs.findLibrary("androidx.compose.ui.test.junit4").get())
     }
 }
