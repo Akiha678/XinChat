@@ -22,3 +22,8 @@ gradlew
 .kotlin
 AGENTS.md
 .agents/*
+
+feature/auth/build
+feature/chat/build
+feature/contact/build
+feature/user/build
