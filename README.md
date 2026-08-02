@@ -16,7 +16,6 @@
 [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.02.01-4285F4?logo=jetpackcompose&logoColor=white)](https://developer.android.com/compose)
 [![Architecture](https://img.shields.io/badge/Architecture-MVVM%20%2B%20UDF-2E7D32)](#架构设计)
 [![Android](https://img.shields.io/badge/Android-API%2024%2B-3DDC84?logo=android&logoColor=white)](https://developer.android.com/)
-[![Status](https://img.shields.io/badge/Status-Early%20Development-orange)](#项目状态)
 
 [项目介绍](#项目介绍) · [快速开始](#快速开始) · [架构设计](#架构设计) · [学习路线](#学习路线) · [参与贡献](#参与贡献)
 
@@ -147,8 +146,6 @@ XinChat
 - 跨 Feature 跳转通过公开的类型安全导航契约完成。
 - 共享代码只有在出现两个以上真实消费者后才提升到 Core。
 
-详细开发约束见 [AGENTS.md](AGENTS.md)。
-
 ## 技术栈
 
 | 分类 | 技术 | 使用方式 |
@@ -235,8 +232,6 @@ Release APK 当前默认未签名。发布前必须通过安全的本地或 CI S
 6. **测试**：使用 Fake Repository 测试 ViewModel，以 Compose UI Test 验证关键交互。
 7. **工程质量**：运行 Lint、Release/R8 构建，并逐步加入 CI、性能测试和 Baseline Profile。
 
-仓库中的 [.agents/skills](.agents/skills) 提供面向 XinChat 的 Compose、MVVM、数据、导航、主题、Preview、构建与审查工作流，可作为开发规范的任务级补充。
-
 ## Roadmap
 
 ### 基础架构
@@ -271,7 +266,6 @@ Roadmap 会根据教学价值和项目进度调整，不代表版本承诺。
 
 ## 开发规范
 
-- 遵循 [AGENTS.md](AGENTS.md) 中的架构、命名、Compose、数据和测试约束。
 - 提交前至少运行受影响测试、`assembleDebug` 和 `git diff --check`。
 - 新增依赖统一写入 Version Catalog；通用 Gradle 配置优先写入 Convention Plugin。
 - 业务 Screen 保持无状态，ViewModel 暴露不可变 StateFlow，数据访问经过 Repository。
@@ -296,6 +290,5 @@ Roadmap 会根据教学价值和项目进度调整，不代表版本承诺。
 - [Guide to app architecture](https://developer.android.com/topic/architecture)：Android 官方分层架构与 UDF 指南。
 - [Jetpack Compose](https://developer.android.com/compose)：声明式 UI、状态、工具和测试文档。
 - [Material 3](https://m3.material.io/)：设计系统与自适应界面规范。
-- [Telegram](https://telegram.org/)：通讯产品形态参考。
 
 XinChat 是独立的非官方教学项目，与 Google、Telegram 及其关联公司不存在隶属、授权或背书关系。相关名称和商标归各自权利人所有。
