@@ -1,4 +1,20 @@
 com.seanchen.xinchat.feature.contact
+string accept
+string add_friend
 string contacts_empty_description
 string contacts_empty_title
 string contacts_title
+string my_friends
+string no_received_requests
+string no_sent_requests
+string received_requests
+string reject
+string retry
+string search
+string search_results
+string search_username
+string sent_requests
+string start_chat
+string status_accepted
+string status_pending
+string status_rejected

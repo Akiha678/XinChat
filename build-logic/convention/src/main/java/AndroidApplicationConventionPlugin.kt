@@ -33,18 +33,18 @@ class AndroidApplicationConventionPlugin : Plugin<Project>{
                     // 设置Android测试运行器
                     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-                    // 库模块提供 dev/prod 环境变体，未显式指定时默认使用开发环境。
-                    missingDimensionStrategy("env", "dev")
                 }
                 flavorDimensions += listOf("env")
-//                productFlavors {
-//                    create("dev") {
-//                        dimension = "env"
-//                    }
-//                    create("prod"){
-//                        dimension = "env"
-//                    }
-//                }
+                productFlavors {
+                    create("dev") {
+                        dimension = "env"
+                        applicationIdSuffix = ".dev"
+                        versionNameSuffix = "-dev"
+                    }
+                    create("prod") {
+                        dimension = "env"
+                    }
+                }
             }
         }
     }

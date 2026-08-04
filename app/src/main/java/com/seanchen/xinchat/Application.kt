@@ -1,4 +1,6 @@
 package com.seanchen.xinchat
 
-class Application {
-}
+import dagger.hilt.android.HiltAndroidApp
+
+@HiltAndroidApp
+class Application : android.app.Application()

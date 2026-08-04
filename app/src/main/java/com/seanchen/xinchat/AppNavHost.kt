@@ -3,22 +3,26 @@ package com.seanchen.xinchat
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
@@ -31,6 +35,10 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.seanchen.xinchat.core.navigation.AppNavigator
 import com.seanchen.xinchat.core.navigation.TopLevelNavKey
+import com.seanchen.xinchat.feature.auth.navigation.LoginKey
+import com.seanchen.xinchat.feature.auth.navigation.RegisterKey
+import com.seanchen.xinchat.feature.auth.navigation.authEntries
+import com.seanchen.xinchat.feature.chat.navigation.ConversationKey
 import com.seanchen.xinchat.feature.chat.navigation.MessagesKey
 import com.seanchen.xinchat.feature.chat.navigation.messagesEntry
 import com.seanchen.xinchat.feature.contact.navigation.ContactsKey
@@ -39,86 +47,106 @@ import com.seanchen.xinchat.feature.user.navigation.ProfileKey
 import com.seanchen.xinchat.feature.user.navigation.profileEntry
 
 private val topLevelDestinations = listOf(
-    TopLevelDestination(
-        key = MessagesKey,
-        labelRes = R.string.navigation_messages,
-        iconRes = R.drawable.ic_messages,
-    ),
-    TopLevelDestination(
-        key = ContactsKey,
-        labelRes = R.string.navigation_contacts,
-        iconRes = R.drawable.ic_contacts,
-    ),
-    TopLevelDestination(
-        key = ProfileKey,
-        labelRes = R.string.navigation_profile,
-        iconRes = R.drawable.ic_profile,
-    ),
+    TopLevelDestination(MessagesKey, R.string.navigation_messages, R.drawable.ic_messages),
+    TopLevelDestination(ContactsKey, R.string.navigation_contacts, R.drawable.ic_contacts),
+    TopLevelDestination(ProfileKey, R.string.navigation_profile, R.drawable.ic_profile),
 )
 
 @Composable
-fun AppNavHost(modifier: Modifier = Modifier) {
-    val navigator = rememberAppNavigator()
-    AppNavHost(navigator = navigator, modifier = modifier)
+fun AppNavHost(
+    modifier: Modifier = Modifier,
+    viewModel: MainActivityViewModel = hiltViewModel(),
+) {
+    val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
+    when {
+        uiState.isLoading -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        uiState.isLoggedIn -> MainNavHost(modifier)
+        else -> AuthNavHost(modifier)
+    }
 }
 
 @Composable
-internal fun AppNavHost(
-    navigator: AppNavigator,
-    modifier: Modifier = Modifier,
-) {
-    val entryProvider = remember {
-        entryProvider<NavKey> {
-            messagesEntry()
-            contactsEntry()
-            profileEntry()
+private fun AuthNavHost(modifier: Modifier = Modifier) {
+    val backStack = rememberNavBackStack(LoginKey)
+    val entries = rememberTopLevelEntries(
+        backStack = backStack,
+        entryProvider = entryProvider<NavKey> {
+            authEntries(
+                onRegisterClick = {
+                    if (backStack.lastOrNull() != RegisterKey) backStack.add(RegisterKey)
+                },
+                onRegisterBack = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) },
+            )
+        },
+    )
+    NavDisplay(
+        entries = entries,
+        modifier = modifier.fillMaxSize(),
+        onBack = { if (backStack.size > 1) backStack.removeAt(backStack.lastIndex) },
+    )
+}
+
+@Composable
+private fun MainNavHost(modifier: Modifier = Modifier) {
+    val navigator = rememberAppNavigator()
+    val entryProvider = entryProvider<NavKey> {
+        messagesEntry(
+            onConversationClick = navigator::navigateTo,
+            onConversationBack = { navigator.pop() },
+        )
+        contactsEntry { conversationId, name ->
+            navigator.navigateTo(MessagesKey)
+            navigator.navigateTo(ConversationKey(conversationId, name))
         }
+        profileEntry()
     }
 
     val messagesEntries = rememberTopLevelEntries(
-        backStack = navigator.backStackFor(MessagesKey),
-        entryProvider = entryProvider,
+        navigator.backStackFor(MessagesKey),
+        entryProvider,
     )
     val contactsEntries = rememberTopLevelEntries(
-        backStack = navigator.backStackFor(ContactsKey),
-        entryProvider = entryProvider,
+        navigator.backStackFor(ContactsKey),
+        entryProvider,
     )
     val profileEntries = rememberTopLevelEntries(
-        backStack = navigator.backStackFor(ProfileKey),
-        entryProvider = entryProvider,
+        navigator.backStackFor(ProfileKey),
+        entryProvider,
     )
     val currentDestination = navigator.currentDestination
     val currentEntries = when (currentDestination) {
         MessagesKey -> messagesEntries
         ContactsKey -> contactsEntries
         ProfileKey -> profileEntries
-        else -> error("Unknown top-level destination: ${currentDestination.route}")
+        else -> error("未知顶级目的地：${currentDestination.route}")
     }
+    val showBottomBar = navigator.currentBackStack.lastOrNull() is TopLevelNavKey
 
     BackHandler(
         enabled = !navigator.canNavigateBack && currentDestination != navigator.startDestination,
         onBack = navigator::navigateBackToStart,
     )
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            NavigationBar {
-                topLevelDestinations.forEach { destination ->
-                    val selected = currentDestination == destination.key
-                    val label = stringResource(destination.labelRes)
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = { navigator.navigateTo(destination.key) },
-                        icon = {
-                            Icon(
-                                painter = painterResource(destination.iconRes),
-                                contentDescription = label,
-                            )
-                        },
-                        label = { Text(label) },
-                        colors = NavigationBarItemDefaults.colors(),
-                    )
+            if (showBottomBar) {
+                NavigationBar {
+                    topLevelDestinations.forEach { destination ->
+                        val label = stringResource(destination.labelRes)
+                        NavigationBarItem(
+                            selected = currentDestination == destination.key,
+                            onClick = { navigator.navigateTo(destination.key) },
+                            icon = {
+                                Icon(
+                                    painterResource(destination.iconRes),
+                                    contentDescription = label,
+                                )
+                            },
+                            label = { Text(label) },
+                        )
+                    }
                 }
             }
         },
@@ -140,13 +168,7 @@ private fun rememberAppNavigator(): AppNavigator {
     val messagesBackStack = rememberNavBackStack(MessagesKey)
     val contactsBackStack = rememberNavBackStack(ContactsKey)
     val profileBackStack = rememberNavBackStack(ProfileKey)
-
-    return remember(
-        selectedRoute,
-        messagesBackStack,
-        contactsBackStack,
-        profileBackStack,
-    ) {
+    return remember(selectedRoute, messagesBackStack, contactsBackStack, profileBackStack) {
         AppNavigator(
             selectedRoute = selectedRoute,
             backStacks = mapOf(
@@ -168,11 +190,7 @@ private fun rememberTopLevelEntries(
         rememberSaveableStateHolderNavEntryDecorator(),
         rememberViewModelStoreNavEntryDecorator(),
     )
-    return rememberDecoratedNavEntries(
-        backStack = backStack,
-        entryDecorators = decorators,
-        entryProvider = entryProvider,
-    )
+    return rememberDecoratedNavEntries(backStack, decorators, entryProvider)
 }
 
 private data class TopLevelDestination(

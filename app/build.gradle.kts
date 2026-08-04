@@ -5,9 +5,7 @@ plugins {
 
 android {
     namespace = "com.seanchen.xinchat"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.seanchen.xinchat"
@@ -20,7 +18,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            manifestPlaceholders["usesCleartextTraffic"] = "true"
+        }
         release {
+            manifestPlaceholders["usesCleartextTraffic"] = "false"
             /**
              * 是否启用代码压缩、优化、混淆
              * 1.删除无用代码
@@ -50,8 +52,9 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:designsystem"))
+    implementation(project(":core:data"))
     implementation(project(":core:navigation"))
+    implementation(project(":feature:auth"))
     implementation(project(":feature:chat"))
     implementation(project(":feature:contact"))
     implementation(project(":feature:user"))
@@ -66,6 +69,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)

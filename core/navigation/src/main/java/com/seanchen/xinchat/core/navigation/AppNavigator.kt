@@ -18,13 +18,13 @@ class AppNavigator(
     val startDestination: TopLevelNavKey,
 ) {
     init {
-        require(backStacks.isNotEmpty()) { "At least one top-level destination is required." }
-        require(startDestination in backStacks) { "The start destination must own a back stack." }
+        require(backStacks.isNotEmpty()) { "至少需要一个顶级目的地" }
+        require(startDestination in backStacks) { "起始目的地必须拥有独立返回栈" }
         require(backStacks.keys.map(TopLevelNavKey::route).distinct().size == backStacks.size) {
-            "Top-level destination routes must be unique."
+            "顶级目的地的路由必须唯一"
         }
         require(backStacks.keys.any { it.route == selectedRoute.value }) {
-            "The selected route must match a top-level destination."
+            "当前路由必须对应一个顶级目的地"
         }
     }
 
@@ -39,12 +39,12 @@ class AppNavigator(
 
     fun backStackFor(destination: TopLevelNavKey): NavBackStack<NavKey> =
         requireNotNull(backStacks[destination]) {
-            "No back stack registered for route ${destination.route}."
+            "路由 ${destination.route} 未注册返回栈"
         }
 
     fun navigateTo(destination: TopLevelNavKey) {
         require(destination in backStacks) {
-            "No back stack registered for route ${destination.route}."
+            "路由 ${destination.route} 未注册返回栈"
         }
         selectedRoute.value = destination.route
     }

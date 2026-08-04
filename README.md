@@ -3,7 +3,7 @@
 
 # XinChat
 
-基于 Kotlin 和Jetpack Compose 的通讯程序
+基于 Kotlin 和 Jetpack Compose 的通讯程序
 
 <div align="center">
     <a href="README_EN.md">🌍 English</a>
@@ -39,7 +39,7 @@ XinChat 以现代通讯应用为业务载体，计划覆盖账号认证、会话
 
 ## 项目状态
 
-项目目前处于基础设施和架构搭建阶段。
+项目已经形成可联调的教学 MVP，覆盖账号、好友和单聊主流程。离线缓存、系统通知、群聊和媒体消息仍属于后续演进范围。
 
 ### 已完成
 
@@ -47,20 +47,22 @@ XinChat 以现代通讯应用为业务载体，计划覆盖账号认证、会话
 - [x] `app`、`core`、`feature` 多模块骨架
 - [x] Gradle Kotlin DSL 与 Version Catalog 统一依赖管理
 - [x] `build-logic` Convention Plugin 基础设施
-- [x] Material 3 颜色、排版、形状与深浅色主题基础
-- [x] Hilt、KSP、Navigation 3、Room、Retrofit 等技术选型和版本规划
+- [x] Material 3 与共享主题组件
+- [x] Hilt、KSP、Navigation 3、Retrofit、OkHttp 与 Kotlin Serialization
 - [x] Debug/Release 构建、R8 与资源压缩基础配置
 - [x] 面向 Compose + MVVM 的仓库开发规范与 Codex Skills
+- [x] 三个独立顶级返回栈：消息、联系人、我的
+- [x] 注册、登录、会话恢复与退出登录
+- [x] 搜索用户、发送申请、查看已发送/收到的申请、同意与拒绝
+- [x] 好友列表、创建或复用单聊、收发文本消息与未读数
+- [x] WebSocket 实时消息、会话列表刷新与前台 Snackbar 提示
 
 ### 正在建设
 
-- [ ] 应用级 Navigation 3 返回栈与 Feature entry 装配
-- [ ] Route / Screen / UiState / ViewModel 标准页面范式
-- [ ] 认证、聊天和用户模块的实际业务页面
-- [ ] Repository、网络服务、Room 数据库与离线同步链路
-- [ ] 稳定的 Fake 数据、单元测试、Compose UI 测试与 CI
-
-> 当前模块存在不代表对应业务已经实现。README 使用复选框区分已落地能力和目标能力，避免把架构规划描述成完成状态。
+- [ ] Room 离线缓存、增量分页与发送失败重试
+- [ ] 系统通知、后台保活和多端同步策略
+- [ ] ViewModel/Repository Fake、Compose UI Test 与 CI 门禁
+- [ ] 群聊、图片/文件消息与消息状态
 
 ## 设计目标
 
@@ -95,10 +97,10 @@ flowchart TB
 
     subgraph Data["Data Layer"]
         Repository["Repository · Single source of truth"]
-        Remote["Remote DataSource / Retrofit"]
-        Local["Local DataSource / Room"]
+        Remote["Retrofit REST + OkHttp WebSocket"]
+        Session["Preferences DataStore"]
         Repository --> Remote
-        Repository --> Local
+        Repository --> Session
     end
 
     VM --> UseCase
@@ -130,11 +132,13 @@ XinChat
 ├── build-logic/convention/      # Gradle Convention Plugin
 ├── core/
 │   ├── designsystem/            # Material 3 主题与设计 token
+│   ├── data/                    # API、WebSocket、会话与 Repository
 │   ├── navigation/              # Navigation 3 公共契约
 │   └── ui/                      # 跨 Feature 复用的无业务 UI
 └── feature/
     ├── auth/                    # 认证业务
     ├── chat/                    # 会话与消息业务
+    ├── contact/                 # 好友与申请业务
     └── user/                    # 用户与个人资料业务
 ```
 
@@ -154,10 +158,11 @@ XinChat
 | UI | Jetpack Compose、Material 3 | 声明式 UI、主题、Preview |
 | 架构 | MVVM、UDF | ViewModel + StateFlow + 无状态 Screen |
 | 异步 | Kotlin Coroutines、Flow | 跨层异步与响应式数据流 |
-| 导航 | Navigation 3 | 类型安全 NavKey 与应用返回栈，待业务接入 |
+| 导航 | Navigation 3 | 类型安全 NavKey、三个顶级返回栈与聊天详情栈 |
 | 依赖注入 | Hilt、KSP | 构造函数注入和编译期代码生成 |
-| 网络 | Retrofit、OkHttp、Kotlin Serialization | 已规划，数据层待实现 |
-| 本地数据 | Room | 已规划，离线数据链路待实现 |
+| 网络 | Retrofit、OkHttp、Kotlin Serialization | REST 写入、WebSocket 实时事件与错误映射 |
+| 本地会话 | Preferences DataStore | 保存登录会话；访问令牌不参与系统备份 |
+| 后端 | Spring Boot、JPA、MySQL、WebSocket | 注册、好友、单聊与实时事件 |
 | 构建 | Gradle Kotlin DSL、Version Catalog | 依赖、插件和版本集中管理 |
 | 构建复用 | Convention Plugin | 统一 Android、Compose 与 Hilt 配置 |
 | 测试 | JUnit、Compose UI Test、AndroidX Test | 单元、UI 与设备测试 |
@@ -195,40 +200,68 @@ export GITHUB_TOKEN="your-read-packages-token"
 
 ### 构建与运行
 
+先启动后端（默认监听 `8080`）：
+
+```bash
+cd /path/to/xinchat-backend
+export DB_URL="jdbc:mysql://127.0.0.1:3306/xin_chat?createDatabaseIfNotExist=true"
+export DB_USERNAME="your-db-user"
+export DB_PASSWORD="your-db-password"
+./mvnw spring-boot:run
+```
+
+Android `dev` 变体默认通过模拟器地址 `http://10.0.2.2:8080/` 访问宿主机。真机调试需要把地址改成电脑在局域网中的 IP：
+
+```bash
+./gradlew assembleDevDebug -Pxinchat.devBaseUrl=http://192.168.1.10:8080/
+```
+
+生产变体没有内置真实服务地址，构建时必须显式配置：
+
+```bash
+./gradlew assembleProdRelease \
+  -Pxinchat.prodBaseUrl=https://chat.example.com/
+```
+
+随后可执行常用验证命令：
+
 ```bash
 # 检查 Gradle 配置
 ./gradlew help
 
 # 构建 Debug APK
-./gradlew assembleDebug
+./gradlew assembleDevDebug
 
 # 运行本地单元测试
-./gradlew testDebugUnitTest
+./gradlew testDevDebugUnitTest
 
 # 运行静态检查
-./gradlew lint
+./gradlew lintDevDebug
 
 # 验证 Release 构建
-./gradlew assembleRelease
+./gradlew assembleProdRelease \
+  -Pxinchat.prodBaseUrl=https://chat.example.com/
 ```
 
 Debug APK 默认生成在：
 
 ```text
-app/build/outputs/apk/debug/app-debug.apk
+app/build/outputs/apk/dev/debug/app-dev-debug.apk
 ```
 
 Release APK 当前默认未签名。发布前必须通过安全的本地或 CI Secret 配置签名，禁止提交 keystore 和密码。
+
+> `dev` 当前允许明文 HTTP，仅用于本地教学联调。生产地址应使用 HTTPS/WSS，且不能保留示例域名。
 
 ## 学习路线
 
 推荐按以下顺序阅读和实践：
 
 1. **构建系统**：从 `settings.gradle.kts`、Version Catalog 和 `build-logic` 理解统一依赖与插件配置。
-2. **设计系统**：阅读 `core:designsystem`，理解 Material 3 ColorScheme、Typography 和 Shapes。
+2. **设计系统**：从应用主题与 Material 3 语义样式理解共享视觉规范。
 3. **Compose 页面**：在 Feature 中实现 Route、Screen、UiState、ViewModel 和 Preview。
 4. **导航**：在 `core:navigation` 定义 NavKey，由 `app` 装配 Navigation 3 entry。
-5. **数据层**：实现 Repository、Retrofit、Room、模型映射和单一事实来源。
+5. **数据层**：阅读 Repository、Retrofit、WebSocket 和会话存储，再扩展 Room 离线缓存。
 6. **测试**：使用 Fake Repository 测试 ViewModel，以 Compose UI Test 验证关键交互。
 7. **工程质量**：运行 Lint、Release/R8 构建，并逐步加入 CI、性能测试和 Baseline Profile。
 
@@ -237,21 +270,22 @@ Release APK 当前默认未签名。发布前必须通过安全的本地或 CI S
 ### 基础架构
 
 - [ ] 将现有 Core/Feature 模块全面迁移到 Convention Plugin
-- [ ] 完善类型安全 Navigation 3 应用框架
+- [x] 完善类型安全 Navigation 3 应用框架
 - [ ] 建立统一 Result/Error 模型与网络监控
 - [ ] 建立 Room 数据库、缓存和迁移测试
 - [ ] 增加 CI、依赖更新、Lint 和测试门禁
 
 ### 通讯能力
 
-- [ ] 注册、登录和会话恢复
-- [ ] 用户资料与联系人
-- [ ] 会话列表与消息时间线
+- [x] 注册、登录和会话恢复
+- [x] 用户资料与联系人
+- [x] 会话列表与消息时间线
 - [ ] 文本、图片和文件消息
 - [ ] 消息发送状态、重试和分页
 - [ ] 单聊、群聊与成员管理
-- [ ] 搜索、未读数和通知
-- [ ] 在线状态、输入状态与实时同步
+- [x] 用户搜索、未读数和前台消息提示
+- [ ] 系统通知、在线状态与输入状态
+- [x] WebSocket 前台实时同步
 - [ ] 离线缓存与多端数据一致性
 
 ### 体验与质量
@@ -266,9 +300,11 @@ Roadmap 会根据教学价值和项目进度调整，不代表版本承诺。
 
 ## 开发规范
 
-- 提交前至少运行受影响测试、`assembleDebug` 和 `git diff --check`。
+- 提交前至少运行受影响测试、`assembleDevDebug` 和 `git diff --check`。
 - 新增依赖统一写入 Version Catalog；通用 Gradle 配置优先写入 Convention Plugin。
 - 业务 Screen 保持无状态，ViewModel 暴露不可变 StateFlow，数据访问经过 Repository。
+- 源码注释和 KDoc 默认使用中文，只解释业务约束与设计原因，不复述代码。
+- 用户可见文案进入 string resources；输入必须在客户端和服务端同时校验。
 - 不提交 Token、签名文件、密码、私有服务器地址或其他敏感信息。
 
 ## 参与贡献

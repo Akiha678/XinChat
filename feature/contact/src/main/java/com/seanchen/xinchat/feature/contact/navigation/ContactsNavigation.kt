@@ -11,6 +11,8 @@ data object ContactsKey : TopLevelNavKey {
     override val route: String = "contacts"
 }
 
-fun EntryProviderScope<NavKey>.contactsEntry() {
-    entry<ContactsKey> { ContactsRoute() }
+fun EntryProviderScope<NavKey>.contactsEntry(
+    onConversationOpened: (conversationId: Long, name: String) -> Unit,
+) {
+    entry<ContactsKey> { ContactsRoute(onConversationOpened = onConversationOpened) }
 }

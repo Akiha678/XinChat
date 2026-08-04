@@ -1,34 +1,31 @@
 package com.seanchen.xinchat.feature.user.ui
 
-import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.seanchen.xinchat.core.designsystem.theme.AppTheme
 import com.seanchen.xinchat.feature.user.R
 
 @Composable
-internal fun ProfileScreen(modifier: Modifier = Modifier) {
+internal fun ProfileScreen(
+    uiState: ProfileUiState,
+    onLogout: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp, vertical = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Text(
-            text = stringResource(R.string.profile_title),
-            style = MaterialTheme.typography.headlineMedium,
-        )
+        Text(stringResource(R.string.profile_title), style = MaterialTheme.typography.headlineMedium)
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.large,
@@ -39,22 +36,27 @@ internal fun ProfileScreen(modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
-                    text = stringResource(R.string.profile_guest_title),
-                    style = MaterialTheme.typography.titleMedium,
+                    uiState.user?.displayName ?: stringResource(R.string.profile_guest_title),
+                    style = MaterialTheme.typography.titleLarge,
                 )
-                Text(
-                    text = stringResource(R.string.profile_guest_description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                uiState.user?.let { user ->
+                    Text("@${user.username}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(user.email, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
+        Button(
+            onClick = onLogout,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoggingOut,
+        ) {
+            Text(
+                if (uiState.isLoggingOut) {
+                    stringResource(R.string.logging_out)
+                } else {
+                    stringResource(R.string.logout)
+                },
+            )
+        }
     }
-}
-
-@Preview(showBackground = true)
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun ProfileScreenPreview() {
-    AppTheme { ProfileScreen() }
 }

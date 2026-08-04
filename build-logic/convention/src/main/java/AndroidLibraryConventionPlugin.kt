@@ -14,6 +14,17 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             }
             extensions.configure<LibraryExtension> {
                 val projectDir = project.projectDir.path
+                val devBaseUrl = providers.gradleProperty("xinchat.devBaseUrl")
+                    .orElse("http://10.0.2.2:8080/")
+                    .get()
+                    .withTrailingSlash()
+                val prodBaseUrl = providers.gradleProperty("xinchat.prodBaseUrl")
+                    .orElse("https://api.xinchat.invalid/")
+                    .get()
+                    .withTrailingSlash()
+                require(prodBaseUrl.startsWith("https://")) {
+                    "XinChat 生产服务地址必须使用 https://"
+                }
 
                 val featureMatch = Regex(".*/(feature/[^/]+).*").find(projectDir)
                 // 匹配core模块路径
@@ -46,14 +57,12 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 productFlavors {
                     create("dev") {
                         dimension = "env"
-                        // 开发环境地址跟生产环境的地址暂时一样
-                        buildConfigField("String", "BASE_URL", "\"https://mall.dusksnow.top/app/\"")
-//                        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8001/app/\"")
+                        buildConfigField("String", "BASE_URL", devBaseUrl.asBuildConfigString())
                         buildConfigField("Boolean", "DEBUG", "true")
                     }
                     create("prod") {
                         dimension = "env"
-                        buildConfigField("String", "BASE_URL", "\"https://mall.dusksnow.top/app/\"")
+                        buildConfigField("String", "BASE_URL", prodBaseUrl.asBuildConfigString())
                         buildConfigField("Boolean", "DEBUG", "false")
                     }
                 }
@@ -63,6 +72,16 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
         }
     }
 }
+
+private fun String.withTrailingSlash(): String = trim().let { value ->
+    require(value.startsWith("http://") || value.startsWith("https://")) {
+        "XinChat 服务地址必须使用 http:// 或 https://"
+    }
+    if (value.endsWith('/')) value else "$value/"
+}
+
+private fun String.asBuildConfigString(): String =
+    "\"${replace("\\", "\\\\").replace("\"", "\\\"")}\""
 
 /**
  * 配置库模块的通用依赖

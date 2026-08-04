@@ -25,6 +25,6 @@
   <artifact
       type="INSTRUMENTATION_TEST"
       applicationId="com.seanchen.xinchat.feature.contact.test"
-      desugaredMethodsFiles="/Users/akiha/.gradle/caches/9.4.1/transforms/587cde5accb7ee2a8c10bc238e393bf8/transformed/desugar_jdk_libs_configuration-2.1.5-desugar-lint.txt:/Users/akiha/.gradle/caches/9.4.1/transforms/36e697cc3758adf5fea899ee4378d105/transformed/D8BackportedDesugaredMethods.txt">
+      desugaredMethodsFiles="/Users/akiha/.gradle/caches/9.4.1/transforms/f5b43c6e812d0a8e61199fc40f844d24/transformed/desugar_jdk_libs_configuration-2.1.5-desugar-lint.txt:/Users/akiha/.gradle/caches/9.4.1/transforms/ac4ce4e462629fe65a61a13eebd56a75/transformed/D8BackportedDesugaredMethods.txt">
   </artifact>
 </variant>

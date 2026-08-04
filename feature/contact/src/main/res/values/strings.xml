@@ -2,4 +2,20 @@
     <string name="contacts_title">联系人</string>
     <string name="contacts_empty_title">暂无联系人</string>
     <string name="contacts_empty_description">添加联系人后，可以从这里快速发起会话。</string>
+    <string name="search_username">按用户名搜索</string>
+    <string name="search">搜索</string>
+    <string name="search_results">搜索结果</string>
+    <string name="add_friend">添加</string>
+    <string name="received_requests">收到的好友申请</string>
+    <string name="sent_requests">已发送的好友申请</string>
+    <string name="no_received_requests">暂无待处理的好友申请</string>
+    <string name="no_sent_requests">暂无已发送的好友申请</string>
+    <string name="my_friends">我的好友</string>
+    <string name="accept">同意</string>
+    <string name="reject">拒绝</string>
+    <string name="start_chat">发消息</string>
+    <string name="status_pending">等待对方处理</string>
+    <string name="status_accepted">已同意</string>
+    <string name="status_rejected">已拒绝</string>
+    <string name="retry">重试</string>
 </resources>

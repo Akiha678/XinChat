@@ -2,4 +2,9 @@
     <string name="messages_title">消息</string>
     <string name="messages_empty_title">暂无消息</string>
     <string name="messages_empty_description">新的会话和通知会显示在这里。</string>
+    <string name="retry">重试</string>
+    <string name="back">返回</string>
+    <string name="send">发送</string>
+    <string name="message_input_hint">输入消息</string>
+    <string name="load_messages_failed">加载消息失败</string>
 </resources>
