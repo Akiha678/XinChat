@@ -2,8 +2,8 @@ package com.seanchen.xinchat.feature.auth.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.seanchen.xinchat.feature.auth.ui.LoginRoute
-import com.seanchen.xinchat.feature.auth.ui.RegisterRoute
+import com.seanchen.xinchat.feature.auth.view.LoginRoute
+import com.seanchen.xinchat.feature.auth.view.RegisterRoute
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -1,5 +1,7 @@
 plugins {
-    alias(libs.plugins.xinchat.android.library.compose)
+    alias(libs.plugins.xinchat.android.library)
+    alias(libs.plugins.xinchat.hilt)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -7,6 +9,6 @@ android {
 }
 
 dependencies {
-    api(libs.androidx.navigation3.runtime)
-    testImplementation(libs.junit)
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.kotlinx.serialization.json)
 }
