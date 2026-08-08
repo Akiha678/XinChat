@@ -8,5 +8,12 @@ android {
 }
 
 dependencies {
+    implementation(projects.core.designsystem)
+    implementation(projects.core.model)
+
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.toaster)
+    implementation(libs.xxpermissions)
+    implementation(libs.mmkv)
+    implementation(libs.timber)
 }

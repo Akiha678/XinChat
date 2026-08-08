@@ -1,7 +1,12 @@
 package com.seanchen.xinchat.core.data.state
 
 import com.seanchen.xinchat.core.data.di.ApplicationScope
+import com.seanchen.xinchat.core.data.repository.AuthStoreRepository
+import com.seanchen.xinchat.core.data.repository.UserInfoRepository
+import com.seanchen.xinchat.core.data.repository.UserInfoStoreRepository
 import com.seanchen.xinchat.core.model.entity.Auth
+import com.seanchen.xinchat.core.model.entity.User
+import com.seanchen.xinchat.core.result.ResultHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +54,82 @@ class AppState @Inject constructor(
      */
     private suspend fun initializeState(){
         // 获取认证信息
+        val authData = authStoreRepository.getAuth()
+        val loggedIn = authStoreRepository.isLoggedIn()
+        _isLoggedIn.value = loggedIn
+        _auth.value = authData
 
+        if (loggedIn) {
+            val user = userInfoStoreRepository.getUserInfo()
+            _userInfo.value = user
+            _userId.value = user?.id ?: 0L
+        }
     }
+
+    /**
+     * 更新用户登录状态
+     */
+    suspend fun updateUserState(auth: Auth, user: User) {
+        authStoreRepository.saveAuth(auth)
+        userInfoStoreRepository.saveUserInfo(user)
+
+        _auth.value = auth
+        _userInfo.value = user
+        _userId.value = user.id
+        _isLoggedIn.value = true
+    }
+
+    /**
+     * 更新用户信息
+     */
+    suspend fun updateUserInfo(user: User) {
+        userInfoStoreRepository.saveUserInfo(user)
+
+        // 更新内存中的状态
+        _userInfo.value = user
+        _userId.value = user.id
+    }
+
+    /**
+     * 更新认证信息
+     */
+    suspend fun updateAuth(auth: Auth) {
+        authStoreRepository.saveAuth(auth)
+
+        _auth.value = auth
+
+        _isLoggedIn.value = true
+    }
+
+    /**
+     * 用户登出
+     */
+    suspend fun logout(){
+        authStoreRepository.clearAuth()
+        userInfoStoreRepository.clearUserInfo()
+
+        // 重置内存中的状态
+        _isLoggedIn.value = false
+        _auth.value = null
+        _userInfo.value = null
+        _userId.value = 0L
+    }
+
+    suspend fun shouldRefreshToken(): Boolean {
+        return authStoreRepository.shouldRefreshToken()
+    }
+
+
+//    fun refreshUserInfo() {
+//        if (!_isLoggedIn.value) return
+//        ResultHandler.handleResultWithData(
+//            scope = applicationScope,
+//            flow = userInfoRepository.getPersonInfo().asResult(),
+//            onData = { data ->
+//                applicationScope.launch {
+//                    updateUserInfo(data)
+//                }
+//            }
+//        )
+//    }
 }

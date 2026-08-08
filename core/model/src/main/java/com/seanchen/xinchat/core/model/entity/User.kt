@@ -22,5 +22,40 @@ data class User(
     /**
      * 昵称
      */
-    val nickName: String? = null
+    val nickName: String? = null,
+
+    /**
+     * 手机号
+     */
+    val phone: String? = null,
+
+    /**
+     * 性别
+     */
+    val gender: Int = 0,
+
+    /**
+     * 状态
+     */
+    val status: Int = 1,
+
+    /**
+     * 登录方式
+     */
+    val loginType: String = "0",
+
+    /**
+     * 密码
+     */
+    val password: String? = null,
+
+    /**
+     * 创建时间
+     */
+    val createTime: String? = null,
+
+    /**
+     * 更新时间
+     */
+    val updateTime: String? = null
 )
