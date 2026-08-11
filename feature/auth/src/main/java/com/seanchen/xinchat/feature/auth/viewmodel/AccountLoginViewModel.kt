@@ -6,6 +6,7 @@ import com.seanchen.xinchat.core.data.repository.AuthRepository
 import com.seanchen.xinchat.core.data.state.AppState
 import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.result.ResultHandler
+import com.seanchen.xinchat.core.result.asResult
 import com.seanchen.xinchat.core.util.storage.MMKVUtils
 import com.seanchen.xinchat.core.util.toast.ToastUtils
 import com.seanchen.xinchat.core.util.validation.ValidationUtil
@@ -102,7 +103,9 @@ class AccountLoginViewModel @Inject constructor(
         viewModelScope.launch {
             savedCredentials(_account.value, _password.value)
             ToastUtils.showSuccess(R.string.login_success)
-            appState
+            appState.updateAuth(authData)
+            appState.refreshUserInfo()
+            TODO("navigateBack")
         }
     }
 

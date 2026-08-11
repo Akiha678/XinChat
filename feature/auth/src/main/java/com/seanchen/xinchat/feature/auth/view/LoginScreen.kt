@@ -17,6 +17,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -163,15 +165,18 @@ fun LoginContentView(
  * 登录界面
  */
 @Composable
-fun LoginContentView(){}
+fun LoginContentView(
+    account: String,
+    password: String,
+    isLoginEnabled: Boolean,
+    onAccountChange: (String) -> Unit,
+    onPasswordChanged: (String) -> Unit,
+    onLoginClick: () -> Unit
+){
+    val accountFieldFocused = remember { mutableStateOf(false) }
+}
 
 
-
-/**
- * 账号密码登录
- */
-@Composable
-fun AccountLoginContentView(){}
 
 
 /**

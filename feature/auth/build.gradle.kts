@@ -5,3 +5,5 @@ plugins {
 android {
     namespace = "com.seanchen.xinchat.feature.auth"
 }
+
+dependencies{}

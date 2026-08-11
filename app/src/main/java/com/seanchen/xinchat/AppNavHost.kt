@@ -3,6 +3,7 @@ package com.seanchen.xinchat
 import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,6 +39,7 @@ import com.seanchen.xinchat.core.navigation.TopLevelNavKey
 import com.seanchen.xinchat.feature.auth.navigation.LoginKey
 import com.seanchen.xinchat.feature.auth.navigation.RegisterKey
 import com.seanchen.xinchat.feature.auth.navigation.authEntries
+import com.seanchen.xinchat.feature.auth.navigation.authGraph
 import com.seanchen.xinchat.feature.chat.navigation.ConversationKey
 import com.seanchen.xinchat.feature.chat.navigation.MessagesKey
 import com.seanchen.xinchat.feature.chat.navigation.messagesEntry
@@ -198,3 +200,9 @@ private data class TopLevelDestination(
     @param:StringRes val labelRes: Int,
     @param:DrawableRes val iconRes: Int,
 )
+
+
+
+private fun appEntryProvider(sharedTransitionScope: SharedTransitionScope) = entryProvider {
+    authGraph()
+}

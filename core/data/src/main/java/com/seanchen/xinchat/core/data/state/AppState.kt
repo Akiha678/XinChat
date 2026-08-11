@@ -7,6 +7,7 @@ import com.seanchen.xinchat.core.data.repository.UserInfoStoreRepository
 import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.result.ResultHandler
+import com.seanchen.xinchat.core.result.asResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -120,16 +121,16 @@ class AppState @Inject constructor(
     }
 
 
-//    fun refreshUserInfo() {
-//        if (!_isLoggedIn.value) return
-//        ResultHandler.handleResultWithData(
-//            scope = applicationScope,
-//            flow = userInfoRepository.getPersonInfo().asResult(),
-//            onData = { data ->
-//                applicationScope.launch {
-//                    updateUserInfo(data)
-//                }
-//            }
-//        )
-//    }
+    fun refreshUserInfo() {
+        if (!_isLoggedIn.value) return
+        ResultHandler.handleResultWithData(
+            scope = applicationScope,
+            flow = userInfoRepository.getPersonInfo().asResult(),
+            onData = { data ->
+                applicationScope.launch {
+                    updateUserInfo(data)
+                }
+            }
+        )
+    }
 }
