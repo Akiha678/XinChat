@@ -1,68 +1,140 @@
 package com.seanchen.xinchat.core.navigation
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.Stable
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.seanchen.xinchat.core.data.state.AppState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
-/**
- * 统一处理应用导航操作，可保存的导航状态仍由 Compose 持有。
- *
- * 每个顶级目的地拥有独立返回栈，切换标签时能够保留界面状态、可保存状态以及后续加入的
- * 内部目的地。
- */
-@Stable
-class AppNavigator(
-    private val selectedRoute: MutableState<String>,
-    private val backStacks: Map<TopLevelNavKey, NavBackStack<NavKey>>,
-    val startDestination: TopLevelNavKey,
+@Singleton
+class AppNavigator @Inject constructor(
+    private val appState: AppState,
 ) {
-    init {
-        require(backStacks.isNotEmpty()) { "至少需要一个顶级目的地" }
-        require(startDestination in backStacks) { "起始目的地必须拥有独立返回栈" }
-        require(backStacks.keys.map(TopLevelNavKey::route).distinct().size == backStacks.size) {
-            "顶级目的地的路由必须唯一"
-        }
-        require(backStacks.keys.any { it.route == selectedRoute.value }) {
-            "当前路由必须对应一个顶级目的地"
+    private val lock = Any()
+
+    /**
+     * 当前活跃的导航控制器
+     */
+    private var controller: NavigationController? = null
+
+    /**
+     * 控制器未注册时缓存的导航命令队列
+     */
+    private val pendingCommands = ArrayDeque<NavigationCommand>()
+
+    /**
+     * 缓存32元素
+     */
+    private val _resultEvents = MutableSharedFlow<ResultEvent>(extraBufferCapacity = 32)
+
+    /**
+     * 路由拦截器
+     */
+    private val routeInterceptor: RouteInterceptor = RouteInterceptor()
+
+    /**
+     * 注册导航控制器
+     */
+    fun attachController(navigationController: NavigationController) {
+        // 上锁
+        synchronized(lock) {
+            controller = navigationController
+            while (pendingCommands.isNotEmpty()) {
+                pendingCommands.removeFirst().execute(navigationController)
+            }
         }
     }
 
-    val currentDestination: TopLevelNavKey
-        get() = backStacks.keys.first { it.route == selectedRoute.value }
-
-    val currentBackStack: NavBackStack<NavKey>
-        get() = backStackFor(currentDestination)
-
-    val canNavigateBack: Boolean
-        get() = currentBackStack.size > 1
-
-    fun backStackFor(destination: TopLevelNavKey): NavBackStack<NavKey> =
-        requireNotNull(backStacks[destination]) {
-            "路由 ${destination.route} 未注册返回栈"
+    /**
+     * 注销导航控制器
+     */
+    fun detachController(navigationController: NavigationController) {
+        synchronized(lock) {
+            if (controller === navigationController) {
+                controller = null
+            }
         }
+    }
 
-    fun navigateTo(destination: TopLevelNavKey) {
-        require(destination in backStacks) {
-            "路由 ${destination.route} 未注册返回栈"
+    /**
+     * 导航到指定路由
+     */
+    fun navigateTo(route: NavKey, navOptions: NavigationOptions? = null) {
+        val targetRoute = resolveTargetRoute(route)
+        executeOrEnqueue(NavigationCommand.NavigateTo(targetRoute, navOptions))
+    }
+
+    /**
+     * 返回上一页
+     */
+    fun navigateBack() {
+        executeOrEnqueue(NavigationCommand.NavigateUp)
+    }
+
+    /**
+     * 返回上一页并携带类型安全结果
+     */
+    fun <T> popBackStackWithResult(key: NavigationResultKey<T>, result: T) {
+        executeOrEnqueue(NavigationCommand.PopBackStackWithResult(key, result))
+    }
+
+    /**
+     * 返回到指定路由
+     */
+    fun navigateBackTo(route: NavKey, inclusive: Boolean = false) {
+        executeOrEnqueue(NavigationCommand.NavigateBackTo(route, inclusive))
+    }
+
+    /**
+     * 监听某个ResultKey 对应的结果流
+     */
+    fun <T> resultEvents(key: NavigationResultKey<T>): Flow<T> {
+        return _resultEvents
+            .filter { it.key == key.key }
+            .map { key.deserialize(it.rawValue) }
+    }
+
+    /**
+     * 分发回传结果事件
+     */
+    internal fun <T> dispatchResult(key: NavigationResultKey<T>, result: T) {
+        val rawValue = key.serialize(result)
+        _resultEvents.tryEmit(ResultEvent(key = key.key, rawValue = rawValue))
+    }
+
+    /**
+     * 执行导航命令
+     */
+    private fun executeOrEnqueue(command: NavigationCommand) {
+        synchronized(lock) {
+            val currentController = controller
+            if (currentController != null) {
+                command.execute(currentController)
+            } else {
+                pendingCommands.addLast(command)
+            }
         }
-        selectedRoute.value = destination.route
     }
 
-    fun navigateTo(key: NavKey) {
-        currentBackStack.add(key)
-    }
-
-    fun pop(): Boolean {
-        if (!canNavigateBack) return false
-        currentBackStack.removeAt(currentBackStack.lastIndex)
-        return true
-    }
-
-    fun navigateBackToStart(): Boolean {
-        if (canNavigateBack) return pop()
-        if (currentDestination == startDestination) return false
-        navigateTo(startDestination)
-        return true
+    /**
+     * 解析最终跳转路由
+     */
+    private fun resolveTargetRoute(route: NavKey): NavKey {
+        return if (routeInterceptor.requiresLogin(route) && !appState.isLoggedIn.value) {
+            routeInterceptor.getLoginRoute()
+        } else {
+            route
+        }
     }
 }
+
+/**
+ * 导航回传结果事件
+ */
+private data class ResultEvent(
+    val key: String,
+    val rawValue: Any
+)
