@@ -16,4 +16,10 @@ object AuthRoutes {
      */
     @Serializable
     data object AccountLogin : NavKey
+
+    @Serializable
+    data object SmsLogin : NavKey
+
+    @Serializable
+    data object Register : NavKey
 }

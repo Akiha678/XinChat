@@ -1,9 +1,29 @@
 package com.seanchen.xinchat.core.navigation.auth
 
-object AuthNavigator {
-    fun toRegister() {
+import com.seanchen.xinchat.core.navigation.navigate
 
+object AuthNavigator {
+    /**
+     * 跳转到账号密码登录页
+     */
+    fun toAccountLogin() {
+        navigate(AuthRoutes.AccountLogin)
     }
+
+    /**
+     * 跳转到短信验证码登录页
+     */
+    fun toSmsLogin() {
+        navigate(AuthRoutes.SmsLogin)
+    }
+
+    /**
+     * 跳转到注册页
+     */
+    fun toRegister() {
+        navigate(AuthRoutes.Register)
+    }
+
 
     fun toResetPassword() {}
 }

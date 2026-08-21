@@ -9,7 +9,12 @@ android {
 
 dependencies {
     implementation(projects.core.model)
+    implementation(projects.core.datastore)
 
-
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okhttp)
     implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.okhttp.logging)
+    implementation(libs.timber)
 }

@@ -3,6 +3,7 @@ package com.seanchen.xinchat.feature.auth.viewmodel
 import android.content.Context
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.AuthRepository
+import com.seanchen.xinchat.core.data.state.AppState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject

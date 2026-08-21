@@ -17,13 +17,6 @@ data class MainActivityUiState(
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
     authRepository: AuthRepository,
-    @Suppress("unused") chatRepository: ChatRepository,
+//    @Suppress("unused") chatRepository: ChatRepository,
 ) : ViewModel() {
-    val uiState = authRepository.session
-        .map { session -> MainActivityUiState(isLoading = false, isLoggedIn = session != null) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = MainActivityUiState(),
-        )
 }

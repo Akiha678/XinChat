@@ -37,12 +37,7 @@ class LoginViewModel @Inject constructor(
         if (state.username.isBlank() || state.password.isBlank() || state.isSubmitting) return
         viewModelScope.launch {
             mutableUiState.update { it.copy(isSubmitting = true, errorMessage = null) }
-            runCatching { authRepository.login(state.username, state.password) }
-                .onFailure { error ->
-                    mutableUiState.update {
-                        it.copy(isSubmitting = false, errorMessage = error.message ?: "登录失败")
-                    }
-                }
+
         }
     }
 
