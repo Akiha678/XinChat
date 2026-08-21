@@ -9,4 +9,10 @@ import kotlinx.serialization.Serializable
 object MainRoutes {
     @Serializable
     data object Main : NavKey
+
+    @Serializable
+    data object Contact : NavKey
+
+    @Serializable
+    data object Me : NavKey
 }

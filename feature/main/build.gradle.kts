@@ -7,4 +7,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.lottie.compose)
+
+    implementation(projects.feature.contact)
+    implementation(projects.feature.chat)
+    implementation(projects.feature.user)
 }
