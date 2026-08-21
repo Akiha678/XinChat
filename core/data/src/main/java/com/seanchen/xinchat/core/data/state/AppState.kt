@@ -2,8 +2,6 @@ package com.seanchen.xinchat.core.data.state
 
 import com.seanchen.xinchat.core.data.di.ApplicationScope
 import com.seanchen.xinchat.core.data.repository.AuthStoreRepository
-import com.seanchen.xinchat.core.data.repository.UserInfoRepository
-import com.seanchen.xinchat.core.data.repository.UserInfoStoreRepository
 import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.result.ResultHandler

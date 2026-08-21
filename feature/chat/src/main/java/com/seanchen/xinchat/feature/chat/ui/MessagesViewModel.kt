@@ -3,7 +3,6 @@ package com.seanchen.xinchat.feature.chat.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.data.model.Conversation
-import com.seanchen.xinchat.core.data.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow

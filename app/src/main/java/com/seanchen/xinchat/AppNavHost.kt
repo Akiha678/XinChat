@@ -50,6 +50,7 @@ import com.seanchen.xinchat.feature.auth.navigation.LoginKey
 import com.seanchen.xinchat.feature.auth.navigation.RegisterKey
 import com.seanchen.xinchat.feature.auth.navigation.authEntries
 import com.seanchen.xinchat.feature.auth.navigation.authGraph
+import com.seanchen.xinchat.feature.main.navigation.mainGraph
 import com.seanchen.xinchat.feature.chat.navigation.ConversationKey
 import com.seanchen.xinchat.feature.chat.navigation.MessagesKey
 import com.seanchen.xinchat.feature.chat.navigation.messagesEntry
@@ -104,10 +105,32 @@ fun AppNavHost(
     }
 }
 
+/**
+ * 创建前进导航动画
+ */
+private fun createForwardTransition() = slideInHorizontally(
+    initialOffsetX = { it },
+    animationSpec = NAV_ANIMATION_SPEC,
+) togetherWith slideOutHorizontally(
+    targetOffsetX = { -it },
+    animationSpec = NAV_ANIMATION_SPEC
+)
 
+/**
+ * 创建返回导航动画
+ */
+private fun createBackwardTransition() = slideInHorizontally (
+    initialOffsetX = { -it },
+    animationSpec = NAV_ANIMATION_SPEC,
+) togetherWith slideOutHorizontally(
+    targetOffsetX = { it },
+    animationSpec = NAV_ANIMATION_SPEC
+)
 
-
-
+private fun appEntryProvider(sharedTransitionScope: SharedTransitionScope) = entryProvider {
+    mainGraph(sharedTransitionScope)
+    authGraph()
+}
 
 
 //private val topLevelDestinations = listOf(
@@ -264,22 +287,5 @@ fun AppNavHost(
 //)
 
 
-private fun createForwardTransition() = slideInHorizontally(
-    initialOffsetX = { it },
-    animationSpec = NAV_ANIMATION_SPEC,
-) togetherWith slideOutHorizontally(
-    targetOffsetX = { -it },
-    animationSpec = NAV_ANIMATION_SPEC
-)
 
-private fun createBackwardTransition() = slideInHorizontally (
-    initialOffsetX = { -it },
-    animationSpec = NAV_ANIMATION_SPEC,
-) togetherWith slideOutHorizontally(
-    targetOffsetX = { it },
-    animationSpec = NAV_ANIMATION_SPEC
-)
 
-private fun appEntryProvider(sharedTransitionScope: SharedTransitionScope) = entryProvider {
-    authGraph()
-}

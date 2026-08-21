@@ -1,12 +1,10 @@
 package com.seanchen.xinchat.core.data.repository
 
-import com.seanchen.xinchat.core.data.model.UserSession
 import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.model.entity.Captcha
 import com.seanchen.xinchat.core.model.response.NetworkResponse
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn

@@ -58,6 +58,7 @@ dependencies {
     implementation(project(":feature:chat"))
     implementation(project(":feature:contact"))
     implementation(project(":feature:user"))
+    implementation(project(":feature:main"))
 
     implementation(libs.common.widget)
 

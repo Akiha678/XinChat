@@ -5,8 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.data.model.Conversation
 import com.seanchen.xinchat.core.data.model.FriendRequest
 import com.seanchen.xinchat.core.data.model.User
-import com.seanchen.xinchat.core.data.repository.ChatRepository
-import com.seanchen.xinchat.core.data.repository.FriendRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
