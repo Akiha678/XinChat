@@ -118,7 +118,7 @@ fun CommonIcon(
 @Composable
 fun LogoIcon(modifier: Modifier = Modifier, size: Dp = 24.dp) {
     Image(
-        painter = painterResource(id = R.drawable.ic_logo),
+        painter = painterResource(id = R.drawable.sc_logo),
         contentDescription = "Logo",
         modifier = modifier
             .size(size)

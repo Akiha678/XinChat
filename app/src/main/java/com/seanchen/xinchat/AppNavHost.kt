@@ -59,9 +59,10 @@ private val NAV_ANIMATION_SPEC: FiniteAnimationSpec<IntOffset> =
 @Composable
 fun AppNavHost(
     navigator: AppNavigator,
+    startDestination: NavKey,
     modifier: Modifier = Modifier
 ) {
-    val backStack = rememberNavBackStack()
+    val backStack = rememberNavBackStack(startDestination)
 
     val navigationController = remember(backStack, navigator){
         createBackStackNavigationController(backStack, navigator)

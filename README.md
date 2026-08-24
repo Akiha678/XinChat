@@ -1,5 +1,5 @@
 <div align="center">
-<img src="docs/images/xinchat_logo.png" width="120" alt="Logo"/>
+<img src="docs/images/sc_logo.png" width="120" alt="Logo"/>
 
 # XinChat
 

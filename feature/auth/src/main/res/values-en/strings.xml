@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Common strings -->
-    <string name="app_name">Cool Mall</string>
+    <string name="app_name">X Chat</string>
 
     <!-- Login/Register shared -->
-    <string name="welcome_login">Hello,\nWelcome to Cool Mall</string>
-    <string name="welcome_register">Hello,\nWelcome to register Cool Mall</string>
+    <string name="welcome_login">Hello,\nWelcome</string>
+    <string name="welcome_register">Hello,\nWelcome to register</string>
     <string name="phone_hint">Please enter phone number</string>
     <string name="phone_code">+86</string>
     <string name="verification_code">Verification code</string>

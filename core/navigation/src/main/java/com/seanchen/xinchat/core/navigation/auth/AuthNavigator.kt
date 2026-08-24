@@ -24,6 +24,8 @@ object AuthNavigator {
         navigate(AuthRoutes.Register)
     }
 
-
+    /**
+     * 跳转到重置密码界面
+     */
     fun toResetPassword() {}
 }
