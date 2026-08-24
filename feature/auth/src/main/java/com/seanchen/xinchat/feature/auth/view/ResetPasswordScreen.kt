@@ -1,6 +1,5 @@
 package com.seanchen.xinchat.feature.auth.view
 
-import android.widget.Space
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme

@@ -22,4 +22,7 @@ object AuthRoutes {
 
     @Serializable
     data object Register : NavKey
+
+    @Serializable
+    data object ResetPassword : NavKey
 }

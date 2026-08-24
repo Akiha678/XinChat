@@ -7,6 +7,7 @@ import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
 import com.seanchen.xinchat.feature.auth.view.LoginRoute
 import com.seanchen.xinchat.feature.auth.view.AccountLoginRoute
 import com.seanchen.xinchat.feature.auth.view.RegisterRoute
+import com.seanchen.xinchat.feature.auth.view.ResetPasswordRoute
 import com.seanchen.xinchat.feature.auth.view.SmsLoginRoute
 import com.seanchen.xinchat.feature.auth.view.SmsLoginScreen
 
@@ -37,5 +38,12 @@ fun EntryProviderScope<NavKey>.authGraph() {
      */
     entry<AuthRoutes.Register> {
         RegisterRoute()
+    }
+
+    /**
+     * 重置密码界面
+     */
+    entry<AuthRoutes.ResetPassword> {
+        ResetPasswordRoute()
     }
 }
