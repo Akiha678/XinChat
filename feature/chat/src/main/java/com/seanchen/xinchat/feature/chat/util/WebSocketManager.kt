@@ -2,6 +2,7 @@ package com.seanchen.xinchat.feature.chat.util
 
 import com.seanchen.xinchat.core.model.entity.Msg
 import com.seanchen.xinchat.core.util.log.LogUtils
+import com.seanchen.xinchat.feature.chat.BuildConfig
 import com.seanchen.xinchat.feature.chat.state.WebSocketConnectionState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -18,6 +19,7 @@ import okhttp3.WebSocketListener
 import java.util.concurrent.TimeUnit
 
 private const val TAG = "WebSocketManager"
+private const val SOCKET_IO_PATH = "socket.io/?EIO=4&transport=websocket"
 
 class WebSocketManager {
     private val _connectionState = MutableStateFlow<WebSocketConnectionState>(WebSocketConnectionState.Disconnected)
@@ -65,7 +67,7 @@ class WebSocketManager {
             LogUtils.d(TAG, "用户Token: ${token.take(15)}...")
 
             val request = Request.Builder()
-                .url("wss://mall.dusksnow.top/socket.io/?EIO=4&transport=websocket")
+                .url(createWebSocketUrl())
                 .build()
 
             // 配置超时和心跳间隔
@@ -248,5 +250,13 @@ class WebSocketManager {
      */
     fun isConnected(): Boolean {
         return _connectionState.value == WebSocketConnectionState.Connected
+    }
+
+    private fun createWebSocketUrl(): String {
+        val baseUrl = BuildConfig.BASE_URL
+            .replaceFirst("https://", "wss://")
+            .replaceFirst("http://", "ws://")
+            .trimEnd('/')
+        return "$baseUrl/$SOCKET_IO_PATH"
     }
 }

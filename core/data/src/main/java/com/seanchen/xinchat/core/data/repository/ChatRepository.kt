@@ -36,6 +36,9 @@ class ChatRepository @Inject constructor(
             emit(chatNetworkDataSource.getMessagePage(params))
         }.flowOn(Dispatchers.IO)
 
+    /**
+     * 未读消息数量
+     */
     fun getUnreadCount(): Flow<NetworkResponse<Int>> = flow {
         emit(chatNetworkDataSource.getUnreadCount())
     }.flowOn(Dispatchers.IO)

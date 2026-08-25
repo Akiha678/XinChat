@@ -43,8 +43,7 @@ class MainActivity : ComponentActivity() {
             if (authStoreRepository.isLoggedIn()) {
                 MainRoutes.Main
             } else {
-                MainRoutes.Main
-//                AuthRoutes.Login
+                AuthRoutes.Login
             }
         }
     }

@@ -10,5 +10,5 @@ public final class BuildConfig {
   public static final String BUILD_TYPE = "debug";
   public static final String FLAVOR = "dev";
   // Field from product flavor: dev
-  public static final String BASE_URL = "http://192.168.1.14:8080/";
+  public static final String BASE_URL = "http://10.10.199.76:8080/";
 }
