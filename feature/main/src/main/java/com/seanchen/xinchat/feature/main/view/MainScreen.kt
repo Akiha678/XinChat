@@ -19,7 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.seanchen.xinchat.feature.chat.view.HomeRoute
+import com.seanchen.xinchat.feature.chat.view.ChatListRoute
 import com.seanchen.xinchat.feature.main.component.BottomNavigationBar
 import com.seanchen.xinchat.feature.main.model.TopLevelDestination
 import com.seanchen.xinchat.feature.main.viewmodel.MainViewModel
@@ -101,7 +101,7 @@ private fun MainScreenContentView(
         modifier = Modifier.padding(paddingValues)
     ) { page: Int ->
         when (page) {
-            0 -> HomeRoute()
+            0 -> ChatListRoute()
             1 -> ContactRoute()
             2 -> ProfileRoute()
         }

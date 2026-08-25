@@ -1,0 +1,5 @@
+appId: com.example.iris_cycling
+---
+- launchApp:
+    clearState: true
+

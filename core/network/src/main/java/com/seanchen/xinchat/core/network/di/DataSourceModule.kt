@@ -2,6 +2,8 @@ package com.seanchen.xinchat.core.network.di
 
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSource
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSourceImpl
+import com.seanchen.xinchat.core.network.datadource.chat.ChatNetworkDataSource
+import com.seanchen.xinchat.core.network.datadource.chat.ChatNetworkDataSourceImpl
 import com.seanchen.xinchat.core.network.datadource.userinfo.UserInfoNetworkDataSource
 import com.seanchen.xinchat.core.network.datadource.userinfo.UserInfoNetworkDataSourceImpl
 import dagger.Binds
@@ -24,4 +26,10 @@ abstract class DataSourceModule {
     abstract fun bindUserInfoNetworkDataSource(
         impl: UserInfoNetworkDataSourceImpl
     ): UserInfoNetworkDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindChatNetworkDataSource(
+        impl: ChatNetworkDataSourceImpl
+    ): ChatNetworkDataSource
 }

@@ -64,10 +64,10 @@ fun BottomNavigationBar(
                     }
                     .padding(vertical = SpaceVerticalXSmall)
             ) {
-//                TabLottieAnimation(
-//                    animRes = destination.animationResId,
-//                    isPressed = selected
-//                )
+                TabLottieAnimation(
+                    animRes = destination.animationResId,
+                    isSelected = selected,
+                )
                 Text(
                     text = stringResource(id = destination.titleTextId),
                     style = MaterialTheme.typography.bodySmall,

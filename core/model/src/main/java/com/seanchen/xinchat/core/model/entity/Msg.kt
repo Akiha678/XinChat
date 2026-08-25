@@ -39,6 +39,11 @@ data class Msg (
      */
     val createTime: String? = null,
 
+    /**
+     * 消息内容
+     */
+    val content: MessageContent? = null,
+
     val type: Int = 0,
 
     /**

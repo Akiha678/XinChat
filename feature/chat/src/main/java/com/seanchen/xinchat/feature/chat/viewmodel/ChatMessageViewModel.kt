@@ -309,8 +309,13 @@ class ChatMessageViewModel @Inject constructor(
             val request = ReadMessageRequest(ids)
 
             try {
-                chatRepository.readMessage(request).first()
-                LogUtils.d(TAG, "消息已标记为已读")
+                val response = chatRepository.readMessage(request).first()
+                if (response.isSucceeded) {
+                    _messages.value = _messages.value.map { message ->
+                        if (message.id in ids) message.copy(status = 1) else message
+                    }
+                    LogUtils.d(TAG, "消息已标记为已读")
+                }
             } catch (e: Exception) {
                 LogUtils.e(TAG, "标记消息已读失败", e)
             }

@@ -7,4 +7,15 @@
     <string name="send">发送</string>
     <string name="message_input_hint">输入消息</string>
     <string name="load_messages_failed">加载消息失败</string>
+    <string name="chat_online_support">在线客服</string>
+    <string name="chat_online_support_description">有问题可以随时和我们聊聊</string>
+    <string name="chat_time_now">刚刚</string>
+    <string name="chat_me">我</string>
+    <string name="chat_default_message">暂不支持的消息</string>
+    <string name="chat_load_history">加载历史消息</string>
+    <string name="chat_loading_history">正在加载历史消息...</string>
+    <string name="chat_load_history_failed">历史消息加载失败，点击重试</string>
+    <string name="chat_no_more_history">没有更多消息了</string>
+    <string name="chat_avatar_description">聊天头像</string>
+    <string name="chat_input_description">消息输入框</string>
 </resources>
