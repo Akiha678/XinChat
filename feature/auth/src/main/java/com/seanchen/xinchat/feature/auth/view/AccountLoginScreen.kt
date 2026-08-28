@@ -19,6 +19,7 @@ import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXLarge
 import com.seanchen.xinchat.core.navigation.auth.AuthNavigator
 import com.seanchen.xinchat.core.navigation.common.CommonNavigator
+import com.seanchen.xinchat.core.navigation.navigateBack
 import com.seanchen.xinchat.core.ui.component.button.AppButton
 import com.seanchen.xinchat.feature.auth.R
 import com.seanchen.xinchat.feature.auth.component.AnimatedAuthPage
@@ -62,8 +63,8 @@ internal fun AccountLoginScreen(
     onLoginClick: () -> Unit = {}
 ){
     AnimatedAuthPage(
-        title = "",
-        onBackClick = {  }
+        title = "欢迎登录XinChat",
+        onBackClick = { navigateBack() }
     ) {
         AccountLoginContentView(
             account = account,

@@ -28,11 +28,11 @@ class AccountLoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : BaseViewModel() {
 
-    companion object {
-        private const val KEY_SAVED_ACCOUNT = "saved_account"
-
-        private const val KEY_SAVED_PASSWORD = "saved_password"
-    }
+//    companion object {
+//        private const val KEY_SAVED_ACCOUNT = "saved_account"
+//
+//        private const val KEY_SAVED_PASSWORD = "saved_password"
+//    }
 
     /**
      * 账号输入
@@ -46,10 +46,10 @@ class AccountLoginViewModel @Inject constructor(
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password
 
-    init {
+//    init {
         // 只回填账号，历史版本保存过明文密码时在这里清理。
-        loadSavedAccount()
-    }
+//        loadSavedAccount()
+//    }
 
     /**
      * 登录按钮是否可用
@@ -105,7 +105,7 @@ class AccountLoginViewModel @Inject constructor(
      */
     private fun loginSuccess(authData: Auth) {
         viewModelScope.launch {
-            saveAccount(_account.value)
+//            saveAccount(_account.value)
             ToastUtils.showSuccess(R.string.login_success)
             appState.updateAuth(authData)
             appState.refreshUserInfo()
@@ -123,20 +123,20 @@ class AccountLoginViewModel @Inject constructor(
     /**
      * 加载已经保存的账号
      */
-    private fun loadSavedAccount() {
-        val savedAccount = MMKVUtils.getString(KEY_SAVED_ACCOUNT, "")
-
-        if (savedAccount.isNotEmpty()){
-            _account.value = savedAccount
-        }
-
-        MMKVUtils.putString(KEY_SAVED_PASSWORD, "")
-    }
-
-    /**
-     * 保存账号
-     */
-    private fun saveAccount(account: String) {
-        MMKVUtils.putString(KEY_SAVED_ACCOUNT, account)
-    }
+//    private fun loadSavedAccount() {
+//        val savedAccount = MMKVUtils.getString(KEY_SAVED_ACCOUNT, "")
+//
+//        if (savedAccount.isNotEmpty()){
+//            _account.value = savedAccount
+//        }
+//
+//        MMKVUtils.putString(KEY_SAVED_PASSWORD, "")
+//    }
+//
+//    /**
+//     * 保存账号
+//     */
+//    private fun saveAccount(account: String) {
+//        MMKVUtils.putString(KEY_SAVED_ACCOUNT, account)
+//    }
 }

@@ -49,20 +49,14 @@ import com.seanchen.xinchat.feature.auth.component.UserAgreement
 import com.seanchen.xinchat.feature.auth.viewmodel.LoginViewModel
 
 @Composable
-internal fun LoginRoute(
-    viewModel: LoginViewModel = hiltViewModel()
-) {
-    val context = LocalContext.current
-
+internal fun LoginRoute() {
     LoginScreen()
 }
 
 @Composable
-internal fun LoginScreen(
-
-) {
+internal fun LoginScreen() {
     AppScaffold(
-        onBackClick = { navigateBack() },
+        showBackIcon = false,
         backgroundColor = MaterialTheme.colorScheme.surface
     ) {
         LoginContentView()
