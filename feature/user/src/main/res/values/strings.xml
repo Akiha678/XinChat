@@ -2,6 +2,10 @@
     <string name="profile_title">我的</string>
     <string name="profile_guest_title">欢迎使用 XinChat</string>
     <string name="profile_guest_description">个人资料、隐私和应用设置将集中显示在这里。</string>
+    <string name="about_us">关于我们</string>
+    <string name="settings">设置</string>
     <string name="logout">退出登录</string>
     <string name="logging_out">正在退出…</string>
+    <string name="not_logged_in">未登录</string>
+    <string name="logout_failed">退出登录失败</string>
 </resources>

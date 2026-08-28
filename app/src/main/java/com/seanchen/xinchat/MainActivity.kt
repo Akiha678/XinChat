@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.navigation3.runtime.NavKey
 import com.seanchen.widget.ui.theme.AppTheme
-import com.seanchen.xinchat.core.data.repository.AuthStoreRepository
+import com.seanchen.xinchat.core.data.state.AppState
 import com.seanchen.xinchat.core.navigation.AppNavigator
 import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
     lateinit var navigator: AppNavigator
 
     @Inject
-    lateinit var authStoreRepository: AuthStoreRepository
+    lateinit var appState: AppState
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +40,8 @@ class MainActivity : ComponentActivity() {
 
     private fun resolveStartDestination(): NavKey {
         return runBlocking(Dispatchers.IO) {
-            if (authStoreRepository.isLoggedIn()) {
+            appState.initialize()
+            if (appState.isLoggedIn.value) {
                 MainRoutes.Main
             } else {
                 AuthRoutes.Login

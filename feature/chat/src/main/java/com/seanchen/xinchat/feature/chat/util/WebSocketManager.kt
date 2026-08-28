@@ -79,13 +79,17 @@ class WebSocketManager {
                 .writeTimeout(15, TimeUnit.SECONDS)
                 .build()
 
-            webSocket = webSocketClient?.newWebSocket(request, object : WebSocketListener() {
+            val authorizedRequest = request.newBuilder()
+                .header("Authorization", "Bearer $token")
+                .build()
+
+            webSocket = webSocketClient?.newWebSocket(authorizedRequest, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     LogUtils.d(TAG, "WebSocket连接成功: ${response.code}")
                     retryCount = 0
 
                     // 发送认证消息
-                    val authMessage = """40/cs,{"isAdmin":false,"token":"$token"}"""
+                    val authMessage = """40/chat,{"token":"$token"}"""
                     LogUtils.d(TAG, "发送认证消息: ${authMessage.take(20)}...")
                     webSocket.send(authMessage)
                 }
@@ -144,7 +148,7 @@ class WebSocketManager {
         try {
             when {
                 // 连接成功消息: 40/cs,{"sid":"708fb2ed-6d08-445c-9264-c57c521eb3f7"}
-                text.startsWith("40/cs,") -> {
+                text.startsWith("40/chat,") -> {
                     LogUtils.d(TAG, "WebSocket认证成功")
                     updateConnectionState(WebSocketConnectionState.Connected)
                 }
@@ -170,23 +174,23 @@ class WebSocketManager {
                     onMessageReceived?.invoke(message)
                 }
 
-                // 消息通知: 42/cs,["msg",{消息内容}]
-                text.startsWith("42/cs,[\"msg\",") -> {
+                // 消息通知: 42/chat,["msg",{消息内容}]
+                text.startsWith("42/chat,[\"msg\",") -> {
                     val messageContent =
-                        text.substringAfter("42/cs,[\"msg\",").substringBeforeLast("]")
+                        text.substringAfter("42/chat,[\"msg\",").substringBeforeLast("]")
                     val message = Json.decodeFromString<Msg>(messageContent)
-                    LogUtils.d(TAG, "收到消息通知(42/cs): id=${message.id}")
+                    LogUtils.d(TAG, "收到消息通知(42/chat): id=${message.id}")
                     onMessageReceived?.invoke(message)
                 }
 
                 // 连接成功消息: 42/cs,["message","连接成功"]
-                text.contains("42/cs,[\"message\",\"连接成功\"]") -> {
+                text.contains("42/chat,[\"message\",\"连接成功\"]") -> {
                     LogUtils.d(TAG, "收到连接成功消息: $text")
                     updateConnectionState(WebSocketConnectionState.Connected)
                 }
 
                 // 其他连接状态消息
-                text.startsWith("42/cs,[\"message\",") -> {
+                text.startsWith("42/chat,[\"message\",") -> {
                     LogUtils.d(TAG, "收到连接状态消息: $text")
                     // 其他连接状态消息，已经在上一个条件处理了连接成功的情况
                 }
@@ -211,7 +215,7 @@ class WebSocketManager {
         }
 
         val sendMessage =
-            """42/cs,["send",{"sessionId":$sessionId,"content":{"type":"$type","data":"$content"}}]"""
+            """42/chat,["send",{"sessionId":$sessionId,"content":{"type":"$type","data":"$content"}}]"""
         LogUtils.d(TAG, "发送消息: ${sendMessage.take(50)}")
 
         val success = webSocket?.send(sendMessage) ?: false

@@ -81,6 +81,7 @@ object ToastUtils {
         val currentStyle = if (isDarkMode) WhiteToastStyle() else BlackToastStyle()
 
         Toaster.setStyle(CustomToastStyle(R.layout.toast_success))
+        Toaster.show(resId)
         Toaster.setStyle(currentStyle)
     }
 

@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -23,8 +24,8 @@ import com.seanchen.xinchat.core.navigation.navigateBack
 import com.seanchen.xinchat.core.ui.component.button.AppButton
 import com.seanchen.xinchat.feature.auth.R
 import com.seanchen.xinchat.feature.auth.component.AnimatedAuthPage
+import com.seanchen.xinchat.feature.auth.component.AuthInputField
 import com.seanchen.xinchat.feature.auth.component.PasswordInputField
-import com.seanchen.xinchat.feature.auth.component.PhoneInputField
 import com.seanchen.xinchat.feature.auth.component.VerificationCodeField
 import com.seanchen.xinchat.feature.auth.viewmodel.ResetPasswordViewModel
 
@@ -32,17 +33,23 @@ import com.seanchen.xinchat.feature.auth.viewmodel.ResetPasswordViewModel
 internal fun ResetPasswordRoute(
     viewModel: ResetPasswordViewModel = hiltViewModel()
 ){
-    val phone by viewModel.phone.collectAsState()
+    val email by viewModel.email.collectAsState()
     val newPassword by viewModel.newPassword.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
     val verificationCode by viewModel.verificationCode.collectAsState()
+    val isEmailValid by viewModel.isEmailValid.collectAsState(initial = false)
+    val isLoadingCode by viewModel.isLoadingCode.collectAsState()
+    val isResetEnabled by viewModel.isResetEnabled.collectAsState(initial = false)
 
     ResetPasswordScreen(
-        phone = phone,
+        email = email,
         newPassword = newPassword,
         confirmPassword = confirmPassword,
         verificationCode = verificationCode,
-        onPhoneChange = viewModel::updatePhone,
+        isEmailValid = isEmailValid,
+        isLoadingCode = isLoadingCode,
+        isResetEnabled = isResetEnabled,
+        onEmailChange = viewModel::updateEmail,
         onNewPasswordChange = viewModel::updateNewPassword,
         onConfirmPasswordChange = viewModel::updateConfirmPassword,
         onVerificationCodeChange = viewModel::updateVerificationCode,
@@ -54,11 +61,14 @@ internal fun ResetPasswordRoute(
 
 @Composable
 internal fun ResetPasswordScreen(
-    phone: String = "",
+    email: String = "",
     newPassword: String = "",
     confirmPassword: String = "",
     verificationCode: String = "",
-    onPhoneChange: (String) -> Unit = {},
+    isEmailValid: Boolean = false,
+    isLoadingCode: Boolean = false,
+    isResetEnabled: Boolean = false,
+    onEmailChange: (String) -> Unit = {},
     onNewPasswordChange: (String) -> Unit = {},
     onConfirmPasswordChange: (String) -> Unit = {},
     onVerificationCodeChange: (String) -> Unit = {},
@@ -71,11 +81,14 @@ internal fun ResetPasswordScreen(
         onBackClick = { navigateBack() }
     ) {
         ResetPasswordContentView(
-            phone = phone,
+            email = email,
             newPassword = newPassword,
             confirmPassword = confirmPassword,
             verificationCode = verificationCode,
-            onPhoneChange = onPhoneChange,
+            isEmailValid = isEmailValid,
+            isLoadingCode = isLoadingCode,
+            isResetEnabled = isResetEnabled,
+            onEmailChange = onEmailChange,
             onNewPasswordChange = onNewPasswordChange,
             onConfirmPasswordChange = onConfirmPasswordChange,
             onVerificationCodeChange = onVerificationCodeChange,
@@ -87,27 +100,31 @@ internal fun ResetPasswordScreen(
 
 @Composable
 private fun ResetPasswordContentView(
-    phone: String,
+    email: String,
     newPassword: String,
     confirmPassword: String,
     verificationCode: String,
-    onPhoneChange: (String) -> Unit,
+    isEmailValid: Boolean,
+    isLoadingCode: Boolean,
+    isResetEnabled: Boolean,
+    onEmailChange: (String) -> Unit,
     onNewPasswordChange: (String) -> Unit,
     onConfirmPasswordChange: (String) -> Unit,
     onVerificationCodeChange: (String) -> Unit,
     onSendVerificationCode: () -> Unit,
     onResetPasswordClick: () -> Unit
 ){
-    val phoneFieldFocused = remember { mutableStateOf(false) }
+    val emailFieldFocused = remember { mutableStateOf(false) }
     val codeFieldFocused = remember { mutableStateOf(false) }
     val newPasswordFieldFocused = remember { mutableStateOf(false) }
     val confirmPasswordFieldFocused = remember { mutableStateOf(false) }
 
-    PhoneInputField(
-        phone = phone,
-        onPhoneChange = onPhoneChange,
-        phoneFieldFocused = phoneFieldFocused,
-        placeholder = stringResource(id = R.string.phone_hint),
+    AuthInputField(
+        value = email,
+        onValueChange = onEmailChange,
+        fieldFocused = emailFieldFocused,
+        placeholder = stringResource(id = R.string.email_hint),
+        keyboardType = KeyboardType.Email,
         nextAction = ImeAction.Next // 回车改为下一项
     )
 
@@ -119,7 +136,8 @@ private fun ResetPasswordContentView(
         codeFieldFocused = codeFieldFocused,
         onSendVerificationCode = onSendVerificationCode,
         placeholder = stringResource(id = R.string.verification_code),
-        nextAction = ImeAction.Next
+        nextAction = ImeAction.Next,
+        isEnabled = isEmailValid && !isLoadingCode
     )
 
     Spacer(modifier = Modifier.height(30.dp))
@@ -167,6 +185,6 @@ private fun ResetPasswordContentView(
     AppButton(
         text = stringResource(id = R.string.reset_password),
         onClick = onResetPasswordClick,
-        enabled = false
+        enabled = isResetEnabled
     )
 }

@@ -142,8 +142,8 @@ private fun LoginContentView(
             ) {
                 // 验证码登录按钮（主按钮）
                 AppButton(
-                    text = stringResource(id = R.string.sms_login),
-                    onClick = { AuthNavigator.toSmsLogin() }
+                    text = stringResource(id = R.string.email_register),
+                    onClick = { AuthNavigator.toRegister() }
                 )
 
                 SpaceVerticalXLarge()

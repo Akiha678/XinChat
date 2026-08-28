@@ -7,18 +7,18 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface UserInfoService {
-    @POST("user/info/updatePerson")
+    @POST("chat/updatePersonInfo")
     suspend fun updatePersonInfo(@Body params: Map<String, Any>): NetworkResponse<Any>
 
-    @POST("user/info/updatePassword")
+    @POST("chat/updatePassword")
     suspend fun updatePassword(@Body params: Map<String, String>): NetworkResponse<Any>
 
-    @POST("user/info/logoff")
-    suspend fun logoff(@Body params: Map<String, Any>): NetworkResponse<Any>
+    @POST("chat/logoff")
+    suspend fun logoff(@Body params: Map<String, Any>): NetworkResponse<Boolean>
 
-    @POST("user/info/bindPhone")
+    @POST("chat/bindPhone")
     suspend fun bindPhone(@Body params: Map<String, String>): NetworkResponse<Any>
 
-    @GET("user/info/person")
+    @GET("chat/person")
     suspend fun getPersonInfo(): NetworkResponse<User>
 }

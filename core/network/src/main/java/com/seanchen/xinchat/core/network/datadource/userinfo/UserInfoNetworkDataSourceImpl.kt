@@ -17,7 +17,7 @@ class UserInfoNetworkDataSourceImpl @Inject constructor(
         return userInfoService.updatePassword(params)
     }
 
-    override suspend fun logoff(params: Map<String, Any>): NetworkResponse<Any> {
+    override suspend fun logoff(params: Map<String, Any>): NetworkResponse<Boolean> {
         return userInfoService.logoff(params)
     }
 

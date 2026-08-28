@@ -7,6 +7,8 @@
     <string name="welcome_login">Hello,\nWelcome</string>
     <string name="welcome_register">Hello,\nWelcome to register</string>
     <string name="phone_hint">Please enter phone number</string>
+    <string name="email_hint">Please enter email</string>
+    <string name="account_hint">Please enter email or username</string>
     <string name="phone_code">+86</string>
     <string name="verification_code">Verification code</string>
     <string name="get_verification_code">Get code</string>
@@ -26,6 +28,7 @@
 
     <!-- Login Home -->
     <string name="sms_login">SMS Login</string>
+    <string name="email_register">Email Register</string>
     <string name="account_login">Account Login</string>
     <string name="other_login_methods">Other Login Methods</string>
     <string name="wechat">WeChat</string>
@@ -60,10 +63,15 @@
 
     <!-- Toast messages -->
     <string name="invalid_phone_number">Please enter a valid phone number</string>
+    <string name="invalid_email">Please enter a valid email</string>
+    <string name="invalid_account">Please enter email or username</string>
     <string name="invalid_verification_code">Please enter a 4-digit verification code</string>
     <string name="invalid_password">Please enter the correct password</string>
     <string name="login_success">Login successful</string>
     <string name="register_success">Registration successful</string>
+    <string name="register_failed">Registration failed</string>
+    <string name="reset_password_success">Password reset</string>
+    <string name="verification_code_sent">Verification code sent</string>
     <string name="login_failed">Login failed: %s</string>
     <string name="login_cancelled">Login cancelled</string>
     <string name="start_qq_login_failed">Failed to start QQ login: %s</string>

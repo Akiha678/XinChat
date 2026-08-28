@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.seanchen.xinchat.core.designsystem.component.BottomNavigationRow
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
@@ -21,8 +22,8 @@ import com.seanchen.xinchat.core.navigation.common.CommonNavigator
 import com.seanchen.xinchat.core.ui.component.button.AppButton
 import com.seanchen.xinchat.feature.auth.R
 import com.seanchen.xinchat.feature.auth.component.AnimatedAuthPage
+import com.seanchen.xinchat.feature.auth.component.AuthInputField
 import com.seanchen.xinchat.feature.auth.component.PasswordInputField
-import com.seanchen.xinchat.feature.auth.component.PhoneInputField
 import com.seanchen.xinchat.feature.auth.component.UserAgreement
 
 
@@ -87,11 +88,12 @@ private fun AccountLoginContentView(
     val accountFieldFocused = remember { mutableStateOf(false) }
     val passwordFieldFocused = remember { mutableStateOf(false) }
 
-    PhoneInputField(
-        phone = account,
-        onPhoneChange = onAccountChange,
-        phoneFieldFocused = accountFieldFocused,
-        placeholder = "请输入手机号",
+    AuthInputField(
+        value = account,
+        onValueChange = onAccountChange,
+        fieldFocused = accountFieldFocused,
+        placeholder = stringResource(id = R.string.account_hint),
+        keyboardType = KeyboardType.Text,
         nextAction = ImeAction.Next
     )
 

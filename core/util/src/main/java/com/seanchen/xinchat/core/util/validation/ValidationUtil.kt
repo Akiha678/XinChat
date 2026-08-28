@@ -13,6 +13,15 @@ object ValidationUtil {
     }
 
     /**
+     * 验证邮箱是否有效
+     */
+    fun isValidEmail(email: String): Boolean {
+        return email.isNotBlank() && email.matches(
+            Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        )
+    }
+
+    /**
      * 验证短信验证码
      * - 验证码为4位
      * - 每位都为数字

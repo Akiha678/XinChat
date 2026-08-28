@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
@@ -38,37 +39,39 @@ fun AppNavHost(
     startDestination: NavKey,
     modifier: Modifier = Modifier
 ) {
-    val backStack = rememberNavBackStack(startDestination)
+    key(startDestination) {
+        val backStack = rememberNavBackStack(startDestination)
 
-    val navigationController = remember(backStack, navigator){
-        createBackStackNavigationController(backStack, navigator)
-    }
-
-    DisposableEffect(navigationController) {
-        // 绑定到 AppNavigator，接收全局导航命令
-        navigator.attachController(navigationController)
-        // 绑定到全局导航服务，支持业务层直接调用navigate
-        NavigationService.bind(navigator)
-        onDispose {
-            NavigationService.unbind(navigator)
-            navigator.detachController(navigationController)
+        val navigationController = remember(backStack, navigator){
+            createBackStackNavigationController(backStack, navigator)
         }
-    }
 
-    SharedTransitionLayout {
-        NavDisplay(
-            backStack = backStack,
-            modifier = modifier,
-            onBack = { navigationController.navigateBack() },
-            entryDecorators = listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator()
-            ),
-            transitionSpec = { createForwardTransition() },
-            popTransitionSpec = { createBackwardTransition() },
-            predictivePopTransitionSpec = { createBackwardTransition() },
-            entryProvider = appEntryProvider(this@SharedTransitionLayout)
-        )
+        DisposableEffect(navigationController) {
+            // 绑定到 AppNavigator，接收全局导航命令
+            navigator.attachController(navigationController)
+            // 绑定到全局导航服务，支持业务层直接调用navigate
+            NavigationService.bind(navigator)
+            onDispose {
+                NavigationService.unbind(navigator)
+                navigator.detachController(navigationController)
+            }
+        }
+
+        SharedTransitionLayout {
+            NavDisplay(
+                backStack = backStack,
+                modifier = modifier,
+                onBack = { navigationController.navigateBack() },
+                entryDecorators = listOf(
+                    rememberSaveableStateHolderNavEntryDecorator(),
+                    rememberViewModelStoreNavEntryDecorator()
+                ),
+                transitionSpec = { createForwardTransition() },
+                popTransitionSpec = { createBackwardTransition() },
+                predictivePopTransitionSpec = { createBackwardTransition() },
+                entryProvider = appEntryProvider(this@SharedTransitionLayout)
+            )
+        }
     }
 }
 

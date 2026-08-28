@@ -4,6 +4,10 @@ import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.AuthRepository
 import com.seanchen.xinchat.core.data.state.AppState
+import com.seanchen.xinchat.core.navigation.NavigationOptions
+import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
+import com.seanchen.xinchat.core.navigation.main.MainRoutes
+import com.seanchen.xinchat.core.navigation.navigate
 import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.result.ResultHandler
 import com.seanchen.xinchat.core.result.asResult
@@ -25,7 +29,7 @@ class AccountLoginViewModel @Inject constructor(
 ) : BaseViewModel() {
 
     companion object {
-        private const val KEY_SAVED_PHONE = "saved_phone"
+        private const val KEY_SAVED_ACCOUNT = "saved_account"
 
         private const val KEY_SAVED_PASSWORD = "saved_password"
     }
@@ -43,15 +47,15 @@ class AccountLoginViewModel @Inject constructor(
     val password: StateFlow<String> = _password
 
     init {
-        // 加载已保存的账号和密码
-        loadSavedCredentials()
+        // 只回填账号，历史版本保存过明文密码时在这里清理。
+        loadSavedAccount()
     }
 
     /**
      * 登录按钮是否可用
      */
     val isLoginEnabled = _account.combine(_password) { account, password ->
-        ValidationUtil.isValidPhone(account) && ValidationUtil.isValidPassword(password)
+        account.isNotBlank() && password.length >= 6
     }
 
     /**
@@ -72,9 +76,9 @@ class AccountLoginViewModel @Inject constructor(
      * 执行登录操作
      */
     fun login() {
-        // 验证手机号
-        if (!ValidationUtil.isValidPhone(_account.value)) {
-            ToastUtils.showError(R.string.invalid_phone_number)
+        // 验证账号
+        if (_account.value.isBlank()) {
+            ToastUtils.showError(R.string.invalid_account)
             return
         }
 
@@ -85,7 +89,7 @@ class AccountLoginViewModel @Inject constructor(
         }
 
         val params = mapOf(
-            "phone" to account.value,
+            "account" to account.value,
             "password" to password.value
         )
 
@@ -101,35 +105,38 @@ class AccountLoginViewModel @Inject constructor(
      */
     private fun loginSuccess(authData: Auth) {
         viewModelScope.launch {
-            savedCredentials(_account.value, _password.value)
+            saveAccount(_account.value)
             ToastUtils.showSuccess(R.string.login_success)
             appState.updateAuth(authData)
             appState.refreshUserInfo()
-            TODO("navigateBack")
+            navigate(
+                route = MainRoutes.Main,
+                navOptions = NavigationOptions(
+                    popUpToRoute = AuthRoutes.Login,
+                    inclusive = true,
+                    allowPopToEmpty = true
+                )
+            )
         }
     }
 
     /**
-     * 加载已经保存的凭据
+     * 加载已经保存的账号
      */
-    private fun loadSavedCredentials(){
-        val savedPhone = MMKVUtils.getString(KEY_SAVED_PHONE, "")
-        val savedPassword = MMKVUtils.getString(KEY_SAVED_PASSWORD, "")
+    private fun loadSavedAccount() {
+        val savedAccount = MMKVUtils.getString(KEY_SAVED_ACCOUNT, "")
 
-        if (savedPhone.isNotEmpty()){
-            _account.value = savedPhone
+        if (savedAccount.isNotEmpty()){
+            _account.value = savedAccount
         }
 
-        if (savedPassword.isNotEmpty()){
-            _password.value = savedPassword
-        }
+        MMKVUtils.putString(KEY_SAVED_PASSWORD, "")
     }
 
     /**
-     * 保存凭据
+     * 保存账号
      */
-    private fun savedCredentials(phone: String, password: String) {
-        MMKVUtils.putString(KEY_SAVED_PHONE, phone)
-        MMKVUtils.putString(KEY_SAVED_PASSWORD, password)
+    private fun saveAccount(account: String) {
+        MMKVUtils.putString(KEY_SAVED_ACCOUNT, account)
     }
 }

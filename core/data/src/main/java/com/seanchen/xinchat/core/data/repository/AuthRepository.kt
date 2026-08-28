@@ -2,6 +2,7 @@ package com.seanchen.xinchat.core.data.repository
 
 import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.model.entity.Captcha
+import com.seanchen.xinchat.core.model.response.LoginResponse
 import com.seanchen.xinchat.core.model.response.NetworkResponse
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSource
 import kotlinx.coroutines.Dispatchers
@@ -17,22 +18,29 @@ class AuthRepository @Inject constructor(
     /**
      * 用户注册
      */
-    fun register(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {
-        emit(authNetworkDataSource.register(params))
+    suspend fun register(params: Map<String, String>): LoginResponse {
+        return authNetworkDataSource.register(params)
+    }
+
+    /**
+     * 获取注册验证码
+     */
+    fun getRegisterCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
+        emit(authNetworkDataSource.getRegisterCode(params))
     }.flowOn(Dispatchers.IO)
 
     /**
-     * 获取短信验证码
+     * 获取修改密码验证码
      */
-    fun getSmsCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
-        emit(authNetworkDataSource.getSmsCode(params))
+    fun getPasswordCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
+        emit(authNetworkDataSource.getPasswordCode(params))
     }.flowOn(Dispatchers.IO)
 
     /**
-     * 刷新Token
+     * 修改密码
      */
-    fun refreshToken(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {
-        emit(authNetworkDataSource.refreshToken(params))
+    fun updatePassword(params: Map<String, String>): Flow<NetworkResponse<Boolean>> = flow {
+        emit(authNetworkDataSource.updatePassword(params))
     }.flowOn(Dispatchers.IO)
 
     /**
@@ -50,9 +58,23 @@ class AuthRepository @Inject constructor(
     }.flowOn(Dispatchers.IO)
 
     /**
+     * 校验图形验证码
+     */
+    fun verifyCaptcha(params: Map<String, String>): Flow<NetworkResponse<Boolean>> = flow {
+        emit(authNetworkDataSource.verifyCaptcha(params))
+    }.flowOn(Dispatchers.IO)
+
+    /**
      * 获取图片验证码
      */
     fun getCaptcha(): Flow<NetworkResponse<Captcha>> = flow {
         emit(authNetworkDataSource.getCaptcha())
+    }.flowOn(Dispatchers.IO)
+
+    /**
+     * 刷新Token
+     */
+    fun refreshToken(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {
+        emit(authNetworkDataSource.refreshToken(params))
     }.flowOn(Dispatchers.IO)
 }

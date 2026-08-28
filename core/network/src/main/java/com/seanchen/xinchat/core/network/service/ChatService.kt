@@ -14,13 +14,13 @@ interface ChatService {
     /**
      * 创建客服会话
      */
-    @POST("cs/session")
+    @POST("chat/session")
     suspend fun createSession(): NetworkResponse<ChatSession>
 
     /**
      * 标记消息为已读
      */
-    @POST("cs/message/read")
+    @POST("chat/message/read")
     suspend fun readMessage(
         @Body params: ReadMessageRequest
     ): NetworkResponse<Boolean>
@@ -28,7 +28,7 @@ interface ChatService {
     /**
      * 分页查询会话消息
      */
-    @POST("cs/message/page")
+    @POST("chat/message/page")
     suspend fun getMessagePage(
         @Body params: MessagePageRequest
     ): NetworkResponse<NetworkPageData<Msg>>
@@ -36,6 +36,6 @@ interface ChatService {
     /**
      * 查询未读消息数
      */
-    @GET("cs/message/unread")
+    @GET("chat/message/unread")
     suspend fun getUnreadCount(): NetworkResponse<Int>
 }

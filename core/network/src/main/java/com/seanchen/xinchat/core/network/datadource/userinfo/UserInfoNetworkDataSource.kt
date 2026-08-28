@@ -30,7 +30,7 @@ interface UserInfoNetworkDataSource {
      * @return 注销结果响应
      * @author Joker.X
      */
-    suspend fun logoff(params: Map<String, Any>): NetworkResponse<Any>
+    suspend fun logoff(params: Map<String, Any>): NetworkResponse<Boolean>
 
     /**
      * 绑定手机号

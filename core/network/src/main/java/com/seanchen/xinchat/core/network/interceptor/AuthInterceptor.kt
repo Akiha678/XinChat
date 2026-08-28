@@ -11,6 +11,10 @@ import javax.inject.Singleton
 class AuthInterceptor @Inject constructor(
     private val authStoreDataSource: AuthStoreDataSource
 ) : Interceptor {
+    private companion object {
+        const val BEARER_PREFIX = "Bearer "
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
 
@@ -20,7 +24,7 @@ class AuthInterceptor @Inject constructor(
 
         val request = if (token.isNotBlank()) {
             originalRequest.newBuilder()
-                .header("Authorization", token)
+                .header("Authorization", "$BEARER_PREFIX$token")
                 .build()
         } else {
             originalRequest

@@ -48,7 +48,7 @@ class UserInfoRepository @Inject constructor(
      * @return 注销结果Flow
      * @author Joker.X
      */
-    fun logoff(params: Map<String, Any>): Flow<NetworkResponse<Any>> = flow {
+    fun logoff(params: Map<String, Any>): Flow<NetworkResponse<Boolean>> = flow {
         emit(userInfoNetworkDataSource.logoff(params))
     }.flowOn(Dispatchers.IO)
 

@@ -31,7 +31,7 @@ fun VerificationCodeField(
     onSendVerificationCode: () -> Unit,
     placeholder: String = "",
     nextAction: ImeAction = ImeAction.Next,
-    isPhoneValid: Boolean = true,
+    isEnabled: Boolean = true,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ) {
     // 验证码输入框和发送按钮
@@ -71,11 +71,11 @@ fun VerificationCodeField(
 
         Text(
             text = stringResource(id = R.string.get_verification_code),
-            color = if (isPhoneValid) ColorWarning else Color.Gray,
+            color = if (isEnabled) ColorWarning else Color.Gray,
             fontSize = 16.sp,
             modifier = Modifier
                 .padding(start = SpaceHorizontalXLarge)
-                .clickable(enabled = isPhoneValid, onClick = onSendVerificationCode)
+                .clickable(enabled = isEnabled, onClick = onSendVerificationCode)
         )
     }
 

@@ -44,10 +44,8 @@ class AppState @Inject constructor(
     /**
      * 初始化应用状态
      */
-    fun initialize(){
-        applicationScope.launch {
-            initializeState()
-        }
+    suspend fun initialize() {
+        initializeState()
     }
 
     /**
