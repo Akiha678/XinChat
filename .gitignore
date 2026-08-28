@@ -23,8 +23,10 @@ gradlew
 AGENTS.md
 .agents/*
 
+build
 feature/auth/build
 feature/chat/build
 feature/contact/build
 feature/user/build
 core/*/build
+**/build/
