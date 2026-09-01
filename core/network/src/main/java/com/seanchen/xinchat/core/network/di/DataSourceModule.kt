@@ -2,6 +2,8 @@ package com.seanchen.xinchat.core.network.di
 
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSource
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSourceImpl
+import com.seanchen.xinchat.core.network.datadource.contact.ContactNetworkDataSource
+import com.seanchen.xinchat.core.network.datadource.contact.ContactNetworkDataSourceImpl
 import com.seanchen.xinchat.core.network.datadource.chat.ChatNetworkDataSource
 import com.seanchen.xinchat.core.network.datadource.chat.ChatNetworkDataSourceImpl
 import com.seanchen.xinchat.core.network.datadource.userinfo.UserInfoNetworkDataSource
@@ -32,4 +34,10 @@ abstract class DataSourceModule {
     abstract fun bindChatNetworkDataSource(
         impl: ChatNetworkDataSourceImpl
     ): ChatNetworkDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindContactNetworkDataSource(
+        impl: ContactNetworkDataSourceImpl
+    ): ContactNetworkDataSource
 }

@@ -1,6 +1,7 @@
 package com.seanchen.xinchat.core.network.di
 
 import com.seanchen.xinchat.core.network.service.AuthService
+import com.seanchen.xinchat.core.network.service.ContactService
 import com.seanchen.xinchat.core.network.service.ChatService
 import com.seanchen.xinchat.core.network.service.UserInfoService
 import dagger.Module
@@ -29,5 +30,11 @@ object ServiceModule {
     @Singleton
     fun provideChatService(retrofit: Retrofit): ChatService {
         return retrofit.create(ChatService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideContactService(retrofit: Retrofit): ContactService {
+        return retrofit.create(ContactService::class.java)
     }
 }

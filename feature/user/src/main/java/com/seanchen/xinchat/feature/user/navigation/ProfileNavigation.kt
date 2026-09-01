@@ -4,7 +4,9 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
+import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.core.navigation.TopLevelNavKey
+import com.seanchen.xinchat.feature.user.view.MeRoute
 import com.seanchen.xinchat.feature.user.view.ProfileRoute
 import kotlinx.serialization.Serializable
 
@@ -23,5 +25,11 @@ fun EntryProviderScope<NavKey>.profileGraph(
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = LocalNavAnimatedContentScope.current,
         )
+    }
+}
+
+fun EntryProviderScope<NavKey>.meGraph() {
+    entry<MainRoutes.Me> {
+        MeRoute()
     }
 }
