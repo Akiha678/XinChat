@@ -25,6 +25,7 @@ import com.seanchen.xinchat.core.navigation.createBackStackNavigationController
 import com.seanchen.xinchat.feature.auth.navigation.authGraph
 import com.seanchen.xinchat.feature.chat.navigation.chatGraph
 import com.seanchen.xinchat.feature.main.navigation.mainGraph
+import com.seanchen.xinchat.feature.user.navigation.profileGraph
 import kotlin.collections.listOf
 
 
@@ -99,6 +100,7 @@ private fun createBackwardTransition() = slideInHorizontally (
 
 private fun appEntryProvider(sharedTransitionScope: SharedTransitionScope) = entryProvider {
     mainGraph(sharedTransitionScope)
+    profileGraph(sharedTransitionScope)
     authGraph()
     chatGraph()
 }

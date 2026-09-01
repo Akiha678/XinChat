@@ -1,27 +1,24 @@
 package com.seanchen.xinchat.feature.user.viewmodel
 
-import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
-import com.seanchen.xinchat.core.data.repository.UserInfoRepository
 import com.seanchen.xinchat.core.data.state.AppState
 import com.seanchen.xinchat.core.model.entity.User
-import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.xinchat.core.util.log.LogUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val appState: AppState,
 ) : BaseViewModel() {
+    private val _isLoggingOut = MutableStateFlow(false)
+    val isLoggingOut: StateFlow<Boolean> = _isLoggingOut.asStateFlow()
+
     val isLoggedIn: StateFlow<Boolean> = appState.isLoggedIn
         .stateIn(
             scope = viewModelScope,
@@ -37,17 +34,17 @@ class ProfileViewModel @Inject constructor(
         )
 
     init {
-        viewModelScope.launch {
-            if (isLoggedIn.value && userInfo.value == null) {
-                appState.refreshUserInfo()
-            }
+        if (appState.isLoggedIn.value && appState.userInfo.value == null) {
+            appState.refreshUserInfo()
         }
     }
 
-    fun logout() {
-        viewModelScope.launch {
+    suspend fun logout() {
+        _isLoggingOut.value = true
+        try {
             appState.logout()
-            navigateBack()
+        } finally {
+            _isLoggingOut.value = false
         }
     }
 }

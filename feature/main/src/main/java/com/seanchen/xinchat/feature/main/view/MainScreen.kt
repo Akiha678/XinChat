@@ -25,7 +25,7 @@ import com.seanchen.xinchat.feature.main.model.TopLevelDestination
 import com.seanchen.xinchat.feature.main.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
 import com.seanchen.xinchat.feature.contact.view.ContactRoute
-import com.seanchen.xinchat.feature.user.view.ProfileRoute
+import com.seanchen.xinchat.feature.user.view.MeRoute
 
 @Composable
 internal fun MainRoute(
@@ -96,14 +96,17 @@ private fun MainScreenContentView(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null
 ) {
-    HorizontalPager(
+        HorizontalPager(
         state = pageState,
         modifier = Modifier.padding(paddingValues)
     ) { page: Int ->
         when (page) {
             0 -> ChatListRoute()
             1 -> ContactRoute()
-            2 -> ProfileRoute()
+            2 -> MeRoute(
+                sharedTransitionScope = sharedTransitionScope,
+                animatedContentScope = animatedContentScope
+            )
         }
     }
 }

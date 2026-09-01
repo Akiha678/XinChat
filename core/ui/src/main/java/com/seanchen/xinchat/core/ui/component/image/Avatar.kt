@@ -38,14 +38,10 @@ fun Avatar(
             }
         }
 
-    val shouldShowDefaultAvatar = avatarUrl.isNullOrEmpty()
-
-    if (shouldShowDefaultAvatar) {
-        DefaultAvatar(
-            size = size,
-
-        )
-    }
+    DefaultAvatar(
+        size = size,
+        modifier = finalModifier
+    )
 }
 
 @Composable
@@ -54,14 +50,16 @@ fun DefaultAvatar(
     modifier: Modifier = Modifier
 ){
     Box(
-        modifier = modifier.background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.08f)),
+        modifier = modifier
+            .size(size)
+            .background(MaterialTheme.colorScheme.primaryContainer),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             painter = painterResource(id = R.drawable.ic_my_fill),
             contentDescription = "默认头像",
             modifier = Modifier.size(size * 0.5f),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.onPrimaryContainer
         )
     }
 }
@@ -73,5 +71,10 @@ fun SmallAvatar(
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-
+    Avatar(
+        avatarUrl = avatarUrl,
+        size = size,
+        onClick = onClick,
+        modifier = modifier
+    )
 }
