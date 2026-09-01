@@ -1,9 +1,12 @@
 package com.seanchen.xinchat.feature.user.view
 
+import androidx.compose.animation.AnimatedContentScope
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -14,50 +17,41 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.designsystem.component.VerticalList
+import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalLarge
+import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalLarge
+import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
+import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.navigation.NavigationOptions
 import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.core.navigation.navigate
+import com.seanchen.xinchat.core.navigation.navigateBack
+import com.seanchen.xinchat.core.ui.component.image.SmallAvatar
+import com.seanchen.xinchat.core.ui.component.list.AppListItem
+import com.seanchen.xinchat.core.ui.component.scaffold.AppScaffold
 import com.seanchen.xinchat.core.ui.component.scaffold.CommonScaffold
+import com.seanchen.xinchat.core.ui.component.text.AppText
+import com.seanchen.xinchat.core.ui.component.text.TextType
+import com.seanchen.xinchat.core.ui.component.title.TitleWithLine
 import com.seanchen.xinchat.feature.user.component.FunctionMenuSection
 import com.seanchen.xinchat.feature.user.viewmodel.ProfileViewModel
 
+/**
+ * 个人中心界面
+ */
 @Composable
 fun ProfileRoute(
+//    sharedTransitionScope: SharedTransitionScope? = null,
+//    animatedContentScope: AnimatedContentScope? = null,
     viewModel: ProfileViewModel = hiltViewModel()
 ){
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        lifecycleOwner.lifecycle.addObserver(viewModel)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(viewModel)
-        }
-    }
-
-    // 收集登录状态
-    val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
-    val isLoggingOut by viewModel.isLoggingOut.collectAsStateWithLifecycle()
-    val logoutCompleted by viewModel.logoutCompleted.collectAsStateWithLifecycle()
-
-    LaunchedEffect(logoutCompleted) {
-        if (logoutCompleted) {
-            navigate(
-                route = AuthRoutes.Login,
-                navOptions = NavigationOptions(
-                    popUpToRoute = MainRoutes.Main,
-                    inclusive = true,
-                    allowPopToEmpty = true
-                )
-            )
-        }
-    }
-
+    val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
 
     ProfileScreen(
-        isLoggedIn = isLoggedIn,
-        isLoggingOut = isLoggingOut,
-        onLogoutClick = viewModel::logout
+        onLogoutClick = viewModel::logout,
+//        sharedTransitionScope = sharedTransitionScope,
+//        animatedContentScope = animatedContentScope,
+        userInfo = userInfo
     )
 }
 
@@ -66,35 +60,78 @@ fun ProfileRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ProfileScreen(
-    isLoggedIn: Boolean = false,
-    isLoggingOut: Boolean = false,
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+//    sharedTransitionScope: SharedTransitionScope? = null,
+//    animatedContentScope: AnimatedContentScope? = null,
+    userInfo: User? = null
 ){
-    CommonScaffold(topBar = {}) { paddingValues ->
+    AppScaffold(
+        titleText = "个人中心",
+        useLargeTopBar = true,
+        onBackClick = { navigateBack() }
+    ) {
         ProfileContentView(
-            modifier = Modifier.padding(paddingValues),
-            isLoggedIn = isLoggedIn,
-            isLoggingOut = isLoggingOut,
-            onLogoutClick = onLogoutClick
+            onLogoutClick = onLogoutClick,
+//            sharedTransitionScope = sharedTransitionScope,
+//            animatedContentScope = animatedContentScope,
+            userInfo = userInfo
         )
     }
 }
 
 @Composable
 private fun ProfileContentView(
-    modifier: Modifier = Modifier,
-    isLoggedIn: Boolean,
-    isLoggingOut: Boolean,
     onLogoutClick: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope? = null,
+    animatedContentScope: AnimatedContentScope? = null,
+    userInfo: User? = null,
 ){
-
     VerticalList(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())
+        modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
-        FunctionMenuSection(
-            isLoggedIn = isLoggedIn,
-            isLoggingOut = isLoggingOut,
-            onLogoutClick = onLogoutClick
+        Card {
+            AppListItem(
+                title = "头像",
+                showArrow = false,
+                verticalPadding = SpaceVerticalSmall,
+                horizontalPadding = SpaceHorizontalLarge,
+                trailingContent = {
+                    SmallAvatar(
+                        avatarUrl = userInfo?.avatarUrl,
+                        modifier = Modifier.let{ modifier ->
+                            if (sharedTransitionScope != null && animatedContentScope != null) {
+                                with(sharedTransitionScope) {
+                                    modifier.sharedElement(
+                                        sharedContentState = rememberSharedContentState(key = "user_avatar"),
+                                        animatedVisibilityScope = animatedContentScope
+                                    )
+                                }
+                            } else {
+                                modifier
+                            }
+                        }
+                    )
+                }
+            )
+
+            AppListItem(
+                title = "昵称",
+                showArrow = false,
+                showDivider = false,
+                horizontalPadding = SpaceHorizontalLarge,
+                verticalPadding = SpaceVerticalLarge,
+                trailingContent = {
+                    AppText(
+                        userInfo?.nickName ?: "未设置",
+                        type = TextType.TERTIARY
+                    )
+                }
+            )
+        }
+
+        TitleWithLine(
+            text = "账号信息",
+            modifier = Modifier.padding(top = SpaceVerticalSmall)
         )
     }
 }

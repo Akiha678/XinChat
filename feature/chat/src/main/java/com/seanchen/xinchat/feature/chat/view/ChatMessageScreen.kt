@@ -57,7 +57,6 @@ import com.seanchen.xinchat.core.ui.component.loading.WeLoadingMP
 import com.seanchen.xinchat.core.ui.component.network.BaseNetworkView
 import com.seanchen.xinchat.feature.chat.R
 import com.seanchen.xinchat.feature.chat.component.Message
-import com.seanchen.xinchat.feature.chat.skeleton.ChatLoadingSkeleton
 import com.seanchen.xinchat.feature.chat.viewmodel.ChatMessageViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -133,7 +132,6 @@ internal fun ChatMessageScreen(
             modifier = Modifier.fillMaxSize(),
             padding = paddingValues,
             onRetry = onRefresh,
-            chatLoading = { ChatLoadingSkeleton() },
             chatError = {
                 Empty(
                     message = R.string.load_messages_failed,
