@@ -16,30 +16,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -48,8 +38,9 @@ import com.seanchen.xinchat.core.designsystem.theme.CommonIcon
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
-import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
+import com.seanchen.xinchat.core.navigation.main.MainRoutes
+import com.seanchen.xinchat.core.navigation.navigate
 import com.seanchen.xinchat.core.ui.R as CoreUiR
 import com.seanchen.xinchat.core.ui.component.appbar.CenterTopAppBar
 import com.seanchen.xinchat.core.ui.component.empty.Empty
@@ -72,11 +63,9 @@ fun ContactRoute(
 
     ContactScreen(
         uiState = uiState,
-        onSearchQueryChange = viewModel::updateSearchQuery,
         onSearchClick = viewModel::searchUsers,
         onFriendClick = { ChatNavigator.toChatMessage() },
         onAddFriendClick = viewModel::addFriend,
-        onAddFriendByUsername = viewModel::addFriendByUsername,
         onRefresh = viewModel::refreshFriends,
         onClearError = viewModel::clearError
     )
@@ -86,17 +75,12 @@ fun ContactRoute(
 @Composable
 internal fun ContactScreen(
     uiState: ContactUiState = ContactUiState(),
-    onSearchQueryChange: (String) -> Unit = {},
     onSearchClick: () -> Unit = {},
     onFriendClick: (ContactUserUiState) -> Unit = {},
     onAddFriendClick: (ContactUserUiState) -> Unit = {},
-    onAddFriendByUsername: (String, String) -> Unit = { _, _ -> },
     onRefresh: () -> Unit = {},
     onClearError: () -> Unit = {},
 ) {
-    var showAddFriendDialog by rememberSaveable { mutableStateOf(false) }
-    var addUsername by rememberSaveable { mutableStateOf("") }
-    var addMessage by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
 
     Scaffold(
@@ -116,7 +100,7 @@ internal fun ContactScreen(
                         )
                     }
                     IconButton(
-                        onClick = { showAddFriendDialog = true },
+                        onClick = { navigate(MainRoutes.AddFriend) },
                         enabled = !uiState.isSendingFriendRequest
                     ) {
                         CommonIcon(
@@ -135,11 +119,6 @@ internal fun ContactScreen(
         ContactContentView(
             uiState = uiState,
             paddingValues = paddingValues,
-            onSearchQueryChange = onSearchQueryChange,
-            onSearchClick = {
-                focusManager.clearFocus()
-                onSearchClick()
-            },
             isSendingFriendRequest = uiState.isSendingFriendRequest,
             onFriendClick = onFriendClick,
             onAddFriendClick = onAddFriendClick,
@@ -148,56 +127,12 @@ internal fun ContactScreen(
         )
     }
 
-    if (showAddFriendDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddFriendDialog = false },
-            title = { Text(text = stringResource(id = R.string.contact_add_friend_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(SpaceVerticalSmall)) {
-                    OutlinedTextField(
-                        value = addUsername,
-                        onValueChange = { addUsername = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text(text = stringResource(id = R.string.contact_add_friend_hint)) }
-                    )
-                    OutlinedTextField(
-                        value = addMessage,
-                        onValueChange = { addMessage = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(text = stringResource(id = R.string.contact_add_friend_message_hint)) },
-                        minLines = 2
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    enabled = addUsername.isNotBlank() && !uiState.isSendingFriendRequest,
-                    onClick = {
-                        onAddFriendByUsername(addUsername, addMessage)
-                        showAddFriendDialog = false
-                        addUsername = ""
-                        addMessage = ""
-                    }
-                ) {
-                    Text(text = stringResource(id = R.string.add_friend))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddFriendDialog = false }) {
-                    Text(text = stringResource(id = android.R.string.cancel))
-                }
-            }
-        )
-    }
 }
 
 @Composable
 private fun ContactContentView(
     uiState: ContactUiState,
     paddingValues: PaddingValues,
-    onSearchQueryChange: (String) -> Unit,
-    onSearchClick: () -> Unit,
     isSendingFriendRequest: Boolean,
     onFriendClick: (ContactUserUiState) -> Unit,
     onAddFriendClick: (ContactUserUiState) -> Unit,
@@ -221,7 +156,8 @@ private fun ContactContentView(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
+                    // 页面使用背景色承托内容卡片，避免列表与顶栏融为一体。
+                    .background(MaterialTheme.colorScheme.surface),
                 contentPadding = PaddingValues(
                     start = SpacePaddingMedium,
                     end = SpacePaddingMedium,
@@ -277,12 +213,6 @@ private fun ContactContentView(
                     }
                 }
 
-                item {
-                    TitleWithLine(
-                        text = stringResource(id = R.string.my_friends)
-                    )
-                }
-
                 if (uiState.friends.isEmpty()) {
                     item {
                         Empty(
@@ -314,6 +244,9 @@ private fun ContactFriendItem(
     onClick: (ContactUserUiState) -> Unit
 ) {
     AppListItem(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface),
         title = user.displayName,
         description = user.username.ifBlank { user.email },
         showArrow = true,
@@ -331,6 +264,9 @@ private fun ContactSearchResultItem(
     onAddFriendClick: (ContactUserUiState) -> Unit
 ) {
     AppListItem(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface),
         title = user.displayName,
         description = user.username.ifBlank { user.email },
         showArrow = false,
@@ -383,7 +319,7 @@ private fun ContactErrorBanner(
 }
 
 @Composable
-private fun ContactAvatar(
+internal fun ContactAvatar(
     user: ContactUserUiState,
     modifier: Modifier = Modifier
 ) {
@@ -409,36 +345,6 @@ private fun ContactAvatar(
             text = initial,
             color = contentColor,
             style = MaterialTheme.typography.titleMedium
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ContactScreenPreview() {
-    MaterialTheme {
-        ContactScreen(
-            uiState = ContactUiState(
-                searchQuery = "sean",
-                friends = listOf(
-                    ContactUserUiState(
-                        id = 1,
-                        displayName = "Sean",
-                        username = "seanchen",
-                        email = "sean@example.com",
-                        avatarColor = 0xFF4E73FF.toInt()
-                    )
-                ),
-                searchResults = listOf(
-                    ContactUserUiState(
-                        id = 2,
-                        displayName = "Akiha",
-                        username = "akiha",
-                        email = "akiha@example.com",
-                        avatarColor = 0xFF00B894.toInt()
-                    )
-                )
-            )
         )
     }
 }

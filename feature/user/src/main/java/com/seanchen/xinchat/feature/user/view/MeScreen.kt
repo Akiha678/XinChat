@@ -77,7 +77,6 @@ internal fun MeScreen(
     onProfileClick: () -> Unit = {},
 ) {
     AppScaffold(
-        title = R.string.profile_title,
         showBackIcon = false,
     ) {
         MeContentView(

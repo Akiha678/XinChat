@@ -1,5 +1,7 @@
 package com.seanchen.xinchat.feature.contact.state
 
+import com.seanchen.xinchat.feature.contact.model.ContactUserModel
+
 data class ContactUiState(
     val searchQuery: String = "",
     val friends: List<ContactUserUiState> = emptyList(),
@@ -17,3 +19,16 @@ data class ContactUserUiState(
     val email: String,
     val avatarColor: Int,
 )
+
+fun ContactUserModel.toUiState() = ContactUserUiState(id, displayName, username, email, avatarColor)
+
+
+sealed class ContactState{
+    data object Loading : ContactState()
+
+    data object Success : ContactState()
+
+    data class Error(
+        val message: String
+    ) : ContactState()
+}

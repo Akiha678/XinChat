@@ -4,13 +4,14 @@ import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.ContactRepository
 import com.seanchen.xinchat.core.model.request.CreateFriendRequest
-import com.seanchen.xinchat.core.model.response.UserSummaryResponse
+import com.seanchen.xinchat.feature.contact.model.toContactUserModel
 import com.seanchen.xinchat.core.result.ResultHandler
 import com.seanchen.xinchat.core.result.asResult
 import com.seanchen.xinchat.core.util.toast.ToastUtils
 import com.seanchen.xinchat.feature.contact.R
 import com.seanchen.xinchat.feature.contact.state.ContactUiState
 import com.seanchen.xinchat.feature.contact.state.ContactUserUiState
+import com.seanchen.xinchat.feature.contact.state.toUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +46,7 @@ class ContactViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        friends = data.map { user -> user.toUiState() }
+                        friends = data.map { user -> user.toContactUserModel().toUiState() }
                     )
                 }
             },
@@ -73,7 +74,7 @@ class ContactViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isSearching = false,
-                        searchResults = data.map { user -> user.toUiState() }
+                        searchResults = data.map { user -> user.toContactUserModel().toUiState() }
                     )
                 }
             },
@@ -135,13 +136,4 @@ class ContactViewModel @Inject constructor(
         _uiState.update { it.copy(errorMessage = null) }
     }
 
-    private fun UserSummaryResponse.toUiState(): ContactUserUiState {
-        return ContactUserUiState(
-            id = id,
-            displayName = name.ifBlank { username.ifBlank { email.ifBlank { "未命名" } } },
-            username = username,
-            email = email,
-            avatarColor = avatarColor
-        )
-    }
 }

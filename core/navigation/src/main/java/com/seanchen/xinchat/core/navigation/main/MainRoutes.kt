@@ -14,5 +14,8 @@ object MainRoutes {
     data object Contact : NavKey
 
     @Serializable
+    data object AddFriend : NavKey
+
+    @Serializable
     data object Me : NavKey
 }

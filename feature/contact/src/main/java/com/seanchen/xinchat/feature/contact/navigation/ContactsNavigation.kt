@@ -4,9 +4,13 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.feature.contact.view.ContactRoute
+import com.seanchen.xinchat.feature.contact.view.AddFriendRoute
 
 fun EntryProviderScope<NavKey>.contactGraph() {
     entry<MainRoutes.Contact> {
         ContactRoute()
+    }
+    entry<MainRoutes.AddFriend> {
+        AddFriendRoute()
     }
 }
