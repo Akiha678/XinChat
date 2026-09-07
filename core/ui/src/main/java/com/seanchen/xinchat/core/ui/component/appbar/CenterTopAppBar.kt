@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
@@ -17,7 +18,9 @@ import com.seanchen.xinchat.core.designsystem.theme.ArrowLeftIcon
 fun CenterTopAppBar(
     title: Int? = null,
     titleText: String? = null,
-    colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
+    colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.background
+    ),
     actions: @Composable (RowScope.() -> Unit) = {},
     onBackClick: () -> Unit = {},
     showBackIcon: Boolean = true

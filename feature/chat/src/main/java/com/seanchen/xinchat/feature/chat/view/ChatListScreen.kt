@@ -26,15 +26,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.common.base.state.BaseNetWorkUiState
 import com.seanchen.xinchat.core.designsystem.theme.Primary
@@ -51,12 +56,31 @@ import com.seanchen.xinchat.feature.chat.R
 import com.seanchen.xinchat.feature.chat.state.ChatListUiState
 import com.seanchen.xinchat.feature.chat.state.ChatSessionItemUiState
 import com.seanchen.xinchat.feature.chat.viewmodel.ChatListViewModel
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun ChatListRoute(
     showBackIcon: Boolean = false,
     viewModel: ChatListViewModel = hiltViewModel()
 ) {
+    // 页面重新进入组合（冷启动、从聊天详情返回、切回本 Tab）时恢复实时连接并补齐会话摘要
+    LaunchedEffect(Unit) {
+        viewModel.onScreenVisible()
+    }
+    // 页面离开组合（被聊天详情页覆盖或切走）时断开本页连接，避免同一账号建立多条连接
+    DisposableEffect(Unit) {
+        onDispose { viewModel.onScreenHidden() }
+    }
+    // 应用退到后台时断开连接，回到前台时恢复连接并补齐摘要
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onScreenVisible()
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) {
+        viewModel.onScreenHidden()
+    }
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     ChatListScreen(
@@ -64,7 +88,7 @@ fun ChatListRoute(
         showBackIcon = showBackIcon,
         onBackClick = { navigateBack() },
         onRefresh = viewModel::refreshSessions,
-        onSessionClick = { ChatNavigator.toChatMessage() }
+        onSessionClick = { session -> ChatNavigator.toChatMessage(session.id) }
     )
 }
 
@@ -153,9 +177,14 @@ private fun ChatSessionItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val title = stringResource(R.string.chat_online_support)
-    val description = stringResource(R.string.chat_online_support_description)
-    val timeText = stringResource(R.string.chat_time_now)
+    val title = session.name.ifBlank { stringResource(R.string.chat_unknown_conversation) }
+    val description = session.preview.ifBlank { stringResource(R.string.chat_no_messages) }
+    val timeText = formatConversationTime(session.lastMessageAt)
+    val avatarColor = Color.hsv(
+        hue = Math.floorMod(session.colorSeed, 360).toFloat(),
+        saturation = 0.35f,
+        value = 0.85f
+    )
 
     Row(
         modifier = modifier
@@ -168,7 +197,7 @@ private fun ChatSessionItem(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Primary.copy(alpha = 0.12f)),
+                .background(avatarColor.copy(alpha = 0.18f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -230,4 +259,18 @@ private fun ChatSessionItem(
             }
         }
     }
+}
+
+private fun formatConversationTime(value: String?): String {
+    if (value.isNullOrBlank()) return ""
+
+    return runCatching {
+        val dateTime = Instant.parse(value).atZone(ZoneId.systemDefault())
+        val today = java.time.LocalDate.now(ZoneId.systemDefault())
+        if (dateTime.toLocalDate() == today) {
+            DateTimeFormatter.ofPattern("HH:mm").format(dateTime)
+        } else {
+            DateTimeFormatter.ofPattern("MM/dd").format(dateTime)
+        }
+    }.getOrDefault(value)
 }

@@ -3,7 +3,6 @@ package com.seanchen.xinchat.feature.contact.view
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,10 +37,9 @@ import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
-import com.seanchen.xinchat.core.navigation.main.MainRoutes
-import com.seanchen.xinchat.core.navigation.navigate
+import com.seanchen.xinchat.core.navigation.contact.ContactNavigator
 import com.seanchen.xinchat.core.ui.R as CoreUiR
-import com.seanchen.xinchat.core.ui.component.appbar.CenterTopAppBar
+import com.seanchen.xinchat.core.ui.component.appbar.SearchTopAppBar
 import com.seanchen.xinchat.core.ui.component.empty.Empty
 import com.seanchen.xinchat.core.ui.component.loading.PageLoading
 import com.seanchen.xinchat.core.ui.component.list.AppListItem
@@ -63,7 +60,7 @@ fun ContactRoute(
 
     ContactScreen(
         uiState = uiState,
-        onSearchClick = viewModel::searchUsers,
+        onSearchClick = ContactNavigator::toAddFriend,
         onFriendClick = { ChatNavigator.toChatMessage() },
         onAddFriendClick = viewModel::addFriend,
         onRefresh = viewModel::refreshFriends,
@@ -81,35 +78,13 @@ internal fun ContactScreen(
     onRefresh: () -> Unit = {},
     onClearError: () -> Unit = {},
 ) {
-    val focusManager = LocalFocusManager.current
-
     Scaffold(
         topBar = {
-            CenterTopAppBar(
-                title = R.string.contacts_title,
+            SearchTopAppBar(
+                placeholderText = stringResource(R.string.search_username),
+                onSearchClick = onSearchClick,
+                titleText = stringResource(R.string.contacts_title),
                 showBackIcon = false,
-                actions = {
-                    IconButton(
-                        onClick = onSearchClick,
-                        enabled = !uiState.isSearching && !uiState.isSendingFriendRequest
-                    ) {
-                        CommonIcon(
-                            resId = CoreUiR.drawable.ic_search,
-                            size = 22.dp,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(
-                        onClick = { navigate(MainRoutes.AddFriend) },
-                        enabled = !uiState.isSendingFriendRequest
-                    ) {
-                        CommonIcon(
-                            resId = CoreUiR.drawable.ic_add,
-                            size = 22.dp,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
             )
         },
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.navigationBars),
@@ -139,99 +114,102 @@ private fun ContactContentView(
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
 ) {
-    when {
-        uiState.isLoading && uiState.friends.isEmpty() -> {
-            PageLoading()
-        }
-
-        uiState.friends.isEmpty() && uiState.searchResults.isEmpty() && uiState.errorMessage != null -> {
-            Empty(
-                message = R.string.contacts_load_failed,
-                retryButtonText = R.string.retry,
-                onRetryClick = onRefresh
-            )
-        }
-
-        else -> {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    // 页面使用背景色承托内容卡片，避免列表与顶栏融为一体。
-                    .background(MaterialTheme.colorScheme.surface),
-                contentPadding = PaddingValues(
-                    start = SpacePaddingMedium,
-                    end = SpacePaddingMedium,
-                    top = paddingValues.calculateTopPadding() + SpacePaddingMedium,
-                    bottom = paddingValues.calculateBottomPadding() + SpacePaddingMedium
-                ),
-                verticalArrangement = Arrangement.spacedBy(SpaceVerticalMedium)
-            ) {
-                if (uiState.errorMessage != null && uiState.friends.isNotEmpty()) {
-                    item {
-                        ContactErrorBanner(
-                            message = uiState.errorMessage,
-                            onClear = onClearError
-                        )
-                    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(paddingValues)
+    ) {
+        when {
+                uiState.isLoading && uiState.friends.isEmpty() -> {
+                    PageLoading()
                 }
 
-                if (uiState.searchQuery.isNotBlank()) {
-                    item {
-                        TitleWithLine(
-                            text = stringResource(id = R.string.search_results)
-                        )
-                    }
+                uiState.friends.isEmpty() && uiState.searchResults.isEmpty() && uiState.errorMessage != null -> {
+                    Empty(
+                        message = R.string.contacts_load_failed,
+                        retryButtonText = R.string.retry,
+                        onRetryClick = onRefresh
+                    )
+                }
 
-                    when {
-                        uiState.isSearching -> {
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(
+                            start = SpacePaddingMedium,
+                            end = SpacePaddingMedium,
+                            bottom = SpacePaddingMedium
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(SpaceVerticalMedium)
+                ) {
+                        if (uiState.errorMessage != null && uiState.friends.isNotEmpty()) {
                             item {
-                                PageLoading()
+                                ContactErrorBanner(
+                                    message = uiState.errorMessage,
+                                    onClear = onClearError
+                                )
                             }
                         }
 
-                        uiState.searchResults.isEmpty() -> {
+                        if (uiState.searchQuery.isNotBlank()) {
+                            item {
+                                TitleWithLine(
+                                    text = stringResource(id = R.string.search_results)
+                                )
+                            }
+
+                            when {
+                                uiState.isSearching -> {
+                                    item {
+                                        PageLoading()
+                                    }
+                                }
+
+                                uiState.searchResults.isEmpty() -> {
+                                    item {
+                                        Empty(
+                                            message = R.string.contact_search_no_result,
+                                            icon = CoreUiR.drawable.ic_empty_data
+                                        )
+                                    }
+                                }
+
+                                else -> {
+                                    items(
+                                        items = uiState.searchResults,
+                                        key = { it.id }
+                                    ) { user ->
+                                        ContactSearchResultItem(
+                                            user = user,
+                                            enabled = !isSendingFriendRequest,
+                                            onAddFriendClick = onAddFriendClick
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (uiState.friends.isEmpty()) {
                             item {
                                 Empty(
-                                    message = R.string.contact_search_no_result,
-                                    icon = CoreUiR.drawable.ic_empty_data
+                                    message = R.string.friends_empty_title,
+                                    subtitle = R.string.friends_empty_description,
+                                    icon = CoreUiR.drawable.ic_empty_data,
+                                    onRetryClick = onRefresh
                                 )
                             }
-                        }
-
-                        else -> {
+                        } else {
                             items(
-                                items = uiState.searchResults,
+                                items = uiState.friends,
                                 key = { it.id }
                             ) { user ->
-                                ContactSearchResultItem(
+                                ContactFriendItem(
                                     user = user,
-                                    enabled = !isSendingFriendRequest,
-                                    onAddFriendClick = onAddFriendClick
+                                    onClick = onFriendClick
                                 )
                             }
                         }
-                    }
-                }
-
-                if (uiState.friends.isEmpty()) {
-                    item {
-                        Empty(
-                            message = R.string.friends_empty_title,
-                            subtitle = R.string.friends_empty_description,
-                            icon = CoreUiR.drawable.ic_empty_data,
-                            onRetryClick = onRefresh
-                        )
-                    }
-                } else {
-                    items(
-                        items = uiState.friends,
-                        key = { it.id }
-                    ) { user ->
-                        ContactFriendItem(
-                            user = user,
-                            onClick = onFriendClick
-                        )
-                    }
                 }
             }
         }

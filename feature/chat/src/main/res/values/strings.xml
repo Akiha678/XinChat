@@ -7,9 +7,9 @@
     <string name="send">发送</string>
     <string name="message_input_hint">输入消息</string>
     <string name="load_messages_failed">加载消息失败</string>
-    <string name="chat_online_support">在线客服</string>
-    <string name="chat_online_support_description">有问题可以随时和我们聊聊</string>
-    <string name="chat_time_now">刚刚</string>
+    <string name="chat_unknown_conversation">未命名会话</string>
+    <string name="chat_unknown_user">未知用户</string>
+    <string name="chat_no_messages">暂无消息</string>
     <string name="chat_me">我</string>
     <string name="chat_default_message">暂不支持的消息</string>
     <string name="chat_load_history">加载历史消息</string>

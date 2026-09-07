@@ -5,6 +5,7 @@ import com.seanchen.xinchat.core.util.log.LogUtils
 import com.seanchen.xinchat.feature.chat.BuildConfig
 import com.seanchen.xinchat.feature.chat.state.WebSocketConnectionState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,12 @@ import java.util.concurrent.TimeUnit
 private const val TAG = "WebSocketManager"
 private const val SOCKET_IO_PATH = "socket.io/?EIO=4&transport=websocket"
 
+/**
+ * 管理单个页面持有的 WebSocket 实时连接。
+ *
+ * 连接被服务端关闭或网络失败时，只要页面仍期望保持连接（未调用 [disconnect]），
+ * 就会按退避策略自动重连，避免会话列表页/聊天页长时间静默断线后收不到新消息。
+ */
 class WebSocketManager {
     private val _connectionState = MutableStateFlow<WebSocketConnectionState>(WebSocketConnectionState.Disconnected)
     val connectionState: StateFlow<WebSocketConnectionState> = _connectionState.asStateFlow()
@@ -29,13 +36,35 @@ class WebSocketManager {
     private var webSocket: WebSocket? = null
 
     /**
-     * 重试计数器
+     * 是否期望保持连接；调用 [disconnect] 后置为 false，不再自动重连
+     */
+    private var keepConnected = false
+
+    /**
+     * 最近一次连接使用的鉴权信息与作用域，自动重连时复用
+     */
+    private var connectToken: String = ""
+    private var connectScope: CoroutineScope? = null
+
+    /**
+     * 待执行的重连任务
+     */
+    private var retryJob: Job? = null
+
+    /**
+     * 重试计数器与上限；重连退避间隔为 [retryBaseDelayMs] 与当前尝试次数的乘积
      */
     private var retryCount = 0
-    private val maxRetries = 3
+    private val maxRetries = 5
+    private val retryBaseDelayMs = 1_000L
 
     private var onMessageReceived: ((Msg) -> Unit)? = null
     private var onConnectionStateChanged: ((WebSocketConnectionState) -> Unit)? = null
+
+    /**
+     * 保护连接状态切换的锁；OkHttp 回调线程与调用方线程共用
+     */
+    private val lock = Any()
 
     /**
      * 设置消息接收回调
@@ -52,18 +81,44 @@ class WebSocketManager {
     }
 
     /**
-     * 建立WebSocket连接
+     * 建立WebSocket连接。已连接或正在连接时重复调用只会更新鉴权信息，不会创建第二条连接。
      */
     fun connect(token: String, scope: CoroutineScope) {
-        if (_connectionState.value == WebSocketConnectionState.Connecting) {
-            LogUtils.d(TAG, "WebSocket正在连接中，忽略重复连接请求")
+        synchronized(lock) {
+            keepConnected = true
+            connectToken = token
+            connectScope = scope
+
+            val state = _connectionState.value
+            if (state == WebSocketConnectionState.Connected ||
+                state == WebSocketConnectionState.Connecting
+            ) {
+                LogUtils.d(TAG, "WebSocket已连接或正在连接中，忽略重复连接请求")
+                return
+            }
+
+            retryCount = 0
+            retryJob?.cancel()
+            retryJob = null
+            openConnection()
+        }
+    }
+
+    /**
+     * 真正发起一次连接；需持锁调用。
+     */
+    private fun openConnection() {
+        updateConnectionState(WebSocketConnectionState.Connecting)
+        val scope = connectScope ?: return
+        val token = connectToken
+        if (token.isBlank()) {
+            LogUtils.e(TAG, "缺少鉴权Token，无法建立WebSocket连接")
+            updateConnectionState(WebSocketConnectionState.Error("登录状态已失效"))
             return
         }
 
-        updateConnectionState(WebSocketConnectionState.Connecting)
-        LogUtils.d(TAG, "开始建立WebSocket连接")
-
         scope.launch {
+            LogUtils.d(TAG, "开始建立WebSocket连接")
             LogUtils.d(TAG, "用户Token: ${token.take(15)}...")
 
             val request = Request.Builder()
@@ -86,7 +141,9 @@ class WebSocketManager {
             webSocket = webSocketClient?.newWebSocket(authorizedRequest, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     LogUtils.d(TAG, "WebSocket连接成功: ${response.code}")
-                    retryCount = 0
+                    synchronized(lock) {
+                        retryCount = 0
+                    }
 
                     // 发送认证消息
                     val authMessage = """40/chat,{"token":"$token"}"""
@@ -113,36 +170,49 @@ class WebSocketManager {
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     LogUtils.e(TAG, "WebSocket连接失败: ${t.message}", t)
                     updateConnectionState(WebSocketConnectionState.Error(t.message ?: "连接错误"))
-
-                    // 尝试重连
-                    if (retryCount < maxRetries) {
-                        retryCount++
-                        retryConnection(scope)
+                    synchronized(lock) {
+                        scheduleReconnect()
                     }
                 }
 
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                     LogUtils.d(TAG, "WebSocket连接关闭: code=$code, reason=$reason")
                     updateConnectionState(WebSocketConnectionState.Disconnected)
+                    // 连接被服务端关闭（重复登录被顶掉、空闲超时等）后尝试恢复连接
+                    synchronized(lock) {
+                        scheduleReconnect()
+                    }
                 }
             })
         }
     }
 
     /**
-     * 重试连接
+     * 连接失败或被关闭后按退避策略安排一次重连；需持锁调用。
      */
-    private fun retryConnection(scope: CoroutineScope) {
-        scope.launch {
-            LogUtils.d(
-                TAG,
-                "WebSocket连接失败，${1000 * retryCount}毫秒后尝试重连 (第${retryCount}次)"
-            )
-
-            delay(1000L * retryCount)
+    private fun scheduleReconnect() {
+        if (!keepConnected) {
+            return
+        }
+        if (retryCount >= maxRetries) {
+            LogUtils.e(TAG, "WebSocket重连次数达到上限，停止自动重连")
+            updateConnectionState(WebSocketConnectionState.Error("连接已断开，请稍后重试"))
+            return
+        }
+        retryCount++
+        val attempt = retryCount
+        val scope = connectScope ?: return
+        retryJob?.cancel()
+        retryJob = scope.launch {
+            LogUtils.d(TAG, "WebSocket连接失败，${retryBaseDelayMs * attempt}毫秒后尝试重连 (第${attempt}次)")
+            delay(retryBaseDelayMs * attempt)
+            synchronized(lock) {
+                if (keepConnected && _connectionState.value != WebSocketConnectionState.Connecting) {
+                    openConnection()
+                }
+            }
         }
     }
-
 
     private fun handleWebSocketMessage(text: String) {
         try {
@@ -230,15 +300,21 @@ class WebSocketManager {
     }
 
     /**
-     * 断开WebSocket连接
+     * 断开WebSocket连接并取消后续自动重连
      */
-    fun disconnect(){
-        LogUtils.d(TAG, "断开WebSocket连接")
-        webSocket?.close(1000, "正常关闭")
-        webSocket = null
-        webSocketClient?.dispatcher?.executorService?.shutdown()
-        webSocketClient = null
-        updateConnectionState(WebSocketConnectionState.Disconnected)
+    fun disconnect() {
+        synchronized(lock) {
+            keepConnected = false
+            retryJob?.cancel()
+            retryJob = null
+
+            LogUtils.d(TAG, "断开WebSocket连接")
+            webSocket?.close(1000, "正常关闭")
+            webSocket = null
+            webSocketClient?.dispatcher?.executorService?.shutdown()
+            webSocketClient = null
+            updateConnectionState(WebSocketConnectionState.Disconnected)
+        }
     }
 
     /**

@@ -14,5 +14,5 @@ object ChatRoutes {
      * 聊天界面
      */
     @Serializable
-    data object ChatMessage : NavKey
+    data class ChatMessage(val sessionId: Long) : NavKey
 }

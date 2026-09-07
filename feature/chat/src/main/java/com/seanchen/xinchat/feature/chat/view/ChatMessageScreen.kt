@@ -42,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.common.base.state.BaseNetWorkUiState
 import com.seanchen.xinchat.core.common.base.state.LoadMoreState
@@ -64,8 +66,18 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 internal fun ChatMessageRoute(
+    sessionId: Long = 0L,
     viewModel: ChatMessageViewModel = hiltViewModel()
 ){
+    LaunchedEffect(sessionId) {
+        viewModel.openSession(sessionId)
+    }
+
+    // 应用从后台回到前台时恢复实时连接（连接在后台期间可能已被服务端断开）
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.connectWebSocket()
+    }
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val messages by viewModel.messages.collectAsStateWithLifecycle()
     val isLoadingHistory by viewModel.isLoadingHistory.collectAsStateWithLifecycle()

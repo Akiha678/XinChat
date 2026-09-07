@@ -105,7 +105,7 @@ private fun MessageRow(
     ) {
         if (!isUserMe) {
             MessageAvatar(
-                name = msg.nickName.ifBlank { stringResource(R.string.chat_online_support) },
+                name = msg.nickName.ifBlank { stringResource(R.string.chat_unknown_user) },
                 visible = showAuthor
             )
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(SpaceHorizontalSmall))

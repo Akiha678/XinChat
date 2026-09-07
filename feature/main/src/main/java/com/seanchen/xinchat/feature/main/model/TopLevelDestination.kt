@@ -2,6 +2,7 @@ package com.seanchen.xinchat.feature.main.model
 
 import androidx.annotation.RawRes
 import androidx.annotation.StringRes
+import com.seanchen.xinchat.core.navigation.contact.ContactRoutes
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.feature.main.R
 
@@ -19,7 +20,7 @@ enum class TopLevelDestination(
     CONTACT(
         titleTextId = R.string.contact,
         animationResId = R.raw.category,
-        route = MainRoutes.Contact
+        route = ContactRoutes.Contact
     ),
 
     ME(

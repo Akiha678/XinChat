@@ -13,7 +13,14 @@ object ChatNavigator {
     /**
      * 跳转到聊天界面
      */
+    fun toChatMessage(sessionId: Long){
+        navigate(ChatRoutes.ChatMessage(sessionId))
+    }
+
+    /**
+     * 从没有指定会话的入口打开聊天页，由聊天页按默认会话兼容处理。
+     */
     fun toChatMessage(){
-        navigate(ChatRoutes.ChatMessage)
+        toChatMessage(sessionId = 0L)
     }
 }

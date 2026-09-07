@@ -16,6 +16,7 @@ import com.seanchen.xinchat.core.result.asResult
 import com.seanchen.xinchat.core.util.log.LogUtils
 import com.seanchen.xinchat.feature.chat.state.WebSocketConnectionState
 import com.seanchen.xinchat.feature.chat.util.ChatSoundManager
+import com.seanchen.xinchat.feature.chat.util.ChatMessageEventBus
 import com.seanchen.xinchat.feature.chat.util.WebSocketManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.Instant
 import javax.inject.Inject
 
 private const val TAG = "ChatViewModel"
@@ -36,6 +38,7 @@ private const val TAG = "ChatViewModel"
 class ChatMessageViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val appState: AppState,
+    private val chatMessageEventBus: ChatMessageEventBus,
     @param:ApplicationContext private val context: Context,
 ) : BaseViewModel() {
     private val _uiState = MutableStateFlow<BaseNetWorkUiState<Unit>>(BaseNetWorkUiState.Loading)
@@ -90,9 +93,30 @@ class ChatMessageViewModel @Inject constructor(
      */
     private val minLoadingTime = 320L
 
+    private var openedSessionId: Long? = null
+
     init {
         setupWebSocketCallbacks()
-        createSession()
+    }
+
+    /**
+     * 打开指定会话；旧入口传入 0 时沿用服务端默认会话。
+     */
+    fun openSession(sessionId: Long) {
+        if (openedSessionId == sessionId) return
+        openedSessionId = sessionId
+
+        if (sessionId > 0) {
+            _sessionId.value = sessionId
+            currentPage = 1
+            hasMoreData = true
+            _messages.value = emptyList()
+            connectWebSocket()
+            loadHistoryMessages(isInitialLoad = true)
+            markMessagesAsRead()
+        } else {
+            createSession()
+        }
     }
 
     /**
@@ -238,6 +262,8 @@ class ChatMessageViewModel @Inject constructor(
      * 添加新消息到列表
      */
     private fun addNewMessage(message: Msg) {
+        if (message.sessionId != _sessionId.value) return
+
         val currentMessages = _messages.value.toMutableList()
 
         if (currentMessages.none { it.id == message.id }) {
@@ -283,6 +309,19 @@ class ChatMessageViewModel @Inject constructor(
         val success = webSocketManager.sendMessage(sessionId, content, type)
         if (success) {
             LogUtils.d(TAG, "消息发送成功")
+            // Socket.IO 服务端可能只在当前详情连接上回推消息，立即同步列表摘要。
+            chatMessageEventBus.publishSentMessage(
+                Msg(
+                    userId = appState.userId.value,
+                    sessionId = sessionId,
+                    status = 1,
+                    nickName = appState.userInfo.value?.nickName.orEmpty(),
+                    createTime = Instant.now().toString(),
+                    content = Msg.MessageContent(type = type, data = content),
+                    type = 0,
+                    updateTime = Instant.now().toString()
+                )
+            )
             // 播放发送消息音效
             chatSoundManager.playMessageSentSound()
             // 清空输入框
@@ -326,7 +365,13 @@ class ChatMessageViewModel @Inject constructor(
         if (_uiState.value is BaseNetWorkUiState.Error) {
             beginLoading()
         }
-        createSession()
+        val sessionId = openedSessionId
+        if (sessionId != null && sessionId > 0) {
+            openedSessionId = null
+            openSession(sessionId)
+        } else {
+            createSession()
+        }
     }
 
     /**

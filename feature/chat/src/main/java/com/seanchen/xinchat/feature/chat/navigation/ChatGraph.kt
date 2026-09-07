@@ -17,7 +17,7 @@ fun EntryProviderScope<NavKey>.chatGraph() {
     /**
      * 聊天界面
      */
-    entry<ChatRoutes.ChatMessage> {
-        ChatMessageRoute()
+    entry<ChatRoutes.ChatMessage> { route ->
+        ChatMessageRoute(sessionId = route.sessionId)
     }
 }

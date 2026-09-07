@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.core.network.datadource.chat
 
+import com.seanchen.xinchat.core.model.entity.Conversation
 import com.seanchen.xinchat.core.model.entity.ChatSession
 import com.seanchen.xinchat.core.model.entity.Msg
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
@@ -8,6 +9,11 @@ import com.seanchen.xinchat.core.model.response.NetworkPageData
 import com.seanchen.xinchat.core.model.response.NetworkResponse
 
 interface ChatNetworkDataSource {
+    /**
+     * 获取当前用户的会话列表。
+     */
+    suspend fun getSessions(): NetworkResponse<List<Conversation>>
+
     /**
      * 创建会话
      */

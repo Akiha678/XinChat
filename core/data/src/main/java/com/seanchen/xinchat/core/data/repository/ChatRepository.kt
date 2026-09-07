@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.core.data.repository
 
+import com.seanchen.xinchat.core.model.entity.Conversation
 import com.seanchen.xinchat.core.model.entity.ChatSession
 import com.seanchen.xinchat.core.model.entity.Msg
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
@@ -16,6 +17,13 @@ import javax.inject.Inject
 class ChatRepository @Inject constructor(
     private val chatNetworkDataSource: ChatNetworkDataSource
 ) {
+    /**
+     * 获取当前用户的会话列表。
+     */
+    fun getSessions(): Flow<NetworkResponse<List<Conversation>>> = flow {
+        emit(chatNetworkDataSource.getSessions())
+    }.flowOn(Dispatchers.IO)
+
     /**
      * 创建会话
      */

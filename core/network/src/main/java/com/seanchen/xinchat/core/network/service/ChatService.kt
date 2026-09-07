@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.core.network.service
 
+import com.seanchen.xinchat.core.model.entity.Conversation
 import com.seanchen.xinchat.core.model.entity.ChatSession
 import com.seanchen.xinchat.core.model.entity.Msg
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
@@ -12,7 +13,13 @@ import retrofit2.http.POST
 
 interface ChatService {
     /**
-     * 创建客服会话
+     * 查询当前用户的会话列表，服务端按最近消息时间倒序返回。
+     */
+    @GET("chat/session")
+    suspend fun getSessions(): NetworkResponse<List<Conversation>>
+
+    /**
+     * 创建兼容旧聊天入口的默认会话。
      */
     @POST("chat/session")
     suspend fun createSession(): NetworkResponse<ChatSession>

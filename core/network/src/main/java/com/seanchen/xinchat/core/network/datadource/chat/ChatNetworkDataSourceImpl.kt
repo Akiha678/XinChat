@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.core.network.datadource.chat
 
+import com.seanchen.xinchat.core.model.entity.Conversation
 import com.seanchen.xinchat.core.model.entity.ChatSession
 import com.seanchen.xinchat.core.model.entity.Msg
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
@@ -13,6 +14,10 @@ import javax.inject.Inject
 class ChatNetworkDataSourceImpl @Inject constructor(
     private val chatService: ChatService
 ) : BaseNetworkDataSource(), ChatNetworkDataSource {
+    override suspend fun getSessions(): NetworkResponse<List<Conversation>> {
+        return chatService.getSessions()
+    }
+
     override suspend fun createSession(): NetworkResponse<ChatSession> {
         return chatService.createSession()
     }

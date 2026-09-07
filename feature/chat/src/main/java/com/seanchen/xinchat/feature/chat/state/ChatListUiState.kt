@@ -6,5 +6,10 @@ data class ChatListUiState(
 
 data class ChatSessionItemUiState(
     val id: Long,
+    val peerId: Long,
+    val name: String,
+    val preview: String,
+    val lastMessageAt: String?,
     val unreadCount: Int,
+    val colorSeed: Int,
 )
