@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,8 +37,8 @@ import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
 import com.seanchen.xinchat.core.navigation.contact.ContactNavigator
+import com.seanchen.xinchat.core.ui.component.appbar.CenterTopAppBar
 import com.seanchen.xinchat.core.ui.R as CoreUiR
-import com.seanchen.xinchat.core.ui.component.appbar.SearchTopAppBar
 import com.seanchen.xinchat.core.ui.component.empty.Empty
 import com.seanchen.xinchat.core.ui.component.loading.PageLoading
 import com.seanchen.xinchat.core.ui.component.list.AppListItem
@@ -80,9 +79,7 @@ internal fun ContactScreen(
 ) {
     Scaffold(
         topBar = {
-            SearchTopAppBar(
-                placeholderText = stringResource(R.string.search_username),
-                onSearchClick = onSearchClick,
+            CenterTopAppBar(
                 titleText = stringResource(R.string.contacts_title),
                 showBackIcon = false,
             )

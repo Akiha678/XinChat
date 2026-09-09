@@ -15,16 +15,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.designsystem.component.VerticalList
 import com.seanchen.xinchat.core.designsystem.theme.ArrowRightIcon
@@ -32,30 +32,45 @@ import com.seanchen.xinchat.core.designsystem.theme.ColorDanger
 import com.seanchen.xinchat.core.designsystem.theme.ColorSuccess
 import com.seanchen.xinchat.core.designsystem.theme.ColorWarning
 import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalLarge
-import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingLarge
-import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalLarge
+import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXSmall
 import com.seanchen.xinchat.core.model.entity.User
-import com.seanchen.xinchat.core.navigation.navigate
+import com.seanchen.xinchat.core.navigation.user.UserNavigator
+import com.seanchen.xinchat.core.ui.component.image.Avatar
 import com.seanchen.xinchat.core.ui.R as CoreUiR
 import com.seanchen.xinchat.core.ui.component.image.SmallAvatar
 import com.seanchen.xinchat.core.ui.component.list.AppListItem
-import com.seanchen.xinchat.core.ui.component.scaffold.AppScaffold
+import com.seanchen.xinchat.core.ui.component.scaffold.CommonScaffold
 import com.seanchen.xinchat.core.ui.component.text.AppText
 import com.seanchen.xinchat.core.ui.component.text.TextSize
 import com.seanchen.xinchat.core.ui.component.text.TextType
 import com.seanchen.xinchat.feature.user.R
-import com.seanchen.xinchat.feature.user.navigation.ProfileRoutes
 import com.seanchen.xinchat.feature.user.viewmodel.MeViewModel
 
 private const val USER_AVATAR_SHARED_KEY = "user_avatar"
 
+/**
+ * 我的界面
+ */
 @Composable
 fun MeRoute(
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
     viewModel: MeViewModel = hiltViewModel(),
 ) {
+    // 获取生命周期所有者
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // 注册生命周期观察者
+    DisposableEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.addObserver(viewModel)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(viewModel)
+        }
+    }
+
+    // 收集登录状态
     val isLoggedIn by viewModel.isLoggedIn.collectAsStateWithLifecycle()
+    // 收集用户信息
     val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
 
     MeScreen(
@@ -63,7 +78,6 @@ fun MeRoute(
         animatedContentScope = animatedContentScope,
         isLoggedIn = isLoggedIn,
         userInfo = userInfo,
-        onProfileClick = { navigate(ProfileRoutes.Profile) }
     )
 }
 
@@ -74,17 +88,14 @@ internal fun MeScreen(
     animatedContentScope: AnimatedContentScope? = null,
     isLoggedIn: Boolean = false,
     userInfo: User? = null,
-    onProfileClick: () -> Unit = {},
 ) {
-    AppScaffold(
-        showBackIcon = false,
-    ) {
+    CommonScaffold(topBar = { }) { paddingValues ->
         MeContentView(
             isLoggedIn = isLoggedIn,
             userInfo = userInfo,
-            onProfileClick = onProfileClick,
             sharedTransitionScope = sharedTransitionScope,
-            animatedContentScope = animatedContentScope
+            animatedContentScope = animatedContentScope,
+            modifier = Modifier.padding(paddingValues)
         )
     }
 }
@@ -93,7 +104,6 @@ internal fun MeScreen(
 private fun MeContentView(
     isLoggedIn: Boolean,
     userInfo: User?,
-    onProfileClick: () -> Unit,
     modifier: Modifier = Modifier,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
@@ -101,13 +111,11 @@ private fun MeContentView(
     VerticalList(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
     ) {
         UserInfoSection(
             isLoggedIn = isLoggedIn,
             userInfo = userInfo,
-            onProfileClick = onProfileClick,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope
         )
@@ -121,65 +129,52 @@ private fun MeContentView(
 private fun UserInfoSection(
     isLoggedIn: Boolean,
     userInfo: User?,
-    onProfileClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
 ) {
-    val displayName = userInfo?.nickName?.takeIf { it.isNotBlank() }
-        ?: stringResource(
-            id = if (isLoggedIn) {
-                R.string.profile_default_nickname
-            } else {
-                R.string.profile_guest_title
-            }
-        )
-    val accountText = if (isLoggedIn) {
-        stringResource(
-            id = R.string.profile_account_format,
-            accountValue(userInfo)
-        )
-    } else {
-        stringResource(id = R.string.profile_guest_description)
-    }
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onProfileClick)
-            .padding(horizontal = SpacePaddingLarge, vertical = SpaceVerticalLarge),
+            .clickable{ UserNavigator.toProfile() },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SharedAvatar(
+        Avatar(
             avatarUrl = userInfo?.avatarUrl,
-            size = 64.dp,
-            sharedTransitionScope = sharedTransitionScope,
-            animatedContentScope = animatedContentScope
+            size = 72.dp,
+            modifier = Modifier.let { modifier ->
+                if (sharedTransitionScope != null && animatedContentScope != null) {
+                    with(receiver = sharedTransitionScope) {
+                        modifier.sharedElement(
+                            sharedContentState = rememberSharedContentState(key = "user_avatar"),
+                            animatedVisibilityScope = animatedContentScope
+                        )
+                    }
+                } else {
+                    modifier
+                }
+            }
         )
 
+        SpaceHorizontalLarge()
+
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = SpaceHorizontalLarge)
+            modifier = Modifier.weight(1f)
         ) {
             AppText(
-                text = displayName,
-                size = TextSize.DISPLAY_MEDIUM,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                text = (if (isLoggedIn && userInfo != null) userInfo.nickName else stringResource(R.string.not_logged_in)).toString(),
+                size = TextSize.DISPLAY_MEDIUM
             )
+
+            SpaceVerticalXSmall()
+
             AppText(
-                text = accountText,
-                type = TextType.TERTIARY,
+                text = if (isLoggedIn && userInfo != null && !userInfo.phone.isNullOrEmpty()) "用户名: ${userInfo.phone}" else "点击登录账号",
                 size = TextSize.BODY_MEDIUM,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 4.dp)
+                type = TextType.TERTIARY
             )
         }
 
-        ArrowRightIcon(size = 18.dp)
+        ArrowRightIcon(tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
