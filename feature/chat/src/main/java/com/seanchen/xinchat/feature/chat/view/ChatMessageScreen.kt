@@ -1,26 +1,30 @@
 package com.seanchen.xinchat.feature.chat.view
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
@@ -33,13 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -47,8 +47,10 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.common.base.state.BaseNetWorkUiState
 import com.seanchen.xinchat.core.common.base.state.LoadMoreState
+import com.seanchen.xinchat.core.designsystem.component.AppColumn
+import com.seanchen.xinchat.core.designsystem.component.FullScreenBox
 import com.seanchen.xinchat.core.designsystem.theme.ShapeExtraLarge
-import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
+import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingSmall
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
 import com.seanchen.xinchat.core.model.entity.Msg
@@ -57,7 +59,11 @@ import com.seanchen.xinchat.core.ui.component.appbar.CenterTopAppBar
 import com.seanchen.xinchat.core.ui.component.empty.Empty
 import com.seanchen.xinchat.core.ui.component.loading.WeLoadingMP
 import com.seanchen.xinchat.core.ui.component.network.BaseNetworkView
+import com.seanchen.xinchat.core.ui.component.tag.Tag
+import com.seanchen.xinchat.core.ui.component.tag.TagStyle
+import com.seanchen.xinchat.core.ui.component.tag.TagType
 import com.seanchen.xinchat.feature.chat.R
+import com.seanchen.xinchat.feature.chat.component.ChatInputArea
 import com.seanchen.xinchat.feature.chat.component.Message
 import com.seanchen.xinchat.feature.chat.viewmodel.ChatMessageViewModel
 import kotlinx.coroutines.delay
@@ -218,64 +224,74 @@ private fun ChatMessageContentView(
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .imePadding()
-            .navigationBarsPadding()
+    FullScreenBox(
+        // 键盘弹出时由 IME insets 收缩内容区（配合 adjustResize），
+        // 输入区始终贴在键盘上方，不会出现整屏被推起、输入框跑到顶部的问题。
+        modifier = modifier.imePadding()
     ) {
-        if (messages.isEmpty()) {
-            Empty(
-                modifier = Modifier.weight(1f),
-                message = R.string.messages_empty_title,
-                subtitle = R.string.messages_empty_description,
-                icon = com.seanchen.xinchat.core.ui.R.drawable.ic_empty_data
-            )
-        } else {
-            LazyColumn(
-                state = scrollState,
-                reverseLayout = true,
+        AppColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // 消息列表占满剩余空间，保证输入区固定在底部
+            Box(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    top = SpaceVerticalMedium,
-                    bottom = SpaceVerticalMedium
-                ),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                    .fillMaxWidth()
             ) {
-                itemsIndexed(
-                    items = messages,
-                    key = { _, message -> message.id }
-                ) { index, message ->
-                    val visualPrevious = messages.getOrNull(index + 1)
-                    val visualNext = messages.getOrNull(index - 1)
-                    Message(
-                        msg = message,
-                        isUserMe = message.type == 0,
-                        isFirstMessageByAuthor = visualPrevious?.userId != message.userId,
-                        isLastMessageByAuthor = visualNext?.userId != message.userId,
-                        isNewMessage = message.id in newMessageIds,
-                        onAnimationFinished = { onClearMessageAnimation(message.id) }
+                if (messages.isEmpty()) {
+                    Empty(
+                        modifier = Modifier.fillMaxSize(),
+                        message = R.string.messages_empty_title,
+                        subtitle = R.string.messages_empty_description,
+                        icon = com.seanchen.xinchat.core.ui.R.drawable.ic_empty_data
                     )
-                }
+                } else {
+                    LazyColumn(
+                        state = scrollState,
+                        reverseLayout = true,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                            top = SpaceVerticalMedium,
+                            bottom = SpaceVerticalMedium
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        itemsIndexed(
+                            items = messages,
+                            key = { _, message -> message.id }
+                        ) { index, message ->
+                            val visualPrevious = messages.getOrNull(index + 1)
+                            val visualNext = messages.getOrNull(index - 1)
+                            Message(
+                                msg = message,
+                                isUserMe = message.type == 0,
+                                isFirstMessageByAuthor = visualPrevious?.userId != message.userId,
+                                isLastMessageByAuthor = visualNext?.userId != message.userId,
+                                isNewMessage = message.id in newMessageIds,
+                                onAnimationFinished = { onClearMessageAnimation(message.id) }
+                            )
+                        }
 
-                item(key = "load_more") {
-                    LoadMoreFooter(
-                        loadMoreState = loadMoreState,
-                        isLoadingHistory = isLoadingHistory,
-                        onLoadMore = onLoadMore
-                    )
+                        item(key = "load_more") {
+                            LoadMoreFooter(
+                                loadMoreState = loadMoreState,
+                                isLoadingHistory = isLoadingHistory,
+                                onLoadMore = onLoadMore
+                            )
+                        }
+                    }
                 }
             }
-        }
 
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-        ChatInputBar(
-            inputText = inputText,
-            onInputTextChange = onInputTextChange,
-            onSendMessage = onSendMessage
-        )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+            ChatInputArea(
+                inputText = inputText,
+                onInputTextChange = onInputTextChange,
+                onSendMessage = onSendMessage,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 
@@ -287,10 +303,10 @@ private fun LoadMoreFooter(
     modifier: Modifier = Modifier
 ) {
     val text = when (loadMoreState) {
-        LoadMoreState.Loading -> R.string.chat_loading_history
-        LoadMoreState.Error -> R.string.chat_load_history_failed
-        LoadMoreState.NoMore -> R.string.chat_no_more_history
-        else -> R.string.chat_load_history
+        LoadMoreState.Loading -> R.string.loading_history
+        LoadMoreState.Error -> R.string.load_failed_retry
+        LoadMoreState.NoMore -> R.string.no_more_messages
+        else -> R.string.load_more_history
     }
 
     Box(
@@ -315,81 +331,41 @@ private fun LoadMoreFooter(
     }
 }
 
+/**
+ * 跳转至底部按钮组件
+ */
 @Composable
-private fun ChatInputBar(
-    inputText: String,
-    onInputTextChange: (String) -> Unit,
-    onSendMessage: () -> Unit,
+fun JumpToBottom(
+    enabled: Boolean,
+    onClicked: () -> Unit,
     modifier: Modifier = Modifier
-) {
-    val focusManager = LocalFocusManager.current
-    val canSend = inputText.isNotBlank()
-
-    androidx.compose.foundation.layout.Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(SpacePaddingMedium),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(SpacePaddingMedium)
-    ) {
-        OutlinedTextField(
-            value = inputText,
-            onValueChange = onInputTextChange,
-            modifier = Modifier
-                .weight(1f)
-                .widthIn(min = 0.dp),
-            placeholder = {
-                Text(text = stringResource(R.string.message_input_hint))
-            },
-            shape = ShapeExtraLarge,
-            maxLines = 4,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-            keyboardActions = KeyboardActions(
-                onSend = {
-                    if (canSend) {
-                        onSendMessage()
-                        focusManager.clearFocus()
-                    }
-                }
-            )
-        )
-
-        TextButton(
-            enabled = canSend,
-            onClick = {
-                onSendMessage()
-                focusManager.clearFocus()
-            },
-            modifier = Modifier.size(width = 64.dp, height = 56.dp)
-        ) {
-            Text(text = stringResource(R.string.send))
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ChatMessageScreenPreview() {
-    MaterialTheme {
-        ChatMessageScreen(
-            uiState = BaseNetWorkUiState.Success(Unit),
-            messages = listOf(
-                Msg(
-                    id = 2,
-                    userId = 100,
-                    nickName = "客服",
-                    content = Msg.MessageContent(type = "text", data = "您好，有什么可以帮您？"),
-                    type = 1
+){
+    AnimatedVisibility(
+        visible = enabled,
+        enter = fadeIn(animationSpec = tween (durationMillis = 300)) +
+                scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
                 ),
-                Msg(
-                    id = 1,
-                    userId = 1,
-                    nickName = "我",
-                    content = Msg.MessageContent(type = "text", data = "我想了解订单状态。"),
-                    type = 0
-                )
-            ),
-            inputText = "谢谢"
+        exit = fadeOut(tween(200)) +
+                scaleOut(
+                    targetScale = 0.8f,
+                    animationSpec = tween(200)
+                ),
+        modifier = modifier
+    ) {
+        Tag(
+            text = stringResource(R.string.back_to_bottom),
+            shape = ShapeExtraLarge,
+            type = TagType.PRIMARY,
+            style = TagStyle.LIGHT,
+            modifier = Modifier
+                .padding(bottom = SpacePaddingSmall)
+                .clip(ShapeExtraLarge)
+                .clickable(onClick = onClicked)
         )
     }
 }

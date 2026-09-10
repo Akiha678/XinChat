@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Page titles -->
+    <string name="customer_service_chat">Customer Service Chat</string>
+    <string name="messages_title">Messages</string>
+
+    <!-- Chat screen -->
+    <string name="back_to_bottom">Back to bottom</string>
+
+    <!-- Conversation list and empty states -->
+    <string name="messages_empty_title">No messages yet</string>
+    <string name="messages_empty_description">New conversations and notifications will appear here.</string>
+    <string name="load_messages_failed">Failed to load messages</string>
+    <string name="retry">Retry</string>
+    <string name="chat_unknown_conversation">Unnamed conversation</string>
+    <string name="chat_no_messages">No messages yet</string>
+
+    <!-- Message bubbles -->
+    <string name="chat_unknown_user">Unknown user</string>
+    <string name="chat_me">Me</string>
+    <string name="chat_default_message">Unsupported message</string>
+
+    <!-- Input field -->
+    <string name="input_message_hint">Send a message...</string>
+    <string name="send">Send</string>
+    <string name="emoji">Emoji</string>
+    <string name="more_functions">More functions</string>
+
+    <!-- Load more -->
+    <string name="load_more_history">Load more history</string>
+    <string name="loading_history">Loading history...</string>
+    <string name="load_success">Load success</string>
+    <string name="load_failed_retry">Load failed, tap to retry</string>
+    <string name="load_failed">Load failed</string>
+    <string name="no_more_messages">No more messages</string>
+
+    <!-- Function selector -->
+    <string name="gallery">Gallery</string>
+    <string name="camera">Camera</string>
+
+    <!-- WebSocket connection -->
+    <string name="connection_error">Connection error</string>
+    <string name="create_session_failed">Failed to create session</string>
+    <string name="send_message_failed">Failed to send message</string>
+    <string name="normal_close">Normal close</string>
+</resources>
+
