@@ -21,7 +21,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -37,7 +36,6 @@ import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.navigation.user.UserNavigator
 import com.seanchen.xinchat.core.ui.component.image.Avatar
 import com.seanchen.xinchat.core.ui.R as CoreUiR
-import com.seanchen.xinchat.core.ui.component.image.SmallAvatar
 import com.seanchen.xinchat.core.ui.component.list.AppListItem
 import com.seanchen.xinchat.core.ui.component.scaffold.CommonScaffold
 import com.seanchen.xinchat.core.ui.component.text.AppText
@@ -161,14 +159,18 @@ private fun UserInfoSection(
             modifier = Modifier.weight(1f)
         ) {
             AppText(
-                text = (if (isLoggedIn && userInfo != null) userInfo.nickName else stringResource(R.string.not_logged_in)).toString(),
+                text = if (isLoggedIn) userInfo.displayName() else stringResource(R.string.not_logged_in),
                 size = TextSize.DISPLAY_MEDIUM
             )
 
             SpaceVerticalXSmall()
 
             AppText(
-                text = if (isLoggedIn && userInfo != null && !userInfo.phone.isNullOrEmpty()) "用户名: ${userInfo.phone}" else "点击登录账号",
+                text = if (isLoggedIn) {
+                    stringResource(R.string.profile_username_format, userInfo.accountName())
+                } else {
+                    stringResource(R.string.profile_click_to_login)
+                },
                 size = TextSize.BODY_MEDIUM,
                 type = TextType.TERTIARY
             )
@@ -225,37 +227,23 @@ private fun MeSettingsSection() {
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+/**
+ * 昵称展示：登录后昵称为空时回退到默认昵称，避免误显示为未登录。
+ */
 @Composable
-private fun SharedAvatar(
-    avatarUrl: String?,
-    size: Dp,
-    sharedTransitionScope: SharedTransitionScope?,
-    animatedContentScope: AnimatedContentScope?,
-    modifier: Modifier = Modifier,
-) {
-    val avatarModifier = if (sharedTransitionScope != null && animatedContentScope != null) {
-        with(sharedTransitionScope) {
-            modifier.sharedElement(
-                sharedContentState = rememberSharedContentState(key = USER_AVATAR_SHARED_KEY),
-                animatedVisibilityScope = animatedContentScope
-            )
-        }
-    } else {
-        modifier
-    }
-
-    SmallAvatar(
-        avatarUrl = avatarUrl,
-        size = size,
-        modifier = avatarModifier
-    )
+private fun User?.displayName(): String {
+    return this?.nickName?.takeIf { it.isNotBlank() }
+        ?: stringResource(id = R.string.profile_default_nickname)
 }
 
+/**
+ * 账号展示：依次回退到手机号、登录唯一 ID 和未设置。
+ */
 @Composable
-private fun accountValue(userInfo: User?): String {
-    return userInfo?.unionid?.takeIf { it.isNotBlank() }
-        ?: userInfo?.id?.takeIf { it > 0 }?.toString()
+private fun User?.accountName(): String {
+    return this?.phone?.takeIf { it.isNotBlank() }
+        ?: this?.unionid?.takeIf { it.isNotBlank() }
+        ?: this?.id?.takeIf { it > 0 }?.toString()
         ?: stringResource(id = R.string.profile_not_set)
 }
 

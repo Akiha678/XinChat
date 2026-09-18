@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.xinchat.android.application.compose)
     alias(libs.plugins.xinchat.hilt)
+
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -62,6 +64,9 @@ dependencies {
     implementation(project(":feature:main"))
 
     implementation(libs.common.widget)
+
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-analytics")
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

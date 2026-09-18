@@ -23,5 +23,7 @@
     <string name="logout">退出登录</string>
     <string name="logging_out">正在退出…</string>
     <string name="not_logged_in">未登录</string>
+    <string name="profile_click_to_login">点击登录账号</string>
+    <string name="profile_username_format">用户名：%1$s</string>
     <string name="logout_failed">退出登录失败</string>
 </resources>

@@ -5,6 +5,7 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import java.util.concurrent.TimeUnit
 import com.seanchen.xinchat.core.network.BuildConfig
 import com.seanchen.xinchat.core.network.interceptor.AuthInterceptor
+import com.seanchen.xinchat.core.network.interceptor.SessionExpiryInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,6 +35,7 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        sessionExpiryInterceptor: SessionExpiryInterceptor,
         loggingInterceptor: HttpLoggingInterceptor,
         @ApplicationContext context: Context
     ): OkHttpClient {
@@ -42,6 +44,7 @@ object NetworkModule {
             .writeTimeout(10, TimeUnit.SECONDS)
             .readTimeout(10, TimeUnit.SECONDS)
             .addInterceptor(authInterceptor)
+            .addInterceptor(sessionExpiryInterceptor)
             .addInterceptor(loggingInterceptor)
             .apply {
             }

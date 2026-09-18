@@ -1,17 +1,24 @@
 package com.seanchen.xinchat.core.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.seanchen.xinchat.core.data.di.ApplicationScope
 import com.seanchen.xinchat.core.data.state.AppState
+import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
+import com.seanchen.xinchat.core.navigation.main.MainRoutes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AppNavigator @Inject constructor(
     private val appState: AppState,
+    @param:ApplicationScope private val applicationScope: CoroutineScope,
 ) {
     private val lock = Any()
 
@@ -34,6 +41,49 @@ class AppNavigator @Inject constructor(
      * 路由拦截器
      */
     private val routeInterceptor: RouteInterceptor = RouteInterceptor()
+
+    init {
+        observeLoginState()
+    }
+
+    /**
+     * 监听登录态，从已登录变为未登录时统一回到登录页
+     *
+     * 登出与登录态失效都表现为该状态变化，返回栈替换只在这里处理一次，
+     * 业务页面不再各自负责登出后的跳转。冷启动时初始值为未登录，属于状态初始化，
+     * 由应用启动流程决定起始页面，这里不触发跳转。
+     */
+    private fun observeLoginState() {
+        applicationScope.launch(Dispatchers.Main.immediate) {
+            var wasLoggedIn = appState.isLoggedIn.value
+            appState.isLoggedIn.collect { loggedIn ->
+                if (wasLoggedIn && !loggedIn) {
+                    navigateToLogin()
+                }
+                wasLoggedIn = loggedIn
+            }
+        }
+    }
+
+    /**
+     * 清空业务返回栈并跳转到登录页
+     */
+    private fun navigateToLogin() {
+        synchronized(lock) {
+            // 已经在登录页时不再重复入栈
+            if (controller?.currentRoute == AuthRoutes.Login) return
+        }
+        executeOrEnqueue(
+            NavigationCommand.NavigateTo(
+                route = AuthRoutes.Login,
+                navOptions = NavigationOptions(
+                    popUpToRoute = MainRoutes.Main,
+                    inclusive = true,
+                    allowPopToEmpty = true
+                )
+            )
+        )
+    }
 
     /**
      * 注册导航控制器

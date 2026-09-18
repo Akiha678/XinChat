@@ -21,6 +21,9 @@ private class BackStackNavigationController(
      */
     private val navigator: AppNavigator
 ): NavigationController {
+    override val currentRoute: NavKey?
+        get() = backStack.lastOrNull()
+
     /**
      * 导航到目标页面
      */

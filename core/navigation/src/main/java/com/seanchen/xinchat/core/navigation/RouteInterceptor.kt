@@ -5,6 +5,7 @@ import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
 import com.seanchen.xinchat.core.navigation.chat.ChatRoutes
 import com.seanchen.xinchat.core.navigation.contact.ContactRoutes
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
+import com.seanchen.xinchat.core.navigation.user.UserRoutes
 import kotlin.reflect.KClass
 
 class RouteInterceptor {
@@ -18,7 +19,8 @@ class RouteInterceptor {
         ChatRoutes.ChatList::class,
         ChatRoutes.ChatMessage::class,
         ContactRoutes.Contact::class,
-        ContactRoutes.AddFriend::class
+        ContactRoutes.AddFriend::class,
+        UserRoutes.Profile::class
     )
 
 

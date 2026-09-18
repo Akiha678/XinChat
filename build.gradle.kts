@@ -14,4 +14,6 @@ plugins {
     alias(libs.plugins.ksp) apply false
     // Android库插件，用于构建Android库模块
     alias(libs.plugins.android.library) apply false
+
+    id("com.google.gms.google-services") version "4.5.0" apply false
 }

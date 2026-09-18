@@ -7,6 +7,7 @@ import com.seanchen.xinchat.core.data.repository.UserInfoStoreRepository
 import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.result.ResultHandler
+import com.seanchen.xinchat.core.result.SessionExpiryNotifier
 import com.seanchen.xinchat.core.result.asResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,6 +40,26 @@ class AppState @Inject constructor(
     // 用户信息
     private val _userInfo = MutableStateFlow<User?>(null)
     val userInfo: StateFlow<User?> = _userInfo.asStateFlow()
+
+    init {
+        observeSessionExpiry()
+    }
+
+    /**
+     * 监听登录态失效，清理本地会话
+     *
+     * 只有当前确实处于登录态时才清理：登录、注册接口用 401 表示凭证错误，
+     * 那种情况下本地本来就没有会话，不应触发登出。
+     */
+    private fun observeSessionExpiry() {
+        applicationScope.launch {
+            SessionExpiryNotifier.events.collect {
+                if (_isLoggedIn.value) {
+                    logout()
+                }
+            }
+        }
+    }
 
 
     /**

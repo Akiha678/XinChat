@@ -10,6 +10,7 @@ android {
 dependencies {
     implementation(projects.core.model)
     implementation(projects.core.datastore)
+    implementation(projects.core.result)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.okhttp)

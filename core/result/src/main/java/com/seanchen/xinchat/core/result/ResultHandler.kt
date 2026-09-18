@@ -149,6 +149,10 @@ object ResultHandler {
         onError: (String, Throwable?) -> Unit
     ){
         onSuccess(response)
+        if (response.code == SessionExpiryNotifier.UNAUTHORIZED_CODE) {
+            // 业务码 401 表示登录态已失效，由数据层决定是否清理会话
+            SessionExpiryNotifier.notifyExpired()
+        }
         if (response.isSucceeded) {
             val data = response.data ?: return
             onSuccessWithData(data)

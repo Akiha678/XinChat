@@ -5,6 +5,11 @@ import androidx.navigation3.runtime.NavKey
 
 interface NavigationController {
     /**
+     * 当前栈顶路由，回退栈为空时返回 null
+     */
+    val currentRoute: NavKey?
+
+    /**
      * 导航到目标路由
      *
      * @param route 目标路由

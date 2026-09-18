@@ -33,10 +33,6 @@ import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
 import com.seanchen.xinchat.core.model.entity.User
-import com.seanchen.xinchat.core.navigation.NavigationOptions
-import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
-import com.seanchen.xinchat.core.navigation.main.MainRoutes
-import com.seanchen.xinchat.core.navigation.navigate
 import com.seanchen.xinchat.core.navigation.navigateBack
 import com.seanchen.xinchat.core.ui.component.image.SmallAvatar
 import com.seanchen.xinchat.core.ui.component.list.AppListItem
@@ -72,17 +68,8 @@ fun ProfileRoute(
         isLoggingOut = isLoggingOut,
         onBackClick = { navigateBack() },
         onLogoutClick = {
-            scope.launch {
-                viewModel.logout()
-                navigate(
-                    route = AuthRoutes.Login,
-                    navOptions = NavigationOptions(
-                        popUpToRoute = MainRoutes.Main,
-                        inclusive = true,
-                        allowPopToEmpty = true
-                    )
-                )
-            }
+            // 登出后的跳转与返回栈清理由导航层根据登录态统一处理
+            scope.launch { viewModel.logout() }
         },
         userInfo = userInfo
     )
@@ -249,21 +236,6 @@ private fun SharedAvatar(
         size = size,
         modifier = avatarModifier
     )
-}
-
-@Composable
-private fun profileName(
-    isLoggedIn: Boolean,
-    userInfo: User?,
-): String {
-    return userInfo?.nickName?.takeIf { it.isNotBlank() }
-        ?: stringResource(
-            id = if (isLoggedIn) {
-                com.seanchen.xinchat.feature.user.R.string.profile_default_nickname
-            } else {
-                com.seanchen.xinchat.feature.user.R.string.profile_guest_title
-            }
-        )
 }
 
 @Composable

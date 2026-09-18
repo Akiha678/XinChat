@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "431989208115",
+    "project_id": "xinchat",
+    "storage_bucket": "xinchat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:431989208115:android:622b58972c2d4768ba1f46",
+        "android_client_info": {
+          "package_name": "com.seanchen.xinchat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAK-RisLDsrNrL79wN0i0nycWfgRaucNME"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
