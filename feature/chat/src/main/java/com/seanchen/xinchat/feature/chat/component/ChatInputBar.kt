@@ -35,10 +35,10 @@ import com.seanchen.xinchat.core.designsystem.theme.ShapeExtraLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalSmall
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingSmall
-import com.seanchen.xinchat.core.ui.component.button.AppButton
-import com.seanchen.xinchat.core.ui.component.button.ButtonSize
-import com.seanchen.xinchat.core.ui.component.text.AppText
-import com.seanchen.xinchat.core.ui.component.text.TextSize
+import com.seanchen.widget.ui.button.AppButton
+import com.seanchen.widget.ui.button.ButtonSize
+import com.seanchen.widget.ui.text.AppText
+import com.seanchen.widget.ui.text.TextSize
 import com.seanchen.xinchat.feature.chat.R
 
 @Composable

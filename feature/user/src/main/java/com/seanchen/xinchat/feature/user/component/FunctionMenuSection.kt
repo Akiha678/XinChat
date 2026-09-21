@@ -7,7 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import com.seanchen.xinchat.core.ui.component.list.AppListItem
+//import com.seanchen.xinchat.core.ui.component.list.AppListItem
+import com.seanchen.widget.ui.list.AppListItem
 import com.seanchen.xinchat.feature.user.R
 
 @Composable

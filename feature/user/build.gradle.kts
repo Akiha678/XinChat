@@ -5,3 +5,7 @@ plugins {
 android {
     namespace = "com.seanchen.xinchat.feature.user"
 }
+
+dependencies{
+    implementation(libs.common.widget)
+}

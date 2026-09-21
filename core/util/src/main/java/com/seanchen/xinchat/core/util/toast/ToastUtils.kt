@@ -152,7 +152,7 @@ object ToastUtils {
      * 显示短时间Toast
      */
     fun showShort(text: CharSequence) {
-        Toaster.showLong(text)
+        Toaster.showShort(text)
     }
 
     /**

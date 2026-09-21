@@ -21,8 +21,8 @@ import androidx.compose.ui.unit.dp
 import com.seanchen.xinchat.core.designsystem.theme.ShapeSmall
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingSmall
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingXSmall
-import com.seanchen.xinchat.core.ui.component.text.AppText
-import com.seanchen.xinchat.core.ui.component.text.TextSize
+import com.seanchen.widget.ui.text.AppText
+import com.seanchen.widget.ui.text.TextSize
 
 @Composable
 fun EmojiSelector(

@@ -26,27 +26,24 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.seanchen.xinchat.core.designsystem.component.CenterColumn
 import com.seanchen.xinchat.core.designsystem.component.SpaceBetweenColumn
 import com.seanchen.xinchat.core.designsystem.theme.LogoIcon
+import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXLarge
 import com.seanchen.xinchat.core.navigation.auth.AuthNavigator
 import com.seanchen.xinchat.core.navigation.common.CommonNavigator
-import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.xinchat.core.ui.component.button.AppButton
-import com.seanchen.xinchat.core.ui.component.button.ButtonStyle
-import com.seanchen.xinchat.core.ui.component.scaffold.AppScaffold
-import com.seanchen.xinchat.core.ui.component.text.AppText
-import com.seanchen.xinchat.core.ui.component.text.TextSize
-import com.seanchen.xinchat.core.ui.component.text.TextType
+import com.seanchen.widget.ui.scaffold.AppScaffold
+import com.seanchen.widget.ui.text.AppText
+import com.seanchen.widget.ui.text.TextType
+import com.seanchen.widget.ui.text.TextSize
 import com.seanchen.xinchat.feature.auth.R
 import com.seanchen.xinchat.feature.auth.component.UserAgreement
-import com.seanchen.xinchat.feature.auth.viewmodel.LoginViewModel
+import com.seanchen.widget.ui.button.AppButton
+import com.seanchen.widget.ui.button.ButtonStyle
 
 @Composable
 internal fun LoginRoute() {
@@ -136,8 +133,8 @@ private fun LoginContentView(
             ) {
                 // 验证码登录按钮（主按钮）
                 AppButton(
-                    text = stringResource(id = R.string.email_register),
-                    onClick = { AuthNavigator.toRegister() }
+                    text = stringResource(id = R.string.sms_login),
+                    onClick = { AuthNavigator.toSmsLogin() }
                 )
 
                 SpaceVerticalXLarge()
@@ -149,6 +146,19 @@ private fun LoginContentView(
                     style = ButtonStyle.OUTLINED
                 )
 
+                SpaceVerticalMedium()
+
+                // 邮箱注册入口
+                androidx.compose.material3.TextButton(
+                    onClick = { AuthNavigator.toRegister() }
+                ) {
+                    AppText(
+                        text = stringResource(id = R.string.email_register),
+                        size = TextSize.BODY_MEDIUM,
+                        type = TextType.PRIMARY
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(48.dp))
 
                 AppText(
@@ -159,29 +169,6 @@ private fun LoginContentView(
 
                 SpaceVerticalXLarge()
 
-                // 第三方登录按钮
-//                SpaceEvenlyRow {
-//                    // 微信登录
-//                    ThirdPartyLoginButton(
-////                        icon = drawable.ic_wechat,
-//                        name = stringResource(id = R.string.wechat),
-//                        onClick = onWechatLoginClick
-//                    )
-//
-//                    // QQ登录
-//                    ThirdPartyLoginButton(
-////                        icon = R.drawable.ic_qq,
-//                        name = stringResource(id = R.string.qq),
-//                        onClick = onQQLogin
-//                    )
-//
-//                    // 支付宝登录
-//                    ThirdPartyLoginButton(
-////                        icon = R.drawable.ic_alipay,
-//                        name = stringResource(id = R.string.alipay),
-//                        onClick = onAlipayLoginClick
-//                    )
-//                }
 
                 // 用户协议
                 UserAgreement(

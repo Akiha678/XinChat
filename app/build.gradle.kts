@@ -53,6 +53,14 @@ android {
     }
 }
 
+// dev 变体的包名为 com.seanchen.xinchat.dev，google-services.json 中没有对应客户端配置，
+// 跳过该变体的 google-services 处理任务，避免构建失败
+tasks.matching { task ->
+    task.name.startsWith("processDev") && task.name.endsWith("GoogleServices")
+}.configureEach {
+    enabled = false
+}
+
 dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:navigation"))
@@ -65,8 +73,9 @@ dependencies {
 
     implementation(libs.common.widget)
 
-    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
-    implementation("com.google.firebase:firebase-analytics")
+    // Firebase 只在 prod 变体接入：google-services.json 中只有 com.seanchen.xinchat 的客户端配置
+    "prodImplementation"(platform("com.google.firebase:firebase-bom:34.19.0"))
+    "prodImplementation"("com.google.firebase:firebase-analytics")
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

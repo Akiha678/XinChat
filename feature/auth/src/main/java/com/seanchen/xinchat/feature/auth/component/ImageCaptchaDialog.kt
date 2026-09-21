@@ -33,9 +33,9 @@ import androidx.compose.ui.unit.sp
 import com.seanchen.xinchat.core.designsystem.component.StartRow
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXLarge
 import com.seanchen.xinchat.core.model.entity.Captcha
-import com.seanchen.xinchat.core.ui.component.button.AppButton
-import com.seanchen.xinchat.core.ui.component.modal.BottomModal
+import com.seanchen.widget.ui.button.AppButton
 import com.seanchen.xinchat.feature.auth.R
+import com.seanchen.widget.ui.modal.BottomModal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

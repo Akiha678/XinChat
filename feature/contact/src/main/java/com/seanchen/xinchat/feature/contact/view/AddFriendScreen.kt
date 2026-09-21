@@ -11,9 +11,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.xinchat.core.ui.component.appbar.CenterTopAppBar
-import com.seanchen.xinchat.core.ui.component.list.AppListItem
-import com.seanchen.xinchat.core.ui.component.loading.PageLoading
+import com.seanchen.widget.ui.appbar.CenterTopAppBar
+import com.seanchen.widget.ui.list.AppListItem
+import com.seanchen.widget.ui.loading.PageLoading
 import com.seanchen.xinchat.feature.contact.R
 import com.seanchen.xinchat.feature.contact.model.AddFriendModel
 import com.seanchen.xinchat.feature.contact.state.ContactUserUiState
@@ -44,6 +44,7 @@ internal fun AddFriendScreen(
 ) {
     Scaffold(
         topBar = {
+            // 组件库使用
             CenterTopAppBar(
                 title = R.string.contact_add_friend_title,
                 onBackClick = ::navigateBack

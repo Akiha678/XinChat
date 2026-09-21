@@ -6,9 +6,9 @@ import androidx.compose.ui.res.stringResource
 import com.seanchen.xinchat.core.designsystem.component.CenterRow
 import com.seanchen.xinchat.core.designsystem.component.StartRow
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
-import com.seanchen.xinchat.core.ui.component.text.AppText
-import com.seanchen.xinchat.core.ui.component.text.TextSize
-import com.seanchen.xinchat.core.ui.component.text.TextType
+import com.seanchen.widget.ui.text.AppText
+import com.seanchen.widget.ui.text.TextSize
+import com.seanchen.widget.ui.text.TextType
 import com.seanchen.xinchat.feature.auth.R
 
 @Composable

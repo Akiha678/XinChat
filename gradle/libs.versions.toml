@@ -81,7 +81,7 @@ androidDesugarJdkLibs = "2.1.5"
 room = "2.8.4"
 
 # 封装的组件库
-xinComponent = "v0.1.5"
+xinComponent = "v0.1.11"
 
 # 动画相关版本
 # Lottie Compose 动画库: https://airbnb.io/lottie/#/android-compose

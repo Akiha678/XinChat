@@ -41,17 +41,16 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seanchen.xinchat.core.common.base.state.BaseNetWorkUiState
 import com.seanchen.xinchat.core.designsystem.theme.Primary
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
 import com.seanchen.xinchat.core.designsystem.theme.appTextColors
+import com.seanchen.xinchat.core.common.base.state.BaseNetWorkUiState
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
 import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.xinchat.core.ui.component.appbar.CenterTopAppBar
-import com.seanchen.xinchat.core.ui.component.empty.Empty
-import com.seanchen.xinchat.core.ui.component.network.BaseNetworkView
+import com.seanchen.widget.ui.empty.Empty
+import com.seanchen.widget.ui.error.BaseNetworkView
 import com.seanchen.xinchat.feature.chat.R
 import com.seanchen.xinchat.feature.chat.state.ChatListUiState
 import com.seanchen.xinchat.feature.chat.state.ChatSessionItemUiState
@@ -59,6 +58,7 @@ import com.seanchen.xinchat.feature.chat.viewmodel.ChatListViewModel
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.seanchen.widget.ui.appbar.CenterTopAppBar
 
 @Composable
 fun ChatListRoute(
@@ -103,6 +103,7 @@ internal fun ChatListScreen(
 ) {
     Scaffold(
         topBar = {
+            // 组件库使用方法
             CenterTopAppBar(
                 title = R.string.messages_title,
                 showBackIcon = showBackIcon,
@@ -115,7 +116,7 @@ internal fun ChatListScreen(
         modifier = Modifier.fillMaxSize()
     ) { paddingValues ->
         BaseNetworkView(
-            uiState = uiState,
+            uiState = uiState.toWidgetState(),
             modifier = Modifier.fillMaxSize(),
             padding = paddingValues,
             onRetry = onRefresh,
@@ -144,7 +145,7 @@ private fun ChatListContentView(
         Empty(
             message = R.string.messages_empty_title,
             subtitle = R.string.messages_empty_description,
-            icon = com.seanchen.xinchat.core.ui.R.drawable.ic_empty_data
+            icon = R.drawable.ic_empty_data
         )
         return
     }

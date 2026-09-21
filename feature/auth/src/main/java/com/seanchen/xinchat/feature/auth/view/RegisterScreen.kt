@@ -19,7 +19,6 @@ import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXLarge
 import com.seanchen.xinchat.core.navigation.common.CommonNavigator
 import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.xinchat.core.ui.component.button.AppButton
 import com.seanchen.xinchat.feature.auth.R
 import com.seanchen.xinchat.feature.auth.component.AnimatedAuthPage
 import com.seanchen.xinchat.feature.auth.component.AuthInputField
@@ -27,6 +26,7 @@ import com.seanchen.xinchat.feature.auth.component.PasswordInputField
 import com.seanchen.xinchat.feature.auth.component.UserAgreement
 import com.seanchen.xinchat.feature.auth.component.VerificationCodeField
 import com.seanchen.xinchat.feature.auth.viewmodel.RegisterViewModel
+import com.seanchen.widget.ui.button.AppButton
 
 @Composable
 internal fun RegisterRoute(

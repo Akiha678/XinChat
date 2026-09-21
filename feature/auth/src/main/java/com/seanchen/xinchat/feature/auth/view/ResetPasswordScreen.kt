@@ -21,7 +21,7 @@ import com.seanchen.xinchat.core.designsystem.component.StartRow
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXLarge
 import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.xinchat.core.ui.component.button.AppButton
+import com.seanchen.widget.ui.button.AppButton
 import com.seanchen.xinchat.feature.auth.R
 import com.seanchen.xinchat.feature.auth.component.AnimatedAuthPage
 import com.seanchen.xinchat.feature.auth.component.AuthInputField

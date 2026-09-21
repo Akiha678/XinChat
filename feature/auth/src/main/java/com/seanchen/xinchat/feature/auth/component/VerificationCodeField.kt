@@ -32,6 +32,7 @@ fun VerificationCodeField(
     placeholder: String = "",
     nextAction: ImeAction = ImeAction.Next,
     isEnabled: Boolean = true,
+    buttonText: String? = null,
     @SuppressLint("ModifierParameter") modifier: Modifier = Modifier
 ) {
     // 验证码输入框和发送按钮
@@ -70,7 +71,7 @@ fun VerificationCodeField(
         }
 
         Text(
-            text = stringResource(id = R.string.get_verification_code),
+            text = buttonText ?: stringResource(id = R.string.get_verification_code),
             color = if (isEnabled) ColorWarning else Color.Gray,
             fontSize = 16.sp,
             modifier = Modifier

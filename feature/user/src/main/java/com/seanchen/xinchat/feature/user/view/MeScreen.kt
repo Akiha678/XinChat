@@ -1,7 +1,6 @@
 package com.seanchen.xinchat.feature.user.view
 
 import androidx.compose.animation.AnimatedContentScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,13 +33,12 @@ import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXSmall
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.navigation.user.UserNavigator
-import com.seanchen.xinchat.core.ui.component.image.Avatar
-import com.seanchen.xinchat.core.ui.R as CoreUiR
-import com.seanchen.xinchat.core.ui.component.list.AppListItem
-import com.seanchen.xinchat.core.ui.component.scaffold.CommonScaffold
-import com.seanchen.xinchat.core.ui.component.text.AppText
-import com.seanchen.xinchat.core.ui.component.text.TextSize
-import com.seanchen.xinchat.core.ui.component.text.TextType
+import com.seanchen.widget.ui.image.Avatar
+import com.seanchen.widget.ui.scaffold.CommonScaffold
+import com.seanchen.widget.ui.list.AppListItem
+import com.seanchen.widget.ui.text.AppText
+import com.seanchen.widget.ui.text.TextSize
+import com.seanchen.widget.ui.text.TextType
 import com.seanchen.xinchat.feature.user.R
 import com.seanchen.xinchat.feature.user.viewmodel.MeViewModel
 
@@ -189,22 +187,22 @@ private fun MeFeatureMenuSection() {
     ) {
         AppListItem(
             title = stringResource(id = R.string.profile_menu_services),
-            leadingIcon = CoreUiR.drawable.ic_menu_list,
+            leadingIcon = R.drawable.ic_menu_list,
             leadingIconTint = MaterialTheme.colorScheme.primary
         )
         AppListItem(
             title = stringResource(id = R.string.profile_menu_favorites),
-            leadingIcon = CoreUiR.drawable.ic_star_fill,
+            leadingIcon = R.drawable.ic_star_fill,
             leadingIconTint = ColorWarning
         )
         AppListItem(
             title = stringResource(id = R.string.profile_menu_cards),
-            leadingIcon = CoreUiR.drawable.ic_coupon,
+            leadingIcon = R.drawable.ic_coupon,
             leadingIconTint = ColorSuccess
         )
         AppListItem(
             title = stringResource(id = R.string.profile_menu_stickers),
-            leadingIcon = CoreUiR.drawable.ic_my_fill,
+            leadingIcon = R.drawable.ic_my_fill,
             leadingIconTint = ColorDanger,
             showDivider = false
         )
@@ -220,7 +218,7 @@ private fun MeSettingsSection() {
     ) {
         AppListItem(
             title = stringResource(id = R.string.settings),
-            leadingIcon = CoreUiR.drawable.ic_menu,
+            leadingIcon = R.drawable.ic_menu,
             leadingIconTint = MaterialTheme.colorScheme.onSurfaceVariant,
             showDivider = false
         )

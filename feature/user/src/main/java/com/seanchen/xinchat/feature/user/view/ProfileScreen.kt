@@ -34,16 +34,15 @@ import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.xinchat.core.ui.component.image.SmallAvatar
-import com.seanchen.xinchat.core.ui.component.list.AppListItem
-import com.seanchen.xinchat.core.ui.component.scaffold.AppScaffold
-import com.seanchen.xinchat.core.ui.component.text.AppText
-import com.seanchen.xinchat.core.ui.component.text.TextSize
-import com.seanchen.xinchat.core.ui.component.text.TextType
-import com.seanchen.xinchat.core.ui.component.title.TitleWithLine
+import com.seanchen.widget.ui.image.SmallAvatar
+import com.seanchen.widget.ui.list.AppListItem
+import com.seanchen.widget.ui.scaffold.AppScaffold
+import com.seanchen.widget.ui.text.AppText
+import com.seanchen.widget.ui.text.TextType
 import com.seanchen.xinchat.feature.user.component.FunctionMenuSection
 import com.seanchen.xinchat.feature.user.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
+import com.seanchen.widget.ui.title.TitleWithLine
 
 private const val USER_AVATAR_SHARED_KEY = "user_avatar"
 

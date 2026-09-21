@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.seanchen.xinchat.core.designsystem.component.TopColumn
 import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalXXLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXXLarge
-import com.seanchen.xinchat.core.ui.component.scaffold.AppScaffold
+import com.seanchen.widget.ui.scaffold.AppScaffold
 
 @Composable
 fun AnimatedAuthPage(

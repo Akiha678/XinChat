@@ -30,4 +30,14 @@
     <string name="status_accepted">已同意</string>
     <string name="status_rejected">已拒绝</string>
     <string name="retry">重试</string>
+    <string name="contacts_count">%d 位联系人</string>
+    <string name="search_contacts">搜索联系人</string>
+    <string name="invite_friends">邀请朋友</string>
+    <string name="find_people_nearby">查找附近的人</string>
+    <string name="status_online">在线</string>
+    <string name="status_last_seen_recently">最近上线</string>
+    <string name="sort_by_name">按姓名排序</string>
+    <string name="sort_by_last_seen">按上线时间排序</string>
+    <string name="add_contact">添加联系人</string>
+    <string name="new_group">新建群组</string>
 </resources>
