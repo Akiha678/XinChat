@@ -2,8 +2,18 @@ package com.seanchen.xinchat.core.network.datadource.userinfo
 
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.model.response.NetworkResponse
+import okhttp3.MultipartBody
 
 interface UserInfoNetworkDataSource {
+
+    /**
+     * 上传用户头像
+     *
+     * @param file 头像文件部件
+     * @return 更新后的用户信息响应
+     */
+    suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User>
+
 
     /**
      * 更新用户个人信息

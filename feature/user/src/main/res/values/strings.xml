@@ -26,4 +26,10 @@
     <string name="profile_click_to_login">点击登录账号</string>
     <string name="profile_username_format">用户名：%1$s</string>
     <string name="logout_failed">退出登录失败</string>
+    <string name="avatar_update_success">头像修改成功</string>
+    <string name="avatar_update_failed">头像修改失败，请重试</string>
+    <string name="avatar_updating">正在上传头像…</string>
+    <string name="avatar_invalid_format">仅支持 JPG、PNG、GIF、WEBP 格式的图片</string>
+    <string name="avatar_size_exceeded">图片大小不能超过 5MB</string>
+    <string name="avatar_read_failed">读取图片失败，请重试</string>
 </resources>

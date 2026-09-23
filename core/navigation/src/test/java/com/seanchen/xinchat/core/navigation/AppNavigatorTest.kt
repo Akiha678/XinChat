@@ -16,6 +16,7 @@ import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.core.navigation.user.UserRoutes
 import com.seanchen.xinchat.core.network.datadource.userinfo.UserInfoNetworkDataSource
 import com.seanchen.xinchat.core.result.SessionExpiryNotifier
+import okhttp3.MultipartBody
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -205,6 +206,10 @@ private class FakeUserInfoStoreDataSource : UserInfoStoreDataSource {
 }
 
 private class FakeUserInfoNetworkDataSource : UserInfoNetworkDataSource {
+    override suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User> {
+        return NetworkResponse()
+    }
+
     override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> {
         return NetworkResponse()
     }

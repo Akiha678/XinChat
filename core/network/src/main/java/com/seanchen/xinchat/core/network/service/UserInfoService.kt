@@ -2,9 +2,12 @@ package com.seanchen.xinchat.core.network.service
 
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.model.response.NetworkResponse
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 
 /**
  * 个人资料相关接口
@@ -13,6 +16,13 @@ import retrofit2.http.POST
  * 修改密码复用认证模块的邮箱验证码入口 auth/updatePassword。
  */
 interface UserInfoService {
+    /**
+     * 上传并更换用户头像
+     */
+    @Multipart
+    @POST("user/info/avatar")
+    suspend fun uploadAvatar(@Part file: MultipartBody.Part): NetworkResponse<User>
+
     /**
      * 修改个人资料
      */

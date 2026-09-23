@@ -14,6 +14,7 @@ import com.seanchen.xinchat.core.model.response.LoginResponse
 import com.seanchen.xinchat.core.model.response.NetworkResponse
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSource
 import com.seanchen.xinchat.core.network.datadource.userinfo.UserInfoNetworkDataSource
+import okhttp3.MultipartBody
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -195,6 +196,8 @@ class SmsLoginViewModelTest {
         }
 
         val fakeUserInfoNetworkDataSource = object : UserInfoNetworkDataSource {
+            override suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User> =
+                NetworkResponse(data = User(id = 1, nickName = "test", avatarUrl = "/uploads/test.png"))
             override suspend fun getPersonInfo(): NetworkResponse<User> =
                 NetworkResponse(data = User(id = 1, nickName = "test", phone = "13800138000"))
             override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> =

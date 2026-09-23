@@ -39,6 +39,7 @@ import com.seanchen.widget.ui.list.AppListItem
 import com.seanchen.widget.ui.text.AppText
 import com.seanchen.widget.ui.text.TextSize
 import com.seanchen.widget.ui.text.TextType
+import com.seanchen.xinchat.core.util.media.toFullMediaUrl
 import com.seanchen.xinchat.feature.user.R
 import com.seanchen.xinchat.feature.user.viewmodel.MeViewModel
 
@@ -135,7 +136,7 @@ private fun UserInfoSection(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Avatar(
-            avatarUrl = userInfo?.avatarUrl,
+            avatarUrl = userInfo?.avatarUrl.toFullMediaUrl(),
             size = 72.dp,
             modifier = Modifier.let { modifier ->
                 if (sharedTransitionScope != null && animatedContentScope != null) {

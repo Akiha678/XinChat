@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import okhttp3.MultipartBody
 import javax.inject.Inject
 
 
@@ -19,6 +20,16 @@ import javax.inject.Inject
 class UserInfoRepository @Inject constructor(
     private val userInfoNetworkDataSource: UserInfoNetworkDataSource
 ) {
+    /**
+     * 上传用户头像
+     *
+     * @param file 头像文件部件
+     * @return 更新后的用户信息Flow
+     */
+    fun uploadAvatar(file: MultipartBody.Part): Flow<NetworkResponse<User>> = flow {
+        emit(userInfoNetworkDataSource.uploadAvatar(file))
+    }.flowOn(Dispatchers.IO)
+
     /**
      * 更新用户信息
      *

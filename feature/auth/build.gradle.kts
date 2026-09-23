@@ -8,6 +8,7 @@ android {
 
 dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.okhttp)
     testImplementation(projects.core.network)
     testImplementation(projects.core.datastore)
     implementation(libs.common.widget)

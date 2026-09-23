@@ -4,12 +4,18 @@ import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.model.response.NetworkResponse
 import com.seanchen.xinchat.core.network.base.BaseNetworkDataSource
 import com.seanchen.xinchat.core.network.service.UserInfoService
+import okhttp3.MultipartBody
 import javax.inject.Inject
 
 class UserInfoNetworkDataSourceImpl @Inject constructor(
     private val userInfoService: UserInfoService
 ) : BaseNetworkDataSource(), UserInfoNetworkDataSource {
+    override suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User> {
+        return userInfoService.uploadAvatar(file)
+    }
+
     override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> {
+
         return userInfoService.updatePersonInfo(params)
     }
 
