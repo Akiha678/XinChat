@@ -14,6 +14,8 @@ import com.seanchen.xinchat.feature.contact.state.ContactUserUiState
 import com.seanchen.xinchat.feature.contact.state.toUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,8 +28,15 @@ class ContactViewModel @Inject constructor(
     private val contactRepository: ContactRepository,
 ) : BaseViewModel() {
 
+    companion object {
+        /** 输入搜索防抖时间（毫秒） */
+        private const val SEARCH_DEBOUNCE_MILLIS = 300L
+    }
+
     private val _uiState = MutableStateFlow(ContactUiState())
     val uiState: StateFlow<ContactUiState> = _uiState.asStateFlow()
+
+    private var searchJob: Job? = null
 
     init {
         refreshFriends()
@@ -35,11 +44,24 @@ class ContactViewModel @Inject constructor(
 
     /**
      * 更新搜索关键词
+     *
+     * 输入变化即清空上一次的全网搜索结果，避免展示与当前关键词不符的旧结果；
+     * 关键词非空时防抖自动触发全网搜索，也可由用户点击键盘搜索键立即搜索。
      */
     fun updateSearchQuery(value: String) {
-        _uiState.update { it.copy(searchQuery = value, errorMessage = null) }
-        if (value.isBlank()) {
-            _uiState.update { it.copy(searchResults = emptyList()) }
+        searchJob?.cancel()
+        _uiState.update {
+            it.copy(
+                searchQuery = value,
+                searchResults = emptyList(),
+                errorMessage = null
+            )
+        }
+        if (value.isNotBlank()) {
+            searchJob = viewModelScope.launch {
+                delay(SEARCH_DEBOUNCE_MILLIS)
+                searchUsers()
+            }
         }
     }
 
@@ -106,6 +128,10 @@ class ContactViewModel @Inject constructor(
      * 搜索全网用户
      */
     fun searchUsers() {
+        if (_uiState.value.isSearching) {
+            return
+        }
+
         val keyword = uiState.value.searchQuery.trim()
         if (keyword.isBlank()) {
             _uiState.update { it.copy(searchResults = emptyList(), errorMessage = null) }

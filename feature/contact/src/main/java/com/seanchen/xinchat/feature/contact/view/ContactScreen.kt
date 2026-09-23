@@ -33,7 +33,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -41,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -65,7 +65,6 @@ import com.seanchen.xinchat.core.designsystem.theme.CommonIcon
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
-import com.seanchen.xinchat.core.navigation.contact.ContactNavigator
 import com.seanchen.widget.ui.empty.Empty
 import com.seanchen.widget.ui.loading.PageLoading
 import com.seanchen.widget.ui.text.AppText
@@ -92,8 +91,6 @@ private val TelegramAvatarColors = listOf(
 
 private val TelegramOnlineColor = Color(0xFF00C853)
 private val TelegramActionBlue = Color(0xFF2AABEE)
-private val TelegramActionGreen = Color(0xFF4CAF50)
-private val TelegramActionPurple = Color(0xFF7E57C2)
 
 @Composable
 fun ContactRoute(
@@ -109,7 +106,8 @@ fun ContactRoute(
         onFriendClick = { user ->
             ChatNavigator.toChatMessage(sessionId = user.id)
         },
-        onAddContactClick = ContactNavigator::toAddFriend,
+        onSearchUsers = viewModel::searchUsers,
+        onAddFriend = viewModel::addFriend,
         onRefresh = viewModel::refreshFriends,
         onClearError = viewModel::clearError
     )
@@ -123,7 +121,8 @@ internal fun ContactScreen(
     onToggleSearch: (Boolean?) -> Unit = {},
     onToggleSort: () -> Unit = {},
     onFriendClick: (ContactUserUiState) -> Unit = {},
-    onAddContactClick: () -> Unit = {},
+    onSearchUsers: () -> Unit = {},
+    onAddFriend: (ContactUserUiState) -> Unit = {},
     onRefresh: () -> Unit = {},
     onClearError: () -> Unit = {},
 ) {
@@ -134,25 +133,8 @@ internal fun ContactScreen(
                 onSearchQueryChange = onSearchQueryChange,
                 onToggleSearch = onToggleSearch,
                 onToggleSort = onToggleSort,
-                onAddContactClick = onAddContactClick
+                onSearchUsers = onSearchUsers
             )
-        },
-        floatingActionButton = {
-            if (!uiState.isSearchActive) {
-                FloatingActionButton(
-                    onClick = onAddContactClick,
-                    containerColor = TelegramActionBlue,
-                    contentColor = Color.White,
-                    shape = CircleShape,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    CommonIcon(
-                        resId = R.drawable.ic_add,
-                        size = 24.dp,
-                        tint = Color.White
-                    )
-                }
-            }
         },
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.navigationBars),
         modifier = Modifier.fillMaxSize()
@@ -161,7 +143,7 @@ internal fun ContactScreen(
             uiState = uiState,
             paddingValues = paddingValues,
             onFriendClick = onFriendClick,
-            onAddContactClick = onAddContactClick,
+            onAddFriend = onAddFriend,
             onRefresh = onRefresh,
             onClearError = onClearError
         )
@@ -175,7 +157,7 @@ private fun TelegramContactTopAppBar(
     onSearchQueryChange: (String) -> Unit,
     onToggleSearch: (Boolean?) -> Unit,
     onToggleSort: () -> Unit,
-    onAddContactClick: () -> Unit,
+    onSearchUsers: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -233,6 +215,7 @@ private fun TelegramContactTopAppBar(
             TelegramSearchBar(
                 query = uiState.searchQuery,
                 onQueryChange = onSearchQueryChange,
+                onSearch = onSearchUsers,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -245,6 +228,7 @@ private fun TelegramContactTopAppBar(
 private fun TelegramSearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
+    onSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
@@ -273,12 +257,13 @@ private fun TelegramSearchBar(
             ),
             cursorBrush = SolidColor(TelegramActionBlue),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
             modifier = Modifier.weight(1f)
         ) { innerTextField ->
             Box(contentAlignment = Alignment.CenterStart) {
                 if (query.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.search_contacts),
+                        text = stringResource(R.string.search_username),
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         fontSize = 15.sp
                     )
@@ -306,7 +291,7 @@ private fun ContactContentView(
     uiState: ContactUiState,
     paddingValues: PaddingValues,
     onFriendClick: (ContactUserUiState) -> Unit,
-    onAddContactClick: () -> Unit,
+    onAddFriend: (ContactUserUiState) -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
 ) {
@@ -343,42 +328,70 @@ private fun ContactContentView(
                         }
                     }
 
-                    // Telegram 风格顶部操作项（非搜索模式下展示）
-                    if (!uiState.isSearchActive) {
-                        item {
-                            TelegramActionItem(
-                                title = stringResource(R.string.find_people_nearby),
-                                iconRes = R.drawable.ic_search,
-                                iconBgColor = TelegramActionPurple,
-                                onClick = onAddContactClick
-                            )
+                    // 搜索模式：展示全网用户搜索结果（可添加好友）
+                    if (uiState.isSearchActive && uiState.searchQuery.isNotBlank()) {
+                        when {
+                            uiState.isSearching -> {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 24.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        PageLoading()
+                                    }
+                                }
+                            }
+
+                            uiState.searchResults.isNotEmpty() -> {
+                                item(key = "search_results_header") {
+                                    SearchResultsHeader()
+                                }
+
+                                items(
+                                    items = uiState.searchResults,
+                                    key = { it.id }
+                                ) { user ->
+                                    TelegramSearchResultRow(
+                                        user = user,
+                                        isFriend = uiState.friends.any { it.id == user.id },
+                                        isAdding = uiState.isSendingFriendRequest,
+                                        onAddFriend = { onAddFriend(user) }
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 48.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Empty(
+                                            message = R.string.contact_user_not_exist,
+                                            icon = R.drawable.ic_empty_data
+                                        )
+                                    }
+                                }
+                            }
                         }
-                        item {
-                            TelegramActionItem(
-                                title = stringResource(R.string.invite_friends),
-                                iconRes = R.drawable.ic_add,
-                                iconBgColor = TelegramActionGreen,
-                                onClick = onAddContactClick
-                            )
-                        }
-                        item {
-                            TelegramActionItem(
-                                title = stringResource(R.string.add_contact),
-                                iconRes = R.drawable.ic_add,
-                                iconBgColor = TelegramActionBlue,
-                                onClick = onAddContactClick
-                            )
-                        }
-                        item {
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                                thickness = 8.dp
-                            )
+                        if (uiState.searchResults.isNotEmpty()) {
+                            item {
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                                    thickness = 8.dp
+                                )
+                            }
                         }
                     }
 
-                    // 空状态展示
-                    if (uiState.displayedFriends.isEmpty()) {
+                    // 空状态展示（仅非搜索模式；搜索模式下的空提示由上方搜索区块统一负责）
+                    val showFriendsEmptyState =
+                        !uiState.isSearchActive || uiState.searchQuery.isBlank()
+                    if (showFriendsEmptyState && uiState.displayedFriends.isEmpty()) {
                         item {
                             Box(
                                 modifier = Modifier
@@ -387,12 +400,8 @@ private fun ContactContentView(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Empty(
-                                    message = if (uiState.searchQuery.isNotBlank()) {
-                                        R.string.contact_search_no_result
-                                    } else {
-                                        R.string.friends_empty_title
-                                    },
-                                    subtitle = if (uiState.searchQuery.isNotBlank()) null else R.string.friends_empty_description,
+                                    message = R.string.friends_empty_title,
+                                    subtitle = R.string.friends_empty_description,
                                     icon = R.drawable.ic_empty_data,
                                     onRetryClick = onRefresh
                                 )
@@ -424,37 +433,67 @@ private fun ContactContentView(
 }
 
 @Composable
-private fun TelegramActionItem(
-    title: String,
-    iconRes: Int,
-    iconBgColor: Color,
-    onClick: () -> Unit
+private fun SearchResultsHeader() {
+    Text(
+        text = stringResource(R.string.search_results),
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun TelegramSearchResultRow(
+    user: ContactUserUiState,
+    isFriend: Boolean,
+    isAdding: Boolean,
+    onAddFriend: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(40.dp)
-                .background(iconBgColor, CircleShape),
-            contentAlignment = Alignment.Center
+        TelegramAvatar(user = user)
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center
         ) {
-            CommonIcon(
-                resId = iconRes,
-                size = 20.dp,
-                tint = Color.White
+            Text(
+                text = user.displayName,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = user.username.ifBlank { user.email },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
-        Spacer(modifier = Modifier.width(16.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
-            color = MaterialTheme.colorScheme.onSurface
-        )
+
+        if (isFriend) {
+            Text(
+                text = stringResource(R.string.contact_already_friend),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            TextButton(
+                onClick = onAddFriend,
+                enabled = !isAdding
+            ) {
+                Text(stringResource(R.string.add_friend))
+            }
+        }
     }
 }
 
@@ -642,7 +681,62 @@ private fun ContactScreenSearchPreview() {
             uiState = ContactUiState(
                 isSearchActive = true,
                 searchQuery = "Al",
+                searchResults = sampleUsers.take(2),
                 friends = sampleUsers
+            )
+        )
+    }
+}
+
+@Preview(name = "搜索全网用户结果", showBackground = true)
+@Composable
+private fun ContactScreenSearchUsersPreview() {
+    MaterialTheme {
+        val searchUsers = listOf(
+            ContactUserUiState(101, "Alice Walker", "alice_walker", "alice@test.com", 0, sectionLetter = "A"),
+            ContactUserUiState(102, "Andy Liu", "andy_liu", "andy@test.com", 0, sectionLetter = "A")
+        )
+        ContactScreen(
+            uiState = ContactUiState(
+                isSearchActive = true,
+                searchQuery = "alice",
+                searchResults = searchUsers,
+                friends = emptyList()
+            )
+        )
+    }
+}
+
+@Preview(name = "搜索结果含好友与非好友", showBackground = true)
+@Composable
+private fun ContactScreenSearchMixedPreview() {
+    MaterialTheme {
+        val friends = listOf(
+            ContactUserUiState(101, "Alice Walker", "alice_walker", "alice@test.com", 0, sectionLetter = "A")
+        )
+        val searchUsers = listOf(
+            ContactUserUiState(101, "Alice Walker", "alice_walker", "alice@test.com", 0, sectionLetter = "A"),
+            ContactUserUiState(103, "Bob Dylan", "bob", "bob@test.com", 0, sectionLetter = "B")
+        )
+        ContactScreen(
+            uiState = ContactUiState(
+                isSearchActive = true,
+                searchQuery = "a",
+                searchResults = searchUsers,
+                friends = friends
+            )
+        )
+    }
+}
+
+@Preview(name = "搜索用户不存在", showBackground = true)
+@Composable
+private fun ContactScreenSearchNotFoundPreview() {
+    MaterialTheme {
+        ContactScreen(
+            uiState = ContactUiState(
+                isSearchActive = true,
+                searchQuery = "not_exist_user"
             )
         )
     }

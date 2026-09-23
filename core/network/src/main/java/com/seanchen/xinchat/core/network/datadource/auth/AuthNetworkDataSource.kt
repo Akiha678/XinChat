@@ -27,6 +27,11 @@ interface AuthNetworkDataSource {
     suspend fun updatePassword(params: Map<String, String>): NetworkResponse<Boolean>
 
     /**
+     * 获取手机验证码
+     */
+    suspend fun getSmsCode(params: Map<String, String>): NetworkResponse<String>
+
+    /**
      * 手机号登录
      */
     suspend fun loginByPhone(params: Map<String, String>): NetworkResponse<Auth>

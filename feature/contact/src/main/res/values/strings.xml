@@ -10,6 +10,8 @@
     <string name="contact_add_friend_message_hint">验证消息</string>
     <string name="contact_search_empty">请输入用户名后再搜索</string>
     <string name="contact_search_no_result">没有找到匹配的用户</string>
+    <string name="contact_user_not_exist">该用户不存在</string>
+    <string name="contact_already_friend">已是好友</string>
     <string name="contacts_load_failed">联系人加载失败</string>
     <string name="contact_enter_username">请输入用户名</string>
     <string name="contact_user_not_found">未找到用户</string>

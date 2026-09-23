@@ -44,6 +44,13 @@ class AuthRepository @Inject constructor(
     }.flowOn(Dispatchers.IO)
 
     /**
+     * 获取手机验证码
+     */
+    fun getSmsCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
+        emit(authNetworkDataSource.getSmsCode(params))
+    }.flowOn(Dispatchers.IO)
+
+    /**
      * 手机号登录
      */
     fun loginByPhone(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {

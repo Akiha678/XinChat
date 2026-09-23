@@ -24,6 +24,9 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import com.seanchen.xinchat.core.navigation.AppNavigator
+import com.seanchen.xinchat.core.navigation.NavigationService
+import kotlinx.coroutines.test.runCurrent
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,7 +38,7 @@ import org.junit.Test
 class SmsLoginViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val scope = CoroutineScope(SupervisorJob() + testDispatcher)
+    private lateinit var scope: CoroutineScope
 
     private val fakeAuthDataSource = object : AuthNetworkDataSource {
         override suspend fun register(params: Map<String, String>): LoginResponse =
@@ -49,6 +52,9 @@ class SmsLoginViewModelTest {
 
         override suspend fun updatePassword(params: Map<String, String>): NetworkResponse<Boolean> =
             NetworkResponse(data = true)
+
+        override suspend fun getSmsCode(params: Map<String, String>): NetworkResponse<String> =
+            NetworkResponse(data = "1234")
 
         override suspend fun loginByPhone(params: Map<String, String>): NetworkResponse<Auth> =
             NetworkResponse(data = Auth("tok", "ref", 100, 100, 0))
@@ -67,22 +73,28 @@ class SmsLoginViewModelTest {
     }
 
     private lateinit var authRepository: AuthRepository
+    private lateinit var appNavigator: AppNavigator
+    private lateinit var fakeAppState: AppState
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        scope = CoroutineScope(SupervisorJob() + testDispatcher)
+        fakeAppState = createFakeAppState(scope)
+        appNavigator = AppNavigator(fakeAppState, scope)
+        NavigationService.bind(appNavigator)
         authRepository = AuthRepository(fakeAuthDataSource)
     }
 
     @After
     fun tearDown() {
-        Dispatchers.resetMain()
+        NavigationService.unbind(appNavigator)
         scope.cancel()
+        Dispatchers.resetMain()
     }
 
     @Test
     fun testUpdatePhone_filtersNonDigits_andLimitsLength() {
-        val fakeAppState = createFakeAppState(scope)
         val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
 
         viewModel.updatePhone("138-0013-8000999")
@@ -91,7 +103,6 @@ class SmsLoginViewModelTest {
 
     @Test
     fun testUpdateVerificationCode_filtersNonDigits_andLimits4Digits() {
-        val fakeAppState = createFakeAppState(scope)
         val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
 
         viewModel.updateVerificationCode("12a345")
@@ -100,7 +111,6 @@ class SmsLoginViewModelTest {
 
     @Test
     fun testCanSendCode_andCanLogin() {
-        val fakeAppState = createFakeAppState(scope)
         val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
 
         assertFalse(viewModel.uiState.value.canSendCode)
@@ -114,26 +124,53 @@ class SmsLoginViewModelTest {
         assertTrue(viewModel.uiState.value.canLogin)
     }
 
+    private fun awaitCondition(timeoutMs: Long = 2000, condition: () -> Boolean) {
+        val start = System.currentTimeMillis()
+        while (!condition() && System.currentTimeMillis() - start < timeoutMs) {
+            Thread.sleep(20)
+            testDispatcher.scheduler.runCurrent()
+        }
+    }
+
     @Test
     fun testSendVerificationCode_startsCountdown() = runTest(testDispatcher) {
-        val fakeAppState = createFakeAppState(scope)
         val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
 
         viewModel.updatePhone("13800138000")
         viewModel.sendVerificationCode()
 
-        advanceTimeBy(350)
-        assertTrue(viewModel.uiState.value.verificationCode.isNotEmpty())
+        awaitCondition { !viewModel.uiState.value.isSendingCode && viewModel.uiState.value.verificationCode.isNotEmpty() }
+        assertEquals("1234", viewModel.uiState.value.verificationCode)
         assertEquals(60, viewModel.uiState.value.resendCountdown)
         assertFalse(viewModel.uiState.value.canSendCode)
 
         advanceTimeBy(1000)
+        testScheduler.runCurrent()
         assertEquals(59, viewModel.uiState.value.resendCountdown)
 
         // 推进剩余倒计时时间使其正常结束
         advanceTimeBy(60_000)
+        testScheduler.runCurrent()
         assertEquals(0, viewModel.uiState.value.resendCountdown)
         assertTrue(viewModel.uiState.value.canSendCode)
+    }
+
+    @Test
+    fun testLogin_success() = runTest(testDispatcher) {
+        val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
+
+        viewModel.updatePhone("13800138000")
+        viewModel.updateVerificationCode("1234")
+
+        viewModel.login()
+        awaitCondition { !viewModel.uiState.value.isLoggingIn && fakeAppState.isLoggedIn.value }
+
+        assertTrue(fakeAppState.isLoggedIn.value)
+        assertEquals("tok", fakeAppState.auth.value?.token)
+        assertFalse(viewModel.uiState.value.isLoggingIn)
+
+        // 让后续异步刷新任务执行完毕，避免泄漏到下一个测试
+        testScheduler.advanceUntilIdle()
     }
 
     private fun createFakeAppState(coroutineScope: CoroutineScope): AppState {

@@ -143,7 +143,6 @@ private fun LoginContentView(
                 AppButton(
                     text = stringResource(id = R.string.account_login),
                     onClick = { AuthNavigator.toAccountLogin() },
-                    style = ButtonStyle.OUTLINED
                 )
 
                 SpaceVerticalMedium()

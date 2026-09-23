@@ -5,11 +5,12 @@ import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.AuthRepository
 import com.seanchen.xinchat.core.data.state.AppState
 import com.seanchen.xinchat.core.model.entity.Auth
-import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.navigation.NavigationOptions
 import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.core.navigation.navigate
+import com.seanchen.xinchat.core.result.ResultHandler
+import com.seanchen.xinchat.core.result.asResult
 import com.seanchen.xinchat.core.util.storage.MMKVUtils
 import com.seanchen.xinchat.core.util.toast.ToastUtils
 import com.seanchen.xinchat.core.util.validation.ValidationUtil
@@ -17,7 +18,6 @@ import com.seanchen.xinchat.feature.auth.R
 import com.seanchen.xinchat.feature.auth.state.SmsLoginUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlin.random.Random
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,7 +63,7 @@ class SmsLoginViewModel @Inject constructor(
     }
 
     /**
-     * 发送短信验证码（UI 层模拟实现）
+     * 发送短信验证码
      */
     fun sendVerificationCode() {
         val currentPhone = _uiState.value.phone
@@ -78,24 +78,22 @@ class SmsLoginViewModel @Inject constructor(
 
         _uiState.update { it.copy(isSendingCode = true) }
 
-        viewModelScope.launch {
-            // 模拟短暂网络延迟
-            delay(300)
-
-            // 模拟生成 4 位随机验证码并自动填入
-            val code = String.format("%04d", Random.nextInt(1000, 10000))
-            runCatching { ToastUtils.showSuccess("【XinChat】模拟验证码：$code") }
-
-            _uiState.update {
-                it.copy(
-                    isSendingCode = false,
-                    verificationCode = code,
-                    resendCountdown = COUNTDOWN_SECONDS
-                )
+        val params = mapOf("phone" to currentPhone)
+        ResultHandler.handleResultWithData(
+            scope = viewModelScope,
+            flow = authRepository.getSmsCode(params).asResult(),
+            onData = { code ->
+                if (ValidationUtil.isValidSmsCode(code)) {
+                    _uiState.update { it.copy(verificationCode = code) }
+                }
+                runCatching { ToastUtils.showSuccess("【XinChat】验证码：$code") }
+                _uiState.update { it.copy(resendCountdown = COUNTDOWN_SECONDS) }
+                startCountdown()
+            },
+            onFinally = {
+                _uiState.update { it.copy(isSendingCode = false) }
             }
-
-            startCountdown()
-        }
+        )
     }
 
     /**
@@ -133,47 +131,37 @@ class SmsLoginViewModel @Inject constructor(
 
         _uiState.update { it.copy(isLoggingIn = true) }
 
-        viewModelScope.launch {
-            try {
-                // 短信登录在后端暂不可用，UI 层模拟完成登录态构建
-                delay(400)
-                val mockAuth = Auth(
-                    token = "sms_mock_token_${System.currentTimeMillis()}",
-                    refreshToken = "sms_mock_refresh_token",
-                    expire = 7 * 24 * 3600L,
-                    refreshExpire = 30 * 24 * 3600L,
-                    createdAt = System.currentTimeMillis()
-                )
+        val params = mapOf(
+            "phone" to currentPhone,
+            "code" to currentCode
+        )
 
-                val mockUser = User(
-                    id = currentPhone.takeLast(6).toLongOrNull() ?: 10001L,
-                    unionid = currentPhone,
-                    nickName = "用户_${currentPhone.takeLast(4)}",
-                    phone = currentPhone,
-                    avatarUrl = null,
-                    gender = 0,
-                    status = 1,
-                    loginType = "1"
-                )
-
-                appState.updateUserState(mockAuth, mockUser)
-                savePhone(currentPhone)
-
-                runCatching { ToastUtils.showSuccess(R.string.login_success) }
-
-                navigate(
-                    route = MainRoutes.Main,
-                    navOptions = NavigationOptions(
-                        popUpToRoute = AuthRoutes.Login,
-                        inclusive = true,
-                        allowPopToEmpty = true
-                    )
-                )
-            } catch (e: Exception) {
-                runCatching { ToastUtils.showError(e.message ?: "登录失败，请重试") }
-            } finally {
+        ResultHandler.handleResultWithData(
+            scope = viewModelScope,
+            flow = authRepository.loginByPhone(params).asResult(),
+            onData = { authData ->
+                loginSuccess(currentPhone, authData)
+            },
+            onFinally = {
                 _uiState.update { it.copy(isLoggingIn = false) }
             }
+        )
+    }
+
+    private fun loginSuccess(phone: String, authData: Auth) {
+        viewModelScope.launch {
+            savePhone(phone)
+            runCatching { ToastUtils.showSuccess(R.string.login_success) }
+            appState.updateAuth(authData)
+            appState.refreshUserInfo()
+            navigate(
+                route = MainRoutes.Main,
+                navOptions = NavigationOptions(
+                    popUpToRoute = AuthRoutes.Login,
+                    inclusive = true,
+                    allowPopToEmpty = true
+                )
+            )
         }
     }
 

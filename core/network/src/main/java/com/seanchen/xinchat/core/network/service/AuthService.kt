@@ -42,6 +42,14 @@ interface AuthService {
     ): NetworkResponse<Boolean>
 
     /**
+     * 获取手机验证码
+     */
+    @POST("auth/login/smsCode")
+    suspend fun getSmsCode(
+        @Body params: Map<String, String>
+    ): NetworkResponse<String>
+
+    /**
      * 手机号登录
      */
     @POST("auth/login/phone")
