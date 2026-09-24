@@ -15,7 +15,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<LibraryExtension> {
                 val projectDir = project.projectDir.path
                 val devBaseUrl = providers.gradleProperty("xinchat.devBaseUrl")
-                    .orElse("http://10.0.2.2:8080/")
+                    .orElse("http://111.231.53.205:8080/")
                     .get()
                     .withTrailingSlash()
                 val prodBaseUrl = providers.gradleProperty("xinchat.prodBaseUrl")

@@ -7,4 +7,6 @@ android {
 }
 
 dependencies {
+    api(libs.coil.compose)
 }
+

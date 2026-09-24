@@ -33,7 +33,7 @@ import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXSmall
 import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.navigation.user.UserNavigator
-import com.seanchen.widget.ui.image.Avatar
+import com.seanchen.xinchat.core.designsystem.component.AppAvatar
 import com.seanchen.widget.ui.scaffold.CommonScaffold
 import com.seanchen.widget.ui.list.AppListItem
 import com.seanchen.widget.ui.text.AppText
@@ -135,7 +135,7 @@ private fun UserInfoSection(
             .clickable{ UserNavigator.toProfile() },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Avatar(
+        AppAvatar(
             avatarUrl = userInfo?.avatarUrl.toFullMediaUrl(),
             size = 72.dp,
             modifier = Modifier.let { modifier ->

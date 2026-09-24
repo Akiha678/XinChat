@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.seanchen.widget.ui.image.SmallAvatar
+import com.seanchen.xinchat.core.designsystem.component.AppAvatar
 import com.seanchen.widget.ui.list.AppListItem
 import com.seanchen.widget.ui.scaffold.AppScaffold
 import com.seanchen.widget.ui.text.AppText
@@ -317,7 +317,7 @@ private fun SharedAvatar(
         modifier
     }
 
-    SmallAvatar(
+    AppAvatar(
         avatarUrl = avatarUrl,
         size = size,
         modifier = avatarModifier
