@@ -210,6 +210,10 @@ private class FakeUserInfoNetworkDataSource : UserInfoNetworkDataSource {
         return NetworkResponse()
     }
 
+    override suspend fun updateNickname(request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): NetworkResponse<User> {
+        return NetworkResponse()
+    }
+
     override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> {
         return NetworkResponse()
     }

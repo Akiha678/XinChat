@@ -198,6 +198,8 @@ class SmsLoginViewModelTest {
         val fakeUserInfoNetworkDataSource = object : UserInfoNetworkDataSource {
             override suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User> =
                 NetworkResponse(data = User(id = 1, nickName = "test", avatarUrl = "/uploads/test.png"))
+            override suspend fun updateNickname(request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): NetworkResponse<User> =
+                NetworkResponse(data = User(id = 1, nickName = request.nickName))
             override suspend fun getPersonInfo(): NetworkResponse<User> =
                 NetworkResponse(data = User(id = 1, nickName = "test", phone = "13800138000"))
             override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> =

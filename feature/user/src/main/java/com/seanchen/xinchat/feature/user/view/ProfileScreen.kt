@@ -25,7 +25,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import com.seanchen.xinchat.feature.user.component.EditNicknameDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,6 +81,9 @@ fun ProfileRoute(
     val isLoggingOut by viewModel.isLoggingOut.collectAsStateWithLifecycle()
     val isUploadingAvatar by viewModel.isUploadingAvatar.collectAsStateWithLifecycle()
     val previewAvatarUri by viewModel.previewAvatarUri.collectAsStateWithLifecycle()
+    val isUpdatingNickname by viewModel.isUpdatingNickname.collectAsStateWithLifecycle()
+
+    var isEditNicknameDialogVisible by remember { mutableStateOf(false) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -127,6 +134,29 @@ fun ProfileRoute(
         }
     }
 
+    EditNicknameDialog(
+        visible = isEditNicknameDialogVisible,
+        currentNickname = userInfo?.nickName.orEmpty(),
+        isSubmitting = isUpdatingNickname,
+        onDismiss = { isEditNicknameDialogVisible = false },
+        onConfirm = { newNickname ->
+            viewModel.updateNickname(
+                nickName = newNickname,
+                onSuccess = {
+                    isEditNicknameDialogVisible = false
+                    Toast.makeText(context, R.string.profile_nickname_update_success, Toast.LENGTH_SHORT).show()
+                },
+                onError = { errorMsg ->
+                    Toast.makeText(
+                        context,
+                        errorMsg ?: context.getString(R.string.profile_nickname_update_failed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+    )
+
     ProfileScreen(
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
@@ -140,6 +170,9 @@ fun ProfileRoute(
                     PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                 )
             }
+        },
+        onNicknameClick = {
+            isEditNicknameDialogVisible = true
         },
         onBackClick = { navigateBack() },
         onLogoutClick = {
@@ -162,6 +195,7 @@ internal fun ProfileScreen(
     previewAvatarUri: Uri? = null,
     userInfo: User? = null,
     onAvatarClick: () -> Unit = {},
+    onNicknameClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
@@ -177,6 +211,7 @@ internal fun ProfileScreen(
             isUploadingAvatar = isUploadingAvatar,
             previewAvatarUri = previewAvatarUri,
             onAvatarClick = onAvatarClick,
+            onNicknameClick = onNicknameClick,
             onLogoutClick = onLogoutClick,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope,
@@ -193,6 +228,7 @@ private fun ProfileContentView(
     isUploadingAvatar: Boolean,
     previewAvatarUri: Uri? = null,
     onAvatarClick: () -> Unit,
+    onNicknameClick: () -> Unit = {},
     onLogoutClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
@@ -214,6 +250,7 @@ private fun ProfileContentView(
             previewAvatarUri = previewAvatarUri,
             isUploadingAvatar = isUploadingAvatar,
             onAvatarClick = onAvatarClick,
+            onNicknameClick = onNicknameClick,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope
         )
@@ -232,6 +269,7 @@ private fun ProfileInfoSection(
     previewAvatarUri: Uri? = null,
     isUploadingAvatar: Boolean,
     onAvatarClick: () -> Unit,
+    onNicknameClick: () -> Unit = {},
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
 ) {
@@ -281,7 +319,9 @@ private fun ProfileInfoSection(
         ProfileValueItem(
             title = R.string.profile_nickname,
             value = userInfo?.nickName?.takeIf { it.isNotBlank() }
-                ?: stringResource(id = R.string.profile_not_set)
+                ?: stringResource(id = R.string.profile_not_set),
+            showArrow = true,
+            onClick = onNicknameClick
         )
         ProfileValueItem(
             title = R.string.profile_account_id,
@@ -305,10 +345,13 @@ private fun ProfileValueItem(
     @StringRes title: Int,
     value: String,
     showDivider: Boolean = true,
+    showArrow: Boolean = false,
+    onClick: (() -> Unit)? = null,
 ) {
     AppListItem(
         title = stringResource(id = title),
-        showArrow = false,
+        showArrow = showArrow,
+        onClick = onClick ?: {},
         showDivider = showDivider,
         horizontalPadding = SpaceHorizontalLarge,
         verticalPadding = SpaceVerticalLarge,

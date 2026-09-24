@@ -24,6 +24,12 @@ interface UserInfoService {
     suspend fun uploadAvatar(@Part file: MultipartBody.Part): NetworkResponse<User>
 
     /**
+     * 修改用户昵称
+     */
+    @POST("user/info/updateNickName")
+    suspend fun updateNickname(@Body request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): NetworkResponse<User>
+
+    /**
      * 修改个人资料
      */
     @POST("user/info/updatePersonInfo")

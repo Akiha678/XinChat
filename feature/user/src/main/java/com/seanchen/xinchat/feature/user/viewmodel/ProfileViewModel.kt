@@ -6,6 +6,7 @@ import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.UserInfoRepository
 import com.seanchen.xinchat.core.data.state.AppState
 import com.seanchen.xinchat.core.model.entity.User
+import com.seanchen.xinchat.core.model.request.UpdateNicknameRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +28,9 @@ class ProfileViewModel @Inject constructor(
 
     private val _isUploadingAvatar = MutableStateFlow(false)
     val isUploadingAvatar: StateFlow<Boolean> = _isUploadingAvatar.asStateFlow()
+
+    private val _isUpdatingNickname = MutableStateFlow(false)
+    val isUpdatingNickname: StateFlow<Boolean> = _isUpdatingNickname.asStateFlow()
 
     // 选中的本地临时头像 Uri，用于实现乐观更新（即时渲染预览）
     private val _previewAvatarUri = MutableStateFlow<Uri?>(null)
@@ -101,6 +105,53 @@ class ProfileViewModel @Inject constructor(
      */
     fun clearPreviewAvatar() {
         _previewAvatarUri.value = null
+    }
+
+    /**
+     * 修改用户昵称
+     *
+     * @param nickName 用户输入的新昵称
+     * @param onSuccess 成功回调
+     * @param onError 失败回调，携带错误原因
+     */
+    fun updateNickname(
+        nickName: String,
+        onSuccess: () -> Unit = {},
+        onError: (String?) -> Unit = {}
+    ) {
+        val trimmed = nickName.trim()
+        if (trimmed.isEmpty()) {
+            onError("昵称不能为空")
+            return
+        }
+        if (trimmed.length > 80) {
+            onError("昵称长度不能超过 80 个字符")
+            return
+        }
+        if (_isUpdatingNickname.value) return
+        _isUpdatingNickname.value = true
+        viewModelScope.launch {
+            try {
+                userInfoRepository.updateNickname(UpdateNicknameRequest(trimmed))
+                    .catch { throwable ->
+                        _isUpdatingNickname.value = false
+                        onError(throwable.message)
+                    }
+                    .collect { response ->
+                        _isUpdatingNickname.value = false
+                        val updatedUser = response.data
+                        if (response.isSucceeded && updatedUser != null) {
+                            appState.updateUserInfo(updatedUser)
+                            onSuccess()
+                        } else {
+                            onError(response.message)
+                        }
+                    }
+            } catch (e: Exception) {
+                _isUpdatingNickname.value = false
+                onError(e.message)
+            }
+        }
     }
 
     suspend fun logout() {

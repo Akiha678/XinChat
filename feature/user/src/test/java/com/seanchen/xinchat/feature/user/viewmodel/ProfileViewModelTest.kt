@@ -115,10 +115,92 @@ class ProfileViewModelTest {
         assertEquals("/old/avatar.jpg", fakeAppState.userInfo.value?.avatarUrl)
     }
 
+    @Test
+    fun updateNickname_success_updatesUserInfo_andCallsSuccessCallback() = runTest(testDispatcher) {
+        val initialUser = User(id = 1, nickName = "OldNick")
+        fakeAppState.updateUserInfo(initialUser)
+        testScheduler.runCurrent()
+
+        val expectedUser = User(id = 1, nickName = "NewNick")
+        fakeUserInfoNetworkDataSource.updateNicknameResult = NetworkResponse(code = 1000, message = "success", data = expectedUser)
+
+        val viewModel = ProfileViewModel(fakeAppState, userInfoRepository)
+
+        var isSuccessCalled = false
+        var isErrorCalled = false
+
+        viewModel.updateNickname(
+            nickName = "NewNick",
+            onSuccess = { isSuccessCalled = true },
+            onError = { isErrorCalled = true }
+        )
+
+        assertTrue(viewModel.isUpdatingNickname.value)
+
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.isUpdatingNickname.value)
+        assertTrue(isSuccessCalled)
+        assertFalse(isErrorCalled)
+        assertEquals("NewNick", fakeAppState.userInfo.value?.nickName)
+    }
+
+    @Test
+    fun updateNickname_empty_callsErrorCallbackWithoutNetwork() = runTest(testDispatcher) {
+        val initialUser = User(id = 1, nickName = "OldNick")
+        fakeAppState.updateUserInfo(initialUser)
+        testScheduler.runCurrent()
+
+        val viewModel = ProfileViewModel(fakeAppState, userInfoRepository)
+
+        var isSuccessCalled = false
+        var errorMessage: String? = null
+
+        viewModel.updateNickname(
+            nickName = "   ",
+            onSuccess = { isSuccessCalled = true },
+            onError = { msg -> errorMessage = msg }
+        )
+
+        assertFalse(viewModel.isUpdatingNickname.value)
+        assertFalse(isSuccessCalled)
+        assertEquals("昵称不能为空", errorMessage)
+        assertEquals("OldNick", fakeAppState.userInfo.value?.nickName)
+    }
+
+    @Test
+    fun updateNickname_failure_callsErrorCallback() = runTest(testDispatcher) {
+        val initialUser = User(id = 1, nickName = "OldNick")
+        fakeAppState.updateUserInfo(initialUser)
+        testScheduler.runCurrent()
+
+        fakeUserInfoNetworkDataSource.updateNicknameResult = NetworkResponse(code = 400, message = "nickName: 昵称长度不能超过 80 个字符", data = null)
+
+        val viewModel = ProfileViewModel(fakeAppState, userInfoRepository)
+
+        var isSuccessCalled = false
+        var errorMessage: String? = null
+
+        viewModel.updateNickname(
+            nickName = "TooLongNick",
+            onSuccess = { isSuccessCalled = true },
+            onError = { msg -> errorMessage = msg }
+        )
+
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.isUpdatingNickname.value)
+        assertFalse(isSuccessCalled)
+        assertEquals("nickName: 昵称长度不能超过 80 个字符", errorMessage)
+        assertEquals("OldNick", fakeAppState.userInfo.value?.nickName)
+    }
+
     private class FakeUserInfoNetworkDataSource : UserInfoNetworkDataSource {
         var uploadAvatarResult: NetworkResponse<User> = NetworkResponse()
+        var updateNicknameResult: NetworkResponse<User> = NetworkResponse()
 
         override suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User> = uploadAvatarResult
+        override suspend fun updateNickname(request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): NetworkResponse<User> = updateNicknameResult
         override suspend fun getPersonInfo(): NetworkResponse<User> = NetworkResponse(data = User(id = 1, nickName = "test"))
         override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> = NetworkResponse(data = true)
         override suspend fun updatePassword(params: Map<String, String>): NetworkResponse<Any> = NetworkResponse(data = true)

@@ -32,4 +32,12 @@
     <string name="avatar_invalid_format">仅支持 JPG、PNG、GIF、WEBP 格式的图片</string>
     <string name="avatar_size_exceeded">图片大小不能超过 5MB</string>
     <string name="avatar_read_failed">读取图片失败，请重试</string>
+    <string name="profile_edit_nickname">修改昵称</string>
+    <string name="profile_edit_nickname_hint">请输入新昵称</string>
+    <string name="profile_nickname_empty_error">昵称不能为空</string>
+    <string name="profile_nickname_length_error">昵称长度不能超过 80 个字符</string>
+    <string name="profile_nickname_update_success">昵称修改成功</string>
+    <string name="profile_nickname_update_failed">昵称修改失败，请重试</string>
+    <string name="profile_cancel">取消</string>
+    <string name="profile_confirm">保存</string>
 </resources>

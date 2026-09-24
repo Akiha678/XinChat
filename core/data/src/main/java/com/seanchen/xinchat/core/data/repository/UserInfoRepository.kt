@@ -31,6 +31,16 @@ class UserInfoRepository @Inject constructor(
     }.flowOn(Dispatchers.IO)
 
     /**
+     * 修改用户昵称
+     *
+     * @param request 包含新昵称的请求对象
+     * @return 更新后的用户信息Flow
+     */
+    fun updateNickname(request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): Flow<NetworkResponse<User>> = flow {
+        emit(userInfoNetworkDataSource.updateNickname(request))
+    }.flowOn(Dispatchers.IO)
+
+    /**
      * 更新用户信息
      *
      * @param params 更新参数

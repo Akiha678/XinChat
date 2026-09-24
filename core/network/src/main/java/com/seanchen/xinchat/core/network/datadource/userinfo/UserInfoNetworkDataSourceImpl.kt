@@ -14,6 +14,10 @@ class UserInfoNetworkDataSourceImpl @Inject constructor(
         return userInfoService.uploadAvatar(file)
     }
 
+    override suspend fun updateNickname(request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): NetworkResponse<User> {
+        return userInfoService.updateNickname(request)
+    }
+
     override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> {
 
         return userInfoService.updatePersonInfo(params)

@@ -14,6 +14,13 @@ interface UserInfoNetworkDataSource {
      */
     suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User>
 
+    /**
+     * 修改用户昵称
+     *
+     * @param request 包含新昵称的请求对象
+     * @return 更新后的用户信息响应
+     */
+    suspend fun updateNickname(request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): NetworkResponse<User>
 
     /**
      * 更新用户个人信息
