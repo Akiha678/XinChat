@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.feature.user.view
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -36,6 +37,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.seanchen.xinchat.core.designsystem.component.AppAvatar
 import com.seanchen.widget.ui.list.AppListItem
 import com.seanchen.widget.ui.scaffold.AppScaffold
@@ -73,6 +76,7 @@ fun ProfileRoute(
     val userInfo by viewModel.userInfo.collectAsStateWithLifecycle()
     val isLoggingOut by viewModel.isLoggingOut.collectAsStateWithLifecycle()
     val isUploadingAvatar by viewModel.isUploadingAvatar.collectAsStateWithLifecycle()
+    val previewAvatarUri by viewModel.previewAvatarUri.collectAsStateWithLifecycle()
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -82,8 +86,24 @@ fun ProfileRoute(
                 is AvatarValidationResult.Success -> {
                     viewModel.uploadAvatar(
                         part = result.part,
-                        onSuccess = {
-                            Toast.makeText(context, R.string.avatar_update_success, Toast.LENGTH_SHORT).show()
+                        previewUri = uri,
+                        onSuccess = { newAvatarUrl ->
+                            scope.launch {
+                                val fullUrl = newAvatarUrl.toFullMediaUrl()
+                                if (fullUrl != null) {
+                                    try {
+                                        // 同步预加载新图片并写入 Coil 缓存
+                                        val request = ImageRequest.Builder(context)
+                                            .data(fullUrl)
+                                            .build()
+                                        context.imageLoader.execute(request)
+                                    } catch (_: Exception) {
+                                        // 即使网络微小波动，也不阻断后续主流程
+                                    }
+                                }
+                                viewModel.clearPreviewAvatar()
+                                Toast.makeText(context, R.string.avatar_update_success, Toast.LENGTH_SHORT).show()
+                            }
                         },
                         onError = { msg ->
                             Toast.makeText(
@@ -113,6 +133,7 @@ fun ProfileRoute(
         isLoggedIn = isLoggedIn,
         isLoggingOut = isLoggingOut,
         isUploadingAvatar = isUploadingAvatar,
+        previewAvatarUri = previewAvatarUri,
         onAvatarClick = {
             if (!isUploadingAvatar) {
                 photoPickerLauncher.launch(
@@ -138,6 +159,7 @@ internal fun ProfileScreen(
     isLoggedIn: Boolean = false,
     isLoggingOut: Boolean = false,
     isUploadingAvatar: Boolean = false,
+    previewAvatarUri: Uri? = null,
     userInfo: User? = null,
     onAvatarClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
@@ -153,6 +175,7 @@ internal fun ProfileScreen(
             isLoggedIn = isLoggedIn,
             isLoggingOut = isLoggingOut,
             isUploadingAvatar = isUploadingAvatar,
+            previewAvatarUri = previewAvatarUri,
             onAvatarClick = onAvatarClick,
             onLogoutClick = onLogoutClick,
             sharedTransitionScope = sharedTransitionScope,
@@ -168,6 +191,7 @@ private fun ProfileContentView(
     isLoggedIn: Boolean,
     isLoggingOut: Boolean,
     isUploadingAvatar: Boolean,
+    previewAvatarUri: Uri? = null,
     onAvatarClick: () -> Unit,
     onLogoutClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope? = null,
@@ -187,6 +211,7 @@ private fun ProfileContentView(
 
         ProfileInfoSection(
             userInfo = userInfo,
+            previewAvatarUri = previewAvatarUri,
             isUploadingAvatar = isUploadingAvatar,
             onAvatarClick = onAvatarClick,
             sharedTransitionScope = sharedTransitionScope,
@@ -204,6 +229,7 @@ private fun ProfileContentView(
 @Composable
 private fun ProfileInfoSection(
     userInfo: User?,
+    previewAvatarUri: Uri? = null,
     isUploadingAvatar: Boolean,
     onAvatarClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope? = null,
@@ -225,8 +251,9 @@ private fun ProfileInfoSection(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.size(44.dp)
                 ) {
+                    val displayAvatar: Any? = previewAvatarUri ?: userInfo?.avatarUrl.toFullMediaUrl()
                     SharedAvatar(
-                        avatarUrl = userInfo?.avatarUrl.toFullMediaUrl(),
+                        avatarUrl = displayAvatar,
                         size = 44.dp,
                         sharedTransitionScope = sharedTransitionScope,
                         animatedContentScope = animatedContentScope
@@ -300,7 +327,7 @@ private fun ProfileValueItem(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun SharedAvatar(
-    avatarUrl: String?,
+    avatarUrl: Any?,
     size: Dp,
     sharedTransitionScope: SharedTransitionScope?,
     animatedContentScope: AnimatedContentScope?,

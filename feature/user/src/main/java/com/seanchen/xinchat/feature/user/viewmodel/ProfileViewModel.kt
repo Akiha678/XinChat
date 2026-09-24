@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.feature.user.viewmodel
 
+import android.net.Uri
 import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.UserInfoRepository
@@ -27,6 +28,10 @@ class ProfileViewModel @Inject constructor(
     private val _isUploadingAvatar = MutableStateFlow(false)
     val isUploadingAvatar: StateFlow<Boolean> = _isUploadingAvatar.asStateFlow()
 
+    // 选中的本地临时头像 Uri，用于实现乐观更新（即时渲染预览）
+    private val _previewAvatarUri = MutableStateFlow<Uri?>(null)
+    val previewAvatarUri: StateFlow<Uri?> = _previewAvatarUri.asStateFlow()
+
     val isLoggedIn: StateFlow<Boolean> = appState.isLoggedIn
         .stateIn(
             scope = viewModelScope,
@@ -48,20 +53,26 @@ class ProfileViewModel @Inject constructor(
     }
 
     /**
-     * 上传并更换用户头像
+     * 上传并更换用户头像（支持本地即时预览以实现乐观更新）
+     *
+     * @param part 上传的图片表单数据
+     * @param previewUri 本地选中的图片 Uri，传入后立即可见，避免网络耗时导致的界面闪白
      */
     fun uploadAvatar(
         part: MultipartBody.Part,
-        onSuccess: () -> Unit = {},
+        previewUri: Uri? = null,
+        onSuccess: (newAvatarUrl: String?) -> Unit = {},
         onError: (String?) -> Unit = {}
     ) {
         if (_isUploadingAvatar.value) return
         _isUploadingAvatar.value = true
+        _previewAvatarUri.value = previewUri // 1. 立即展示选中的本地图片（0 延迟视觉反馈）
         viewModelScope.launch {
             try {
                 userInfoRepository.uploadAvatar(part)
                     .catch { throwable ->
                         _isUploadingAvatar.value = false
+                        _previewAvatarUri.value = null // 失败回滚
                         onError(throwable.message)
                     }
                     .collect { response ->
@@ -69,16 +80,27 @@ class ProfileViewModel @Inject constructor(
                         val user = response.data
                         if (response.isSucceeded && user != null) {
                             appState.updateUserInfo(user)
-                            onSuccess()
+                            // 保持 previewAvatarUri，避免网络图片未缓存造成界面闪现默认头像，
+                            // 由 UI 在完成后台预加载后调用 clearPreviewAvatar() 平滑清除
+                            onSuccess(user.avatarUrl)
                         } else {
+                            _previewAvatarUri.value = null // 业务失败回滚
                             onError(response.message)
                         }
                     }
             } catch (e: Exception) {
                 _isUploadingAvatar.value = false
+                _previewAvatarUri.value = null // 异常回滚
                 onError(e.message)
             }
         }
+    }
+
+    /**
+     * 清空本地预览头像，平滑交接至正式的用户网络头像
+     */
+    fun clearPreviewAvatar() {
+        _previewAvatarUri.value = null
     }
 
     suspend fun logout() {
