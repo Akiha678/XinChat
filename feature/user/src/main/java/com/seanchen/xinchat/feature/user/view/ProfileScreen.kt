@@ -29,7 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import com.seanchen.xinchat.feature.user.component.EditNicknameDialog
+import com.seanchen.widget.ui.dialog.AppInputDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -134,10 +134,13 @@ fun ProfileRoute(
         }
     }
 
-    EditNicknameDialog(
+    AppInputDialog(
         visible = isEditNicknameDialogVisible,
-        currentNickname = userInfo?.nickName.orEmpty(),
-        isSubmitting = isUpdatingNickname,
+        title = stringResource(id = R.string.profile_edit_nickname),
+        initialValue = userInfo?.nickName.orEmpty(),
+        placeholder = stringResource(id = R.string.profile_edit_nickname_hint),
+        maxLength = 80,
+        confirmLoading = isUpdatingNickname,
         onDismiss = { isEditNicknameDialogVisible = false },
         onConfirm = { newNickname ->
             viewModel.updateNickname(

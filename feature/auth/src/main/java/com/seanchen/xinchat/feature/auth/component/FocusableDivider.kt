@@ -1,11 +1,10 @@
 package com.seanchen.xinchat.feature.auth.component
 
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.seanchen.widget.ui.divider.AppDivider
 import com.seanchen.xinchat.core.designsystem.theme.Primary
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalLarge
 
@@ -20,9 +19,10 @@ fun FocusableDivider(
         SpaceVerticalLarge()
     }
 
-    HorizontalDivider(
+    AppDivider(
         modifier = modifier,
-        thickness = thickness.dp,
-        color = if (focusState.value) Primary else MaterialTheme.colorScheme.outline
+        isFocused = focusState.value,
+        focusedColor = Primary,
+        thickness = thickness.dp
     )
 }

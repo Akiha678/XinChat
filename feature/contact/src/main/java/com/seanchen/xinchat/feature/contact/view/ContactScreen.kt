@@ -1,10 +1,5 @@
 package com.seanchen.xinchat.feature.contact.view
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,23 +21,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -50,11 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -62,35 +45,19 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.designsystem.theme.CommonIcon
-import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingLarge
-import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
+import com.seanchen.widget.ui.appbar.ExpandableSearchTopAppBar
+import com.seanchen.widget.ui.banner.AppBanner
 import com.seanchen.widget.ui.empty.Empty
+import com.seanchen.widget.ui.image.LetterAvatar
 import com.seanchen.widget.ui.loading.PageLoading
-import com.seanchen.widget.ui.text.AppText
-import com.seanchen.widget.ui.text.TextSize
-import com.seanchen.widget.ui.text.TextType
+import com.seanchen.widget.ui.theme.ColorOnline
 import com.seanchen.xinchat.feature.contact.R
 import com.seanchen.xinchat.feature.contact.state.ContactUiState
 import com.seanchen.xinchat.feature.contact.state.ContactUserUiState
 import com.seanchen.xinchat.feature.contact.viewmodel.ContactViewModel
-import kotlin.math.abs
 
-/**
- * Telegram 经典头像色盘
- */
-private val TelegramAvatarColors = listOf(
-    Color(0xFFE17076), // 珊瑚红
-    Color(0xFFFAA774), // 暖橙色
-    Color(0xFFA695E7), // 薰衣草紫
-    Color(0xFF7BC862), // 清爽绿
-    Color(0xFF6EC9CB), // 绿松石青
-    Color(0xFF65AADD), // 浅蔚蓝
-    Color(0xFFEE7AAE), // 樱花粉
-)
 
-private val TelegramOnlineColor = Color(0xFF00C853)
-private val TelegramActionBlue = Color(0xFF2AABEE)
 
 @Composable
 fun ContactRoute(
@@ -128,12 +95,36 @@ internal fun ContactScreen(
 ) {
     Scaffold(
         topBar = {
-            TelegramContactTopAppBar(
-                uiState = uiState,
+            ExpandableSearchTopAppBar(
+                titleText = stringResource(R.string.contacts_title),
+                subtitleText = if (uiState.friends.isNotEmpty() && !uiState.isSearchActive) {
+                    stringResource(R.string.contacts_count, uiState.friends.size)
+                } else null,
+                isSearchActive = uiState.isSearchActive,
+                searchQuery = uiState.searchQuery,
                 onSearchQueryChange = onSearchQueryChange,
-                onToggleSearch = onToggleSearch,
-                onToggleSort = onToggleSort,
-                onSearchUsers = onSearchUsers
+                onSearch = onSearchUsers,
+                searchPlaceholder = stringResource(R.string.search_username),
+                actions = {
+                    // 搜索按钮
+                    IconButton(onClick = { onToggleSearch(null) }) {
+                        CommonIcon(
+                            resId = if (uiState.isSearchActive) R.drawable.ic_close else R.drawable.ic_search,
+                            size = 22.dp,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    // 排序按钮
+                    if (!uiState.isSearchActive && uiState.friends.isNotEmpty()) {
+                        IconButton(onClick = onToggleSort) {
+                            CommonIcon(
+                                resId = R.drawable.ic_menu_list,
+                                size = 20.dp,
+                                tint = if (uiState.sortByOnline) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
             )
         },
         contentWindowInsets = ScaffoldDefaults.contentWindowInsets.exclude(WindowInsets.navigationBars),
@@ -147,142 +138,6 @@ internal fun ContactScreen(
             onRefresh = onRefresh,
             onClearError = onClearError
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun TelegramContactTopAppBar(
-    uiState: ContactUiState,
-    onSearchQueryChange: (String) -> Unit,
-    onToggleSearch: (Boolean?) -> Unit,
-    onToggleSort: () -> Unit,
-    onSearchUsers: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-    ) {
-        TopAppBar(
-            title = {
-                Column {
-                    Text(
-                        text = stringResource(R.string.contacts_title),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    if (uiState.friends.isNotEmpty() && !uiState.isSearchActive) {
-                        Text(
-                            text = stringResource(R.string.contacts_count, uiState.friends.size),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            },
-            actions = {
-                // 搜索按钮
-                IconButton(onClick = { onToggleSearch(null) }) {
-                    CommonIcon(
-                        resId = if (uiState.isSearchActive) R.drawable.ic_close else R.drawable.ic_search,
-                        size = 22.dp,
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                // 排序按钮
-                if (!uiState.isSearchActive && uiState.friends.isNotEmpty()) {
-                    IconButton(onClick = onToggleSort) {
-                        CommonIcon(
-                            resId = R.drawable.ic_menu_list,
-                            size = 20.dp,
-                            tint = if (uiState.sortByOnline) TelegramActionBlue else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface
-            )
-        )
-
-        // 搜索输入栏展开动画
-        AnimatedVisibility(
-            visible = uiState.isSearchActive,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut()
-        ) {
-            TelegramSearchBar(
-                query = uiState.searchQuery,
-                onQueryChange = onSearchQueryChange,
-                onSearch = onSearchUsers,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun TelegramSearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    onSearch: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .height(44.dp)
-            .background(
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(22.dp)
-            )
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        CommonIcon(
-            resId = R.drawable.ic_search,
-            size = 18.dp,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        BasicTextField(
-            value = query,
-            onValueChange = onQueryChange,
-            singleLine = true,
-            textStyle = TextStyle(
-                fontSize = 15.sp,
-                color = MaterialTheme.colorScheme.onSurface
-            ),
-            cursorBrush = SolidColor(TelegramActionBlue),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-            modifier = Modifier.weight(1f)
-        ) { innerTextField ->
-            Box(contentAlignment = Alignment.CenterStart) {
-                if (query.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.search_username),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        fontSize = 15.sp
-                    )
-                }
-                innerTextField()
-            }
-        }
-        if (query.isNotEmpty()) {
-            IconButton(
-                onClick = { onQueryChange("") },
-                modifier = Modifier.size(24.dp)
-            ) {
-                CommonIcon(
-                    resId = R.drawable.ic_close,
-                    size = 16.dp,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
     }
 }
 
@@ -321,9 +176,9 @@ private fun ContactContentView(
                     // 错误横幅
                     if (uiState.errorMessage != null) {
                         item {
-                            ContactErrorBanner(
+                            AppBanner(
                                 message = uiState.errorMessage,
-                                onClear = onClearError
+                                onClose = onClearError
                             )
                         }
                     }
@@ -509,7 +364,7 @@ private fun TelegramSectionHeader(letter: String) {
             text = letter,
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
-                color = TelegramActionBlue
+                color = MaterialTheme.colorScheme.primary
             )
         )
     }
@@ -547,7 +402,7 @@ private fun TelegramContactRow(
             Text(
                 text = if (user.isOnline) stringResource(R.string.status_online) else user.lastSeenText,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (user.isOnline) TelegramOnlineColor else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                color = if (user.isOnline) ColorOnline else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -560,45 +415,13 @@ fun TelegramAvatar(
     user: ContactUserUiState,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = remember(user.id, user.displayName) {
-        if (user.avatarColor != 0) {
-            Color(user.avatarColor)
-        } else {
-            val hash = abs(user.id.hashCode() + user.displayName.hashCode())
-            TelegramAvatarColors[hash % TelegramAvatarColors.size]
-        }
-    }
-    val initial = user.displayName.trim().take(1).uppercase().ifBlank { "?" }
-
-    Box(
-        modifier = modifier.size(46.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .size(46.dp)
-                .clip(CircleShape)
-                .background(bgColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = initial,
-                color = Color.White,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        // 在线状态指示圆点
-        if (user.isOnline) {
-            Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .align(Alignment.BottomEnd)
-                    .background(TelegramOnlineColor, CircleShape)
-                    .border(2.dp, MaterialTheme.colorScheme.surface, CircleShape)
-            )
-        }
-    }
+    LetterAvatar(
+        name = user.displayName,
+        modifier = modifier,
+        size = 46.dp,
+        backgroundColor = if (user.avatarColor != 0) Color(user.avatarColor) else null,
+        isOnline = user.isOnline
+    )
 }
 
 /**
@@ -612,41 +435,6 @@ fun ContactAvatar(
     TelegramAvatar(user = user, modifier = modifier)
 }
 
-@Composable
-private fun ContactErrorBanner(
-    message: String,
-    onClear: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = SpacePaddingLarge, vertical = SpacePaddingMedium),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            AppText(
-                text = message,
-                type = TextType.ERROR,
-                size = TextSize.BODY_MEDIUM,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = onClear) {
-                CommonIcon(
-                    resId = R.drawable.ic_close,
-                    size = 20.dp,
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-            }
-        }
-    }
-}
 
 @Preview(name = "Telegram 风格联系人列表", showBackground = true)
 @Composable
