@@ -55,6 +55,7 @@ data class ContactUserUiState(
     val username: String = "",
     val email: String = "",
     val avatarColor: Int = 0,
+    val avatarUrl: String? = null,
     val isOnline: Boolean = false,
     val lastSeenText: String = "最近上线",
     val sectionLetter: String = "#"
@@ -71,6 +72,7 @@ fun ContactUserModel.toUiState(
         username = username,
         email = email,
         avatarColor = avatarColor,
+        avatarUrl = avatarUrl,
         isOnline = isOnline,
         lastSeenText = lastSeenText,
         sectionLetter = letter

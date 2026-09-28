@@ -20,8 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.seanchen.xinchat.core.designsystem.component.AppAvatar
+import com.seanchen.xinchat.core.util.media.toFullMediaUrl
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -412,13 +415,34 @@ fun TelegramAvatar(
     user: ContactUserUiState,
     modifier: Modifier = Modifier
 ) {
-    LetterAvatar(
-        name = user.displayName,
-        modifier = modifier,
-        size = 46.dp,
-        backgroundColor = if (user.avatarColor != 0) Color(user.avatarColor) else null,
-        isOnline = user.isOnline
-    )
+    val fullUrl = user.avatarUrl?.takeIf { it.isNotBlank() }?.toFullMediaUrl()
+    androidx.compose.foundation.layout.Box(modifier = modifier.size(46.dp)) {
+        if (fullUrl != null) {
+            AppAvatar(
+                avatarUrl = fullUrl,
+                size = 46.dp,
+                modifier = Modifier.matchParentSize()
+            )
+        } else {
+            LetterAvatar(
+                name = user.displayName,
+                modifier = Modifier.matchParentSize(),
+                size = 46.dp,
+                backgroundColor = if (user.avatarColor != 0) Color(user.avatarColor) else null,
+                isOnline = false
+            )
+        }
+        if (user.isOnline) {
+            androidx.compose.foundation.layout.Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .align(Alignment.BottomEnd)
+                    .background(Color.White, CircleShape)
+                    .padding(2.dp)
+                    .background(ColorOnline, CircleShape)
+            )
+        }
+    }
 }
 
 /**

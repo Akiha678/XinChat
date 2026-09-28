@@ -9,4 +9,5 @@ data class UserSummaryResponse(
     val username: String = "",
     val email: String = "",
     val avatarColor: Int = 0,
+    val avatarUrl: String? = null,
 )

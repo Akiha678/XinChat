@@ -18,10 +18,14 @@ data class ContactUserModel(
     val username: String,
     val email: String,
     val avatarColor: Int,
+    val avatarUrl: String? = null,
 )
 
 fun UserSummaryResponse.toContactUserModel() = ContactUserModel(
     id = id,
     displayName = name.ifBlank { username.ifBlank { email.ifBlank { "未命名" } } },
-    username = username, email = email, avatarColor = avatarColor
+    username = username,
+    email = email,
+    avatarColor = avatarColor,
+    avatarUrl = avatarUrl,
 )
