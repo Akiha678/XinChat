@@ -56,7 +56,7 @@ import com.seanchen.widget.ui.error.BaseNetworkView
 import com.seanchen.xinchat.feature.chat.R
 import com.seanchen.xinchat.feature.chat.state.ChatListUiState
 import com.seanchen.xinchat.feature.chat.state.ChatSessionItemUiState
-import com.seanchen.xinchat.feature.chat.state.toWidgetState
+import com.seanchen.xinchat.core.common.base.state.toWidgetState
 import com.seanchen.xinchat.feature.chat.viewmodel.ChatListViewModel
 import java.time.Instant
 import java.time.ZoneId

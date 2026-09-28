@@ -34,6 +34,10 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import javax.inject.Inject
 
+/**
+ * 聊天界面ViewModel
+ */
+
 private const val TAG = "ChatViewModel"
 
 @HiltViewModel

@@ -8,7 +8,7 @@ data class ChatInfoUiState(
     val name: String = "",
     val avatarUrl: String = "",
     val peerId: Long = 0L,
-    val isPinned: Boolean = false,
-    val isMuted: Boolean = false,
-    val isLoading: Boolean = false
+    val isPinned: Boolean = false,  // 已固定
+    val isMuted: Boolean = false,   // 已静音
+    val isLoading: Boolean = false  // 加载中
 )

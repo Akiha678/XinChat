@@ -1,4 +1,4 @@
-package com.seanchen.xinchat.feature.chat.state
+package com.seanchen.xinchat.core.common.base.state
 
 import com.seanchen.xinchat.core.common.base.state.BaseNetWorkUiState as CoreNetWorkState
 import com.seanchen.widget.ui.error.BaseNetWorkUiState as WidgetNetWorkState
@@ -10,7 +10,7 @@ import com.seanchen.widget.ui.error.BaseNetWorkUiState as WidgetNetWorkState
  * 的类型（避免业务/数据层依赖 UI 组件库）。两个 sealed class 结构一致，此映射为纯类型转换，
  * 成功态数据原样透传。
  */
-internal fun <T> CoreNetWorkState<T>.toWidgetState(): WidgetNetWorkState<T> = when (this) {
+fun <T> CoreNetWorkState<T>.toWidgetState(): WidgetNetWorkState<T> = when (this) {
     is CoreNetWorkState.Loading -> WidgetNetWorkState.Loading
     is CoreNetWorkState.Success -> WidgetNetWorkState.Success(data)
     is CoreNetWorkState.Error -> WidgetNetWorkState.Error(message, exception)

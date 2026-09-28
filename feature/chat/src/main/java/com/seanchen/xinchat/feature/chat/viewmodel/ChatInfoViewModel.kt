@@ -15,6 +15,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
+/**
+ * 聊天信息ViewModel
+ */
+
+private const val TAG = "ChatInfoViewModel"
+
 @HiltViewModel
 class ChatInfoViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
