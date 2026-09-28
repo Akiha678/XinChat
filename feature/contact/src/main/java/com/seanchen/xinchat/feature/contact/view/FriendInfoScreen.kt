@@ -29,10 +29,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seanchen.xinchat.core.navigation.navigateBack
+import com.seanchen.xinchat.feature.contact.viewmodel.FriendInfoViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -95,15 +100,24 @@ fun ContactUserUiState.toFriendInfoUiState(
  */
 @Composable
 fun FriendInfoRoute(
+    userId: Long = 0L,
     user: ContactUserUiState? = null,
-    onBackClick: () -> Unit = {},
+    viewModel: FriendInfoViewModel = hiltViewModel(),
+    onBackClick: () -> Unit = { navigateBack() },
     onSendMessage: (Long) -> Unit = { sessionId ->
         ChatNavigator.toChatMessage(sessionId = sessionId)
     },
     onAudioVideoCall: (Long) -> Unit = {}
 ) {
-    val uiState = remember(user) {
-        user?.toFriendInfoUiState() ?: FriendInfoUiState()
+    LaunchedEffect(userId) {
+        if (userId > 0L) {
+            viewModel.loadFriendInfo(userId)
+        }
+    }
+
+    val vmUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState = remember(user, vmUiState) {
+        user?.toFriendInfoUiState() ?: vmUiState
     }
 
     FriendInfoScreen(

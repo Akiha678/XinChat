@@ -24,6 +24,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.seanchen.xinchat.core.designsystem.component.AppAvatar
+import com.seanchen.xinchat.core.navigation.contact.ContactNavigator
 import com.seanchen.xinchat.core.util.media.toFullMediaUrl
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -73,6 +74,9 @@ fun ContactRoute(
         onFriendClick = { user ->
             ChatNavigator.toChatMessage(sessionId = user.id)
         },
+        onAvatarClick = { user ->
+            ContactNavigator.toFriendInfo(userId = user.id)
+        },
         onSearchUsers = viewModel::searchUsers,
         onAddFriend = viewModel::addFriend,
         onRefresh = viewModel::refreshFriends,
@@ -88,6 +92,7 @@ internal fun ContactScreen(
     onToggleSearch: (Boolean?) -> Unit = {},
     onToggleSort: () -> Unit = {},
     onFriendClick: (ContactUserUiState) -> Unit = {},
+    onAvatarClick: (ContactUserUiState) -> Unit = {},
     onSearchUsers: () -> Unit = {},
     onAddFriend: (ContactUserUiState) -> Unit = {},
     onRefresh: () -> Unit = {},
@@ -134,6 +139,7 @@ internal fun ContactScreen(
             uiState = uiState,
             paddingValues = paddingValues,
             onFriendClick = onFriendClick,
+            onAvatarClick = onAvatarClick,
             onAddFriend = onAddFriend,
             onRefresh = onRefresh,
             onClearError = onClearError
@@ -146,6 +152,7 @@ private fun ContactContentView(
     uiState: ContactUiState,
     paddingValues: PaddingValues,
     onFriendClick: (ContactUserUiState) -> Unit,
+    onAvatarClick: (ContactUserUiState) -> Unit = {},
     onAddFriend: (ContactUserUiState) -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
@@ -212,7 +219,8 @@ private fun ContactContentView(
                                         user = user,
                                         isFriend = uiState.friends.any { it.id == user.id },
                                         isAdding = uiState.isSendingFriendRequest,
-                                        onAddFriend = { onAddFriend(user) }
+                                        onAddFriend = { onAddFriend(user) },
+                                        onAvatarClick = { onAvatarClick(user) }
                                     )
                                 }
                             }
@@ -276,7 +284,8 @@ private fun ContactContentView(
                             ) { user ->
                                 TelegramContactRow(
                                     user = user,
-                                    onClick = { onFriendClick(user) }
+                                    onClick = { onFriendClick(user) },
+                                    onAvatarClick = { onAvatarClick(user) }
                                 )
                             }
                         }
@@ -303,6 +312,7 @@ private fun TelegramSearchResultRow(
     isFriend: Boolean,
     isAdding: Boolean,
     onAddFriend: () -> Unit,
+    onAvatarClick: (() -> Unit)? = null,
 ) {
     Row(
         modifier = Modifier
@@ -310,7 +320,10 @@ private fun TelegramSearchResultRow(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TelegramAvatar(user = user)
+        TelegramAvatar(
+            user = user,
+            modifier = if (onAvatarClick != null) Modifier.clickable(onClick = onAvatarClick) else Modifier
+        )
 
         Spacer(modifier = Modifier.width(14.dp))
 
@@ -373,7 +386,8 @@ private fun TelegramSectionHeader(letter: String) {
 @Composable
 private fun TelegramContactRow(
     user: ContactUserUiState,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onAvatarClick: (() -> Unit)? = null
 ) {
     Row(
         modifier = Modifier
@@ -382,8 +396,11 @@ private fun TelegramContactRow(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Telegram 风格头像（带在线状态小绿点）
-        TelegramAvatar(user = user)
+        // Telegram 风格头像（带在线状态小绿点），点击进入好友资料
+        TelegramAvatar(
+            user = user,
+            modifier = if (onAvatarClick != null) Modifier.clickable(onClick = onAvatarClick) else Modifier
+        )
 
         Spacer(modifier = Modifier.width(14.dp))
 

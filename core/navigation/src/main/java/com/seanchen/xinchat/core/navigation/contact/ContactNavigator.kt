@@ -17,4 +17,11 @@ object ContactNavigator {
     fun toAddFriend(){
         navigate(ContactRoutes.AddFriend)
     }
+
+    /**
+     * 跳转至好友资料界面
+     */
+    fun toFriendInfo(userId: Long) {
+        navigate(ContactRoutes.FriendInfo(userId = userId))
+    }
 }

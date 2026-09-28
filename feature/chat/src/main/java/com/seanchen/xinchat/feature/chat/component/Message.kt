@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,7 +60,8 @@ fun Message(
     isLastMessageByAuthor: Boolean,
     isNewMessage: Boolean = false,
     currentUserAvatarUrl: String? = null,
-    onAnimationFinished: () -> Unit = {}
+    onAnimationFinished: () -> Unit = {},
+    onAvatarClick: ((Long) -> Unit)? = null
 ){
     val spaceBetweenAuthors = if (isLastMessageByAuthor) Modifier.padding(top = SpaceVerticalSmall) else Modifier
 
@@ -88,6 +90,7 @@ fun Message(
                 isUserMe = isUserMe,
                 showAuthor = isFirstMessageByAuthor,
                 currentUserAvatarUrl = currentUserAvatarUrl,
+                onAvatarClick = onAvatarClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .then(spaceBetweenAuthors)
@@ -100,6 +103,7 @@ fun Message(
             isUserMe = isUserMe,
             showAuthor = isFirstMessageByAuthor,
             currentUserAvatarUrl = currentUserAvatarUrl,
+            onAvatarClick = onAvatarClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .then(spaceBetweenAuthors)
@@ -114,6 +118,7 @@ private fun MessageRow(
     isUserMe: Boolean,
     showAuthor: Boolean,
     currentUserAvatarUrl: String? = null,
+    onAvatarClick: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val rawAvatarUrl = if (isUserMe) {
@@ -131,7 +136,8 @@ private fun MessageRow(
         if (!isUserMe) {
             MessageAvatar(
                 avatarUrl = fullAvatarUrl,
-                visible = showAuthor
+                visible = showAuthor,
+                onClick = if (onAvatarClick != null) { { onAvatarClick(msg.userId) } } else null
             )
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(SpaceHorizontalSmall))
         }
@@ -179,6 +185,7 @@ private fun MessageRow(
 private fun MessageAvatar(
     avatarUrl: String?,
     visible: Boolean,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (!visible) {
@@ -189,6 +196,6 @@ private fun MessageAvatar(
     AppAvatar(
         avatarUrl = avatarUrl,
         size = 34.dp,
-        modifier = modifier
+        modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
     )
 }

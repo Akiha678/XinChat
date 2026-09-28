@@ -6,6 +6,7 @@ import com.seanchen.xinchat.core.navigation.contact.ContactRoutes
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.feature.contact.view.ContactRoute
 import com.seanchen.xinchat.feature.contact.view.AddFriendRoute
+import com.seanchen.xinchat.feature.contact.view.FriendInfoRoute
 
 fun EntryProviderScope<NavKey>.contactGraph() {
     entry<ContactRoutes.Contact> {
@@ -13,5 +14,8 @@ fun EntryProviderScope<NavKey>.contactGraph() {
     }
     entry<ContactRoutes.AddFriend> {
         AddFriendRoute()
+    }
+    entry<ContactRoutes.FriendInfo> { route ->
+        FriendInfoRoute(userId = route.userId)
     }
 }

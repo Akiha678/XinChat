@@ -83,8 +83,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.res.stringResource
-import com.seanchen.widget.ui.icon.CommonIcon
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
+import com.seanchen.xinchat.core.navigation.contact.ContactNavigator
 import com.seanchen.widget.ui.appbar.MenuAppBar
 
 @Composable
@@ -126,6 +126,9 @@ internal fun ChatMessageRoute(
                 ChatNavigator.toChatInfo(activeSessionId)
             }
         },
+        onAvatarClick = { userId ->
+            ContactNavigator.toFriendInfo(userId = userId)
+        },
         onLoadMore = viewModel::loadMoreMessages,
         onSendMessage = viewModel::sendMessage,
         onInputTextChange = viewModel::updateInputText,
@@ -148,6 +151,7 @@ internal fun ChatMessageScreen(
     onRefresh: () -> Unit = {},
     onBackClick: () -> Unit = {},
     onMenuClick: () -> Unit = {},
+    onAvatarClick: (Long) -> Unit = {},
     onLoadMore: () -> Unit = {},
     onSendMessage: () -> Unit = {},
     onInputTextChange: (String) -> Unit = {},
@@ -191,6 +195,7 @@ internal fun ChatMessageScreen(
             onInputTextChange = onInputTextChange,
             onClearMessageAnimation = onClearMessageAnimation,
             onMarkAsRead = onMarkAsRead,
+            onAvatarClick = onAvatarClick,
             newMessageEvent = newMessageEvent
         )
     }
@@ -212,6 +217,7 @@ private fun ChatMessageContentView(
     onInputTextChange: (String) -> Unit,
     onClearMessageAnimation: (Long) -> Unit,
     onMarkAsRead: () -> Unit,
+    onAvatarClick: (Long) -> Unit = {},
     newMessageEvent: Flow<Unit>? = null
 ){
     val scrollState = rememberLazyListState()
@@ -321,7 +327,8 @@ private fun ChatMessageContentView(
                                         isLastMessageByAuthor = visualNext?.userId != message.userId,
                                         isNewMessage = message.id in newMessageIds,
                                         currentUserAvatarUrl = currentUserAvatarUrl,
-                                        onAnimationFinished = { onClearMessageAnimation(message.id) }
+                                        onAnimationFinished = { onClearMessageAnimation(message.id) },
+                                        onAvatarClick = onAvatarClick
                                     )
                                 }
 

@@ -10,4 +10,10 @@ object ContactRoutes {
 
     @Serializable
     data object AddFriend : NavKey
+
+    /**
+     * 好友信息界面
+     */
+    @Serializable
+    data class FriendInfo(val userId: Long) : NavKey
 }
