@@ -22,7 +22,17 @@ class ChatMessageEventBus @Inject constructor() {
     )
     val sentMessages: SharedFlow<Msg> = _sentMessages.asSharedFlow()
 
+    private val _clearedSessions = MutableSharedFlow<Long>(
+        extraBufferCapacity = 16,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+    val clearedSessions: SharedFlow<Long> = _clearedSessions.asSharedFlow()
+
     fun publishSentMessage(message: Msg) {
         _sentMessages.tryEmit(message)
+    }
+
+    fun publishClearSession(sessionId: Long) {
+        _clearedSessions.tryEmit(sessionId)
     }
 }

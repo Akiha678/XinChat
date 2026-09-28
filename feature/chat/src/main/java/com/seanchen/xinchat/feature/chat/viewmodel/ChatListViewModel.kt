@@ -12,6 +12,7 @@ import com.seanchen.xinchat.core.result.asResult
 import com.seanchen.xinchat.feature.chat.state.ChatListUiState
 import com.seanchen.xinchat.feature.chat.state.ChatSessionItemUiState
 import com.seanchen.xinchat.feature.chat.util.ChatMessageEventBus
+import com.seanchen.xinchat.feature.chat.util.ChatSettingsManager
 import com.seanchen.xinchat.feature.chat.util.WebSocketManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +25,8 @@ import javax.inject.Inject
 class ChatListViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val appState: AppState,
-    private val chatMessageEventBus: ChatMessageEventBus
+    private val chatMessageEventBus: ChatMessageEventBus,
+    private val chatSettingsManager: ChatSettingsManager
 ) : BaseViewModel() {
     private val _uiState = MutableStateFlow<BaseNetWorkUiState<ChatListUiState>>(
         BaseNetWorkUiState.Loading
@@ -37,6 +39,16 @@ class ChatListViewModel @Inject constructor(
         webSocketManager.setOnMessageReceived(::onMessageReceived)
         viewModelScope.launch {
             chatMessageEventBus.sentMessages.collect(::onMessageReceived)
+        }
+        viewModelScope.launch {
+            chatSettingsManager.settingsChangedEvent.collect {
+                loadSessions(publishLoading = false)
+            }
+        }
+        viewModelScope.launch {
+            chatMessageEventBus.clearedSessions.collect {
+                loadSessions(publishLoading = false)
+            }
         }
         refreshSessions()
     }
@@ -109,16 +121,30 @@ class ChatListViewModel @Inject constructor(
     private fun toChatListUiState(conversations: List<Conversation>): ChatListUiState =
         ChatListUiState(
             sessions = conversations.map { conversation ->
+                val isPinned = chatSettingsManager.isPinned(conversation.id)
+                val isMuted = chatSettingsManager.isMuted(conversation.id)
+                val clearedTime = chatSettingsManager.getClearedTime(conversation.id)
+                val lastMsgTime = runCatching {
+                    conversation.lastMessageAt?.let { java.time.Instant.parse(it).toEpochMilli() } ?: 0L
+                }.getOrDefault(0L)
+                val isHistoryCleared = clearedTime > 0 && lastMsgTime <= clearedTime
+
                 ChatSessionItemUiState(
                     id = conversation.id,
                     peerId = conversation.peerId,
                     name = conversation.name,
-                    preview = conversation.preview,
-                    lastMessageAt = conversation.lastMessageAt,
-                    unreadCount = conversation.unreadCount,
-                    colorSeed = conversation.colorSeed
+                    preview = if (isHistoryCleared) "" else conversation.preview,
+                    lastMessageAt = if (isHistoryCleared) null else conversation.lastMessageAt,
+                    unreadCount = if (isHistoryCleared) 0 else conversation.unreadCount,
+                    colorSeed = conversation.colorSeed,
+                    avatarUrl = conversation.avatarUrl,
+                    isPinned = isPinned,
+                    isMuted = isMuted
                 )
-            }
+            }.sortedWith(
+                compareByDescending<ChatSessionItemUiState> { it.isPinned }
+                    .thenByDescending { it.lastMessageAt ?: "" }
+            )
         )
 
     /**

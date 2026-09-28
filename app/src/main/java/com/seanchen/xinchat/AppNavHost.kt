@@ -2,8 +2,11 @@ package com.seanchen.xinchat
 
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -78,25 +81,33 @@ fun AppNavHost(
 }
 
 /**
- * 创建前进导航动画
+ * 创建前进导航动画（带视差位移与淡入淡出，极其丝滑）
  */
-private fun createForwardTransition() = slideInHorizontally(
-    initialOffsetX = { it },
-    animationSpec = NAV_ANIMATION_SPEC,
-) togetherWith slideOutHorizontally(
-    targetOffsetX = { -it },
-    animationSpec = NAV_ANIMATION_SPEC
+private fun createForwardTransition() = (
+    slideInHorizontally(
+        initialOffsetX = { fullWidth -> fullWidth },
+        animationSpec = tween(durationMillis = NAV_ANIMATION_DURATION, easing = FastOutSlowInEasing)
+    ) + fadeIn(animationSpec = tween(durationMillis = NAV_ANIMATION_DURATION, easing = FastOutSlowInEasing))
+) togetherWith (
+    slideOutHorizontally(
+        targetOffsetX = { fullWidth -> -fullWidth / 3 },
+        animationSpec = tween(durationMillis = NAV_ANIMATION_DURATION, easing = FastOutSlowInEasing)
+    ) + fadeOut(animationSpec = tween(durationMillis = 200))
 )
 
 /**
  * 创建返回导航动画
  */
-private fun createBackwardTransition() = slideInHorizontally (
-    initialOffsetX = { -it },
-    animationSpec = NAV_ANIMATION_SPEC,
-) togetherWith slideOutHorizontally(
-    targetOffsetX = { it },
-    animationSpec = NAV_ANIMATION_SPEC
+private fun createBackwardTransition() = (
+    slideInHorizontally(
+        initialOffsetX = { fullWidth -> -fullWidth / 3 },
+        animationSpec = tween(durationMillis = NAV_ANIMATION_DURATION, easing = FastOutSlowInEasing)
+    ) + fadeIn(animationSpec = tween(durationMillis = 200))
+) togetherWith (
+    slideOutHorizontally(
+        targetOffsetX = { fullWidth -> fullWidth },
+        animationSpec = tween(durationMillis = NAV_ANIMATION_DURATION, easing = FastOutSlowInEasing)
+    ) + fadeOut(animationSpec = tween(durationMillis = NAV_ANIMATION_DURATION, easing = FastOutSlowInEasing))
 )
 
 private fun appEntryProvider(sharedTransitionScope: SharedTransitionScope) = entryProvider {

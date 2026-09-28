@@ -12,4 +12,7 @@ data class ChatSessionItemUiState(
     val lastMessageAt: String?,
     val unreadCount: Int,
     val colorSeed: Int,
+    val avatarUrl: String = "",
+    val isPinned: Boolean = false,
+    val isMuted: Boolean = false
 )

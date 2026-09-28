@@ -23,4 +23,11 @@ object ChatNavigator {
     fun toChatMessage(){
         toChatMessage(sessionId = 0L)
     }
+
+    /**
+     * 跳转到聊天信息界面
+     */
+    fun toChatInfo(sessionId: Long){
+        navigate(ChatRoutes.ChatInfo(sessionId))
+    }
 }

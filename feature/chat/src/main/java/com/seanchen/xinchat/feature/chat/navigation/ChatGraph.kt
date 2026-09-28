@@ -20,4 +20,11 @@ fun EntryProviderScope<NavKey>.chatGraph() {
     entry<ChatRoutes.ChatMessage> { route ->
         ChatMessageRoute(sessionId = route.sessionId)
     }
+
+    /**
+     * 聊天信息界面
+     */
+    entry<ChatRoutes.ChatInfo> { route ->
+        com.seanchen.xinchat.feature.chat.view.ChatInfoRoute(sessionId = route.sessionId)
+    }
 }

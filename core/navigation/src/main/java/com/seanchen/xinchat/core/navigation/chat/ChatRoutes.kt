@@ -15,4 +15,10 @@ object ChatRoutes {
      */
     @Serializable
     data class ChatMessage(val sessionId: Long) : NavKey
+
+    /**
+     * 聊天信息界面
+     */
+    @Serializable
+    data class ChatInfo(val sessionId: Long) : NavKey
 }

@@ -15,5 +15,6 @@ data class Conversation(
     val preview: String = "",
     val lastMessageAt: String? = null,
     val unreadCount: Int = 0,
-    val colorSeed: Int = 0
+    val colorSeed: Int = 0,
+    val avatarUrl: String = ""
 )

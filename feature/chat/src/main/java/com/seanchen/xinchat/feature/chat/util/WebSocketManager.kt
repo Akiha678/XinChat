@@ -32,7 +32,6 @@ class WebSocketManager {
     private val _connectionState = MutableStateFlow<WebSocketConnectionState>(WebSocketConnectionState.Disconnected)
     val connectionState: StateFlow<WebSocketConnectionState> = _connectionState.asStateFlow()
 
-    private var webSocketClient: OkHttpClient? = null
     private var webSocket: WebSocket? = null
 
     /**
@@ -107,6 +106,17 @@ class WebSocketManager {
     /**
      * 真正发起一次连接；需持锁调用。
      */
+    companion object {
+        private val sharedClient: OkHttpClient by lazy {
+            OkHttpClient.Builder()
+                .pingInterval(0, TimeUnit.SECONDS) // 禁用OkHttp的自动ping
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS) // 增加读取超时时间，避免长时间无消息导致断开
+                .writeTimeout(15, TimeUnit.SECONDS)
+                .build()
+        }
+    }
+
     private fun openConnection() {
         updateConnectionState(WebSocketConnectionState.Connecting)
         val scope = connectScope ?: return
@@ -125,20 +135,11 @@ class WebSocketManager {
                 .url(createWebSocketUrl())
                 .build()
 
-            // 配置超时和心跳间隔
-            // 注意：禁用OkHttp的自动ping机制，我们自己处理心跳
-            webSocketClient = OkHttpClient.Builder()
-                .pingInterval(0, TimeUnit.SECONDS) // 禁用OkHttp的自动ping
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS) // 增加读取超时时间，避免长时间无消息导致断开
-                .writeTimeout(15, TimeUnit.SECONDS)
-                .build()
-
             val authorizedRequest = request.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
 
-            webSocket = webSocketClient?.newWebSocket(authorizedRequest, object : WebSocketListener() {
+            webSocket = sharedClient.newWebSocket(authorizedRequest, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     LogUtils.d(TAG, "WebSocket连接成功: ${response.code}")
                     synchronized(lock) {
@@ -311,8 +312,6 @@ class WebSocketManager {
             LogUtils.d(TAG, "断开WebSocket连接")
             webSocket?.close(1000, "正常关闭")
             webSocket = null
-            webSocketClient?.dispatcher?.executorService?.shutdown()
-            webSocketClient = null
             updateConnectionState(WebSocketConnectionState.Disconnected)
         }
     }

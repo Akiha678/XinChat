@@ -18,6 +18,7 @@ class RouteInterceptor {
         MainRoutes.Me::class,
         ChatRoutes.ChatList::class,
         ChatRoutes.ChatMessage::class,
+        ChatRoutes.ChatInfo::class,
         ContactRoutes.Contact::class,
         ContactRoutes.AddFriend::class,
         UserRoutes.Profile::class

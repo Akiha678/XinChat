@@ -1,4 +1,4 @@
-package com.seanchen.xinchat.feature.chat.view
+package com.seanchen.xinchat.feature.chat.state
 
 import com.seanchen.xinchat.core.common.base.state.BaseNetWorkUiState as CoreNetWorkState
 import com.seanchen.widget.ui.error.BaseNetWorkUiState as WidgetNetWorkState

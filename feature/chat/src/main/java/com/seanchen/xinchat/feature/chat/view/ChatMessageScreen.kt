@@ -1,6 +1,12 @@
 package com.seanchen.xinchat.feature.chat.view
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -8,7 +14,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import com.seanchen.xinchat.core.designsystem.theme.ShapeMedium
+import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,10 +71,9 @@ import com.seanchen.xinchat.core.model.entity.Msg
 import com.seanchen.xinchat.core.navigation.navigateBack
 import com.seanchen.widget.ui.empty.Empty
 import com.seanchen.widget.ui.loading.WeLoadingMP
-import com.seanchen.widget.ui.error.BaseNetworkView
 import com.seanchen.widget.ui.tag.Tag
-import com.seanchen.widget.ui.tag.TagType
 import com.seanchen.widget.ui.tag.TagStyle
+import com.seanchen.widget.ui.tag.TagType
 import com.seanchen.xinchat.feature.chat.R
 import com.seanchen.xinchat.feature.chat.component.ChatInputArea
 import com.seanchen.xinchat.feature.chat.component.Message
@@ -68,6 +81,10 @@ import com.seanchen.xinchat.feature.chat.viewmodel.ChatMessageViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.res.stringResource
+import com.seanchen.widget.ui.icon.CommonIcon
+import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
 import com.seanchen.widget.ui.appbar.CenterTopAppBar
 
 @Composable
@@ -86,20 +103,29 @@ internal fun ChatMessageRoute(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val messages by viewModel.messages.collectAsStateWithLifecycle()
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val isLoadingHistory by viewModel.isLoadingHistory.collectAsStateWithLifecycle()
     val loadMoreState by viewModel.loadMoreState.collectAsStateWithLifecycle()
     val inputText by viewModel.inputText.collectAsStateWithLifecycle()
     val newMessageIds by viewModel.newMessageIds.collectAsStateWithLifecycle()
+    val currentSessionId by viewModel.sessionId.collectAsStateWithLifecycle()
+    val activeSessionId = if (sessionId > 0) sessionId else currentSessionId
 
     ChatMessageScreen(
         uiState = uiState,
         messages = messages,
+        currentUserAvatarUrl = currentUser?.avatarUrl,
         isLoadingHistory = isLoadingHistory,
         loadMoreState = loadMoreState,
         inputText = inputText,
         newMessageIds = newMessageIds,
         onRefresh = viewModel::retryRequest,
         onBackClick = { navigateBack() },
+        onMenuClick = {
+            if (activeSessionId > 0) {
+                ChatNavigator.toChatInfo(activeSessionId)
+            }
+        },
         onLoadMore = viewModel::loadMoreMessages,
         onSendMessage = viewModel::sendMessage,
         onInputTextChange = viewModel::updateInputText,
@@ -114,12 +140,14 @@ internal fun ChatMessageRoute(
 internal fun ChatMessageScreen(
     uiState: BaseNetWorkUiState<Unit> = BaseNetWorkUiState.Loading,
     messages: List<Msg> = emptyList(),
+    currentUserAvatarUrl: String? = null,
     isLoadingHistory: Boolean = false,
     loadMoreState: LoadMoreState = LoadMoreState.Success,
     inputText: String = "",
     newMessageIds: Set<Long> = emptySet(),
     onRefresh: () -> Unit = {},
     onBackClick: () -> Unit = {},
+    onMenuClick: () -> Unit = {},
     onLoadMore: () -> Unit = {},
     onSendMessage: () -> Unit = {},
     onInputTextChange: (String) -> Unit = {},
@@ -135,7 +163,17 @@ internal fun ChatMessageScreen(
             // 组件库使用方案
             CenterTopAppBar(
                 title = R.string.messages_title,
-                onBackClick = onBackClick
+                onBackClick = onBackClick,
+                actions = {
+                    IconButton(onClick = onMenuClick) {
+                        CommonIcon(
+                            resId = R.drawable.ic_more,
+                            contentDescription = stringResource(R.string.chat_more_options),
+                            size = 24.dp,
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             )
         },
         contentWindowInsets = ScaffoldDefaults
@@ -146,33 +184,23 @@ internal fun ChatMessageScreen(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
-        BaseNetworkView(
-            uiState = uiState.toWidgetState(),
-            modifier = Modifier.fillMaxSize(),
-            padding = paddingValues,
-            onRetry = onRefresh,
-            chatError = {
-                Empty(
-                    message = R.string.load_messages_failed,
-                    retryButtonText = R.string.retry,
-                    onRetryClick = onRefresh
-                )
-            }
-        ) {
-            ChatMessageContentView(
-                messages = messages,
-                isLoadingHistory = isLoadingHistory,
-                loadMoreState = loadMoreState,
-                inputText = inputText,
-                newMessageIds = newMessageIds,
-                onLoadMore = onLoadMore,
-                onSendMessage = onSendMessage,
-                onInputTextChange = onInputTextChange,
-                onClearMessageAnimation = onClearMessageAnimation,
-                onMarkAsRead = onMarkAsRead,
-                newMessageEvent = newMessageEvent
-            )
-        }
+        ChatMessageContentView(
+            modifier = Modifier.padding(paddingValues),
+            messages = messages,
+            uiState = uiState,
+            currentUserAvatarUrl = currentUserAvatarUrl,
+            isLoadingHistory = isLoadingHistory,
+            loadMoreState = loadMoreState,
+            inputText = inputText,
+            newMessageIds = newMessageIds,
+            onRefresh = onRefresh,
+            onLoadMore = onLoadMore,
+            onSendMessage = onSendMessage,
+            onInputTextChange = onInputTextChange,
+            onClearMessageAnimation = onClearMessageAnimation,
+            onMarkAsRead = onMarkAsRead,
+            newMessageEvent = newMessageEvent
+        )
     }
 }
 
@@ -180,10 +208,13 @@ internal fun ChatMessageScreen(
 private fun ChatMessageContentView(
     modifier: Modifier = Modifier,
     messages: List<Msg>,
+    uiState: BaseNetWorkUiState<Unit> = BaseNetWorkUiState.Loading,
+    currentUserAvatarUrl: String? = null,
     isLoadingHistory: Boolean,
     loadMoreState: LoadMoreState,
     inputText: String,
     newMessageIds: Set<Long>,
+    onRefresh: () -> Unit = {},
     onLoadMore: () -> Unit,
     onSendMessage: () -> Unit,
     onInputTextChange: (String) -> Unit,
@@ -194,7 +225,7 @@ private fun ChatMessageContentView(
     val scrollState = rememberLazyListState()
 
     LaunchedEffect(messages) {
-        if (messages.any { it.status == 0 }) {
+        if (messages.any { it.status == 0 && it.type != 0 }) {
             onMarkAsRead()
         }
     }
@@ -213,11 +244,15 @@ private fun ChatMessageContentView(
 
     LaunchedEffect(messages.size, loadMoreState) {
         snapshotFlow {
-            scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
-        }.distinctUntilChanged().collect { lastVisibleIndex ->
-            val shouldLoadMore = lastVisibleIndex != null &&
+            val isScrolling = scrollState.isScrollInProgress
+            val lastVisible = scrollState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
+            isScrolling to lastVisible
+        }.distinctUntilChanged().collect { (isScrolling, lastVisibleIndex) ->
+            val shouldLoadMore = isScrolling &&
+                    lastVisibleIndex != null &&
                     messages.isNotEmpty() &&
-                    lastVisibleIndex >= messages.lastIndex - 1
+                    lastVisibleIndex >= messages.lastIndex - 1 &&
+                    loadMoreState == LoadMoreState.PullToLoad
 
             if (shouldLoadMore) {
                 onLoadMore()
@@ -239,46 +274,73 @@ private fun ChatMessageContentView(
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                if (messages.isEmpty()) {
-                    Empty(
-                        modifier = Modifier.fillMaxSize(),
-                        message = R.string.messages_empty_title,
-                        subtitle = R.string.messages_empty_description,
-//                        icon = com.seanchen.xinchat.core.ui.R.drawable.ic_empty_data
-                    )
-                } else {
-                    LazyColumn(
-                        state = scrollState,
-                        reverseLayout = true,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                            top = SpaceVerticalMedium,
-                            bottom = SpaceVerticalMedium
-                        ),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        itemsIndexed(
-                            items = messages,
-                            key = { _, message -> message.id }
-                        ) { index, message ->
-                            val visualPrevious = messages.getOrNull(index + 1)
-                            val visualNext = messages.getOrNull(index - 1)
-                            Message(
-                                msg = message,
-                                isUserMe = message.type == 0,
-                                isFirstMessageByAuthor = visualPrevious?.userId != message.userId,
-                                isLastMessageByAuthor = visualNext?.userId != message.userId,
-                                isNewMessage = message.id in newMessageIds,
-                                onAnimationFinished = { onClearMessageAnimation(message.id) }
+                val contentState = when {
+                    messages.isNotEmpty() -> ChatContentState.Content
+                    uiState is BaseNetWorkUiState.Loading -> ChatContentState.Loading
+                    uiState is BaseNetWorkUiState.Error -> ChatContentState.Error
+                    else -> ChatContentState.Empty
+                }
+
+                Crossfade(
+                    targetState = contentState,
+                    animationSpec = tween(durationMillis = 280),
+                    label = "ChatContentCrossfade"
+                ) { state ->
+                    when (state) {
+                        ChatContentState.Loading -> {
+                            ChatSkeletonPlaceholder()
+                        }
+                        ChatContentState.Error -> {
+                            Empty(
+                                modifier = Modifier.fillMaxSize(),
+                                message = R.string.load_messages_failed,
+                                retryButtonText = R.string.retry,
+                                onRetryClick = onRefresh
                             )
                         }
-
-                        item(key = "load_more") {
-                            LoadMoreFooter(
-                                loadMoreState = loadMoreState,
-                                isLoadingHistory = isLoadingHistory,
-                                onLoadMore = onLoadMore
+                        ChatContentState.Empty -> {
+                            Empty(
+                                modifier = Modifier.fillMaxSize(),
+                                message = R.string.messages_empty_title,
+                                subtitle = R.string.messages_empty_description,
                             )
+                        }
+                        ChatContentState.Content -> {
+                            LazyColumn(
+                                state = scrollState,
+                                reverseLayout = true,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                    top = SpaceVerticalMedium,
+                                    bottom = SpaceVerticalMedium
+                                ),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)
+                            ) {
+                                itemsIndexed(
+                                    items = messages,
+                                    key = { _, message -> message.id }
+                                ) { index, message ->
+                                    val visualPrevious = messages.getOrNull(index + 1)
+                                    val visualNext = messages.getOrNull(index - 1)
+                                    Message(
+                                        msg = message,
+                                        isUserMe = message.type == 0,
+                                        isFirstMessageByAuthor = visualPrevious?.userId != message.userId,
+                                        isLastMessageByAuthor = visualNext?.userId != message.userId,
+                                        isNewMessage = message.id in newMessageIds,
+                                        currentUserAvatarUrl = currentUserAvatarUrl,
+                                        onAnimationFinished = { onClearMessageAnimation(message.id) }
+                                    )
+                                }
+
+                                item(key = "load_more") {
+                                    LoadMoreFooter(
+                                        loadMoreState = loadMoreState,
+                                        isLoadingHistory = isLoadingHistory,
+                                        onLoadMore = onLoadMore
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -368,5 +430,108 @@ fun JumpToBottom(
                 .clip(ShapeExtraLarge)
                 .clickable(onClick = onClicked)
         )
+    }
+}
+
+private enum class ChatContentState {
+    Loading, Error, Empty, Content
+}
+
+/**
+ * 带有呼吸微光动效的聊天气泡骨架屏组件
+ */
+@Composable
+private fun ChatSkeletonPlaceholder(
+    modifier: Modifier = Modifier
+) {
+    val transition = rememberInfiniteTransition(label = "SkeletonTransition")
+    val alpha by transition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 0.60f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 850, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "SkeletonAlpha"
+    )
+    val shimmerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha)
+
+    androidx.compose.foundation.layout.Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = SpacePaddingMedium, vertical = SpaceVerticalMedium),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // 时间戳微弱占位
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(width = 80.dp, height = 14.dp)
+                .clip(CircleShape)
+                .background(shimmerColor)
+        )
+
+        // 对方消息骨架 (左)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(shimmerColor)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(width = 150.dp, height = 40.dp)
+                    .clip(ShapeMedium)
+                    .background(shimmerColor)
+            )
+        }
+
+        // 当前用户消息骨架 (右)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 200.dp, height = 52.dp)
+                    .clip(ShapeMedium)
+                    .background(shimmerColor)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                .background(shimmerColor)
+            )
+        }
+
+        // 对方长消息骨架 (左)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.Top
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(shimmerColor)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(
+                modifier = Modifier
+                    .size(width = 230.dp, height = 64.dp)
+                    .clip(ShapeMedium)
+                    .background(shimmerColor)
+            )
+        }
     }
 }

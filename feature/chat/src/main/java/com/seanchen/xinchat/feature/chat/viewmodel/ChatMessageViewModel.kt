@@ -9,6 +9,7 @@ import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.ChatRepository
 import com.seanchen.xinchat.core.data.state.AppState
 import com.seanchen.xinchat.core.model.entity.Msg
+import com.seanchen.xinchat.core.model.entity.User
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
 import com.seanchen.xinchat.core.model.request.ReadMessageRequest
 import com.seanchen.xinchat.core.result.ResultHandler
@@ -17,6 +18,7 @@ import com.seanchen.xinchat.core.util.log.LogUtils
 import com.seanchen.xinchat.feature.chat.state.WebSocketConnectionState
 import com.seanchen.xinchat.feature.chat.util.ChatSoundManager
 import com.seanchen.xinchat.feature.chat.util.ChatMessageEventBus
+import com.seanchen.xinchat.feature.chat.util.ChatSettingsManager
 import com.seanchen.xinchat.feature.chat.util.WebSocketManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,8 +41,12 @@ class ChatMessageViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val appState: AppState,
     private val chatMessageEventBus: ChatMessageEventBus,
+    private val chatSettingsManager: ChatSettingsManager,
     @param:ApplicationContext private val context: Context,
 ) : BaseViewModel() {
+    val currentUser: StateFlow<User?> = appState.userInfo
+    val currentUserId: StateFlow<Long> = appState.userId
+
     private val _uiState = MutableStateFlow<BaseNetWorkUiState<Unit>>(BaseNetWorkUiState.Loading)
     val uiState: StateFlow<BaseNetWorkUiState<Unit>> = _uiState.asStateFlow()
 
@@ -63,6 +69,7 @@ class ChatMessageViewModel @Inject constructor(
         WebSocketConnectionState.Disconnected)
 
     private val _sessionId = MutableStateFlow<Long>(0)
+    val sessionId: StateFlow<Long> = _sessionId.asStateFlow()
 
     private val webSocketManager = WebSocketManager()
 
@@ -83,20 +90,18 @@ class ChatMessageViewModel @Inject constructor(
     val messages: StateFlow<List<Msg>> = _messages.asStateFlow()
 
 
-    /**
-     * 页面加载开始时间
-     */
-    private var loadingStartTime = 0L
-
-    /**
-     * 首次页面加载最少展示时间
-     */
-    private val minLoadingTime = 320L
-
     private var openedSessionId: Long? = null
 
     init {
         setupWebSocketCallbacks()
+        chatSoundManager.preload(viewModelScope)
+        viewModelScope.launch {
+            chatMessageEventBus.clearedSessions.collect { clearedSessionId ->
+                if (_sessionId.value == clearedSessionId) {
+                    _messages.value = emptyList()
+                }
+            }
+        }
     }
 
     /**
@@ -113,7 +118,6 @@ class ChatMessageViewModel @Inject constructor(
             _messages.value = emptyList()
             connectWebSocket()
             loadHistoryMessages(isInitialLoad = true)
-            markMessagesAsRead()
         } else {
             createSession()
         }
@@ -133,7 +137,7 @@ class ChatMessageViewModel @Inject constructor(
     }
 
     private fun createSession() {
-        beginLoading()
+        _uiState.value = BaseNetWorkUiState.Loading
         LogUtils.d(TAG, "开始创建会话")
 
         ResultHandler.handleResultWithData(
@@ -151,11 +155,8 @@ class ChatMessageViewModel @Inject constructor(
             },
             onError = { message, exception ->
                 LogUtils.e(TAG, "会话创建失败: $message")
-                viewModelScope.launch {
-                    applyMinLoadingDelay()
-                    _uiState.value = BaseNetWorkUiState.Error(message, exception)
-                    _connectionState.value = WebSocketConnectionState.Error("创建会话失败")
-                }
+                _uiState.value = BaseNetWorkUiState.Error(message, exception)
+                _connectionState.value = WebSocketConnectionState.Error("创建会话失败")
             }
         )
     }
@@ -184,7 +185,17 @@ class ChatMessageViewModel @Inject constructor(
             scope = viewModelScope,
             flow = chatRepository.getMessagePage(params).asResult(),
             onData = { data ->
-                val newMessage = data.list ?: emptyList()
+                val rawMessage = data.list ?: emptyList()
+                val clearedTime = chatSettingsManager.getClearedTime(_sessionId.value)
+                val newMessage = if (clearedTime > 0) {
+                    rawMessage.filter { msg ->
+                        val msgTime = runCatching { java.time.Instant.parse(msg.createTime).toEpochMilli() }
+                            .getOrDefault(Long.MAX_VALUE)
+                        msgTime > clearedTime
+                    }
+                } else {
+                    rawMessage
+                }
                 val pagination = data.pagination
 
                 LogUtils.d(TAG, "历史消息加载成功: ${newMessage.size}条消息")
@@ -209,9 +220,9 @@ class ChatMessageViewModel @Inject constructor(
                 _isLoadingHistory.value = false
 
                 if (isInitialLoad) {
-                    viewModelScope.launch {
-                        applyMinLoadingDelay()
-                        _uiState.value = BaseNetWorkUiState.Success(Unit)
+                    _uiState.value = BaseNetWorkUiState.Success(Unit)
+                    if (newMessage.any { it.status == 0 && it.type != 0 }) {
+                        markMessagesAsRead()
                     }
                 }
                 _loadMoreState.value =
@@ -226,10 +237,7 @@ class ChatMessageViewModel @Inject constructor(
                     currentPage--
                     _loadMoreState.value = LoadMoreState.Error
                 } else if (isInitialLoad) {
-                    viewModelScope.launch {
-                        applyMinLoadingDelay()
-                        _uiState.value = BaseNetWorkUiState.Error(message, exception)
-                    }
+                    _uiState.value = BaseNetWorkUiState.Error(message, exception)
                 }
             }
         )
@@ -272,7 +280,7 @@ class ChatMessageViewModel @Inject constructor(
 
             _newMessageIds.value += message.id
 
-            if (message.type == 1) {
+            if (message.type == 1 && !chatSettingsManager.isMuted(_sessionId.value)) {
                 chatSoundManager.playMessageReceivedSound()
             }
             viewModelScope.launch {
@@ -316,6 +324,7 @@ class ChatMessageViewModel @Inject constructor(
                     sessionId = sessionId,
                     status = 1,
                     nickName = appState.userInfo.value?.nickName.orEmpty(),
+                    avatarUrl = appState.userInfo.value?.avatarUrl.orEmpty(),
                     createTime = Instant.now().toString(),
                     content = Msg.MessageContent(type = type, data = content),
                     type = 0,
@@ -363,7 +372,7 @@ class ChatMessageViewModel @Inject constructor(
 
     fun retryRequest(){
         if (_uiState.value is BaseNetWorkUiState.Error) {
-            beginLoading()
+            _uiState.value = BaseNetWorkUiState.Loading
         }
         val sessionId = openedSessionId
         if (sessionId != null && sessionId > 0) {
@@ -371,25 +380,6 @@ class ChatMessageViewModel @Inject constructor(
             openSession(sessionId)
         } else {
             createSession()
-        }
-    }
-
-    /**
-     * 开始页面加载流程
-     */
-    private fun beginLoading() {
-        _uiState.value = BaseNetWorkUiState.Loading
-        loadingStartTime = System.currentTimeMillis()
-    }
-
-    /**
-     * 应用最少加载时间
-     */
-    private suspend fun applyMinLoadingDelay() {
-        val elapsedTime = System.currentTimeMillis() - loadingStartTime
-        val remainingTime = (minLoadingTime - elapsedTime).coerceAtLeast(0L)
-        if (remainingTime > 0L) {
-            delay(remainingTime)
         }
     }
 

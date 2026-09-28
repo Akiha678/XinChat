@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.seanchen.xinchat.core.designsystem.component.AppAvatar
 import com.seanchen.xinchat.core.designsystem.theme.Primary
 import com.seanchen.xinchat.core.designsystem.theme.ShapeMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceHorizontalSmall
@@ -39,6 +40,7 @@ import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
 import com.seanchen.xinchat.core.designsystem.theme.TextWhite
 import com.seanchen.xinchat.core.designsystem.theme.appTextColors
 import com.seanchen.xinchat.core.model.entity.Msg
+import com.seanchen.xinchat.core.util.media.toFullMediaUrl
 import com.seanchen.xinchat.feature.chat.R
 import kotlinx.coroutines.delay
 
@@ -47,6 +49,7 @@ import kotlinx.coroutines.delay
  * 单条消息组件
  * @param msg 消息数据
  * @param isUserMe 是否为当前用户发送的消息
+ * @param currentUserAvatarUrl 当前登录用户的最新头像地址
  */
 @Composable
 fun Message(
@@ -55,34 +58,48 @@ fun Message(
     isFirstMessageByAuthor: Boolean,
     isLastMessageByAuthor: Boolean,
     isNewMessage: Boolean = false,
+    currentUserAvatarUrl: String? = null,
     onAnimationFinished: () -> Unit = {}
 ){
     val spaceBetweenAuthors = if (isLastMessageByAuthor) Modifier.padding(top = SpaceVerticalSmall) else Modifier
-    var visible by remember { mutableStateOf(!isNewMessage) }
 
-    LaunchedEffect(isNewMessage) {
-        if (isNewMessage) {
+    if (isNewMessage) {
+        var visible by remember { mutableStateOf(false) }
+
+        LaunchedEffect(Unit) {
             visible = true
             delay(500)
             onAnimationFinished()
         }
-    }
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = tween(220)) + slideInHorizontally(
-            animationSpec = tween(260, easing = FastOutSlowInEasing),
-            initialOffsetX = { width -> if (isUserMe) width / 2 else -width / 2 }
-        ),
-        exit = fadeOut(animationSpec = tween(160)) + slideOutHorizontally(
-            animationSpec = tween(160),
-            targetOffsetX = { width -> if (isUserMe) width / 2 else -width / 2 }
-        )
-    ) {
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(animationSpec = tween(220)) + slideInHorizontally(
+                animationSpec = tween(260, easing = FastOutSlowInEasing),
+                initialOffsetX = { width -> if (isUserMe) width / 2 else -width / 2 }
+            ),
+            exit = fadeOut(animationSpec = tween(160)) + slideOutHorizontally(
+                animationSpec = tween(160),
+                targetOffsetX = { width -> if (isUserMe) width / 2 else -width / 2 }
+            )
+        ) {
+            MessageRow(
+                msg = msg,
+                isUserMe = isUserMe,
+                showAuthor = isFirstMessageByAuthor,
+                currentUserAvatarUrl = currentUserAvatarUrl,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(spaceBetweenAuthors)
+                    .padding(horizontal = SpacePaddingMedium, vertical = 2.dp)
+            )
+        }
+    } else {
         MessageRow(
             msg = msg,
             isUserMe = isUserMe,
             showAuthor = isFirstMessageByAuthor,
+            currentUserAvatarUrl = currentUserAvatarUrl,
             modifier = Modifier
                 .fillMaxWidth()
                 .then(spaceBetweenAuthors)
@@ -96,8 +113,16 @@ private fun MessageRow(
     msg: Msg,
     isUserMe: Boolean,
     showAuthor: Boolean,
+    currentUserAvatarUrl: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val rawAvatarUrl = if (isUserMe) {
+        currentUserAvatarUrl?.takeIf { it.isNotBlank() } ?: msg.avatarUrl
+    } else {
+        msg.avatarUrl
+    }
+    val fullAvatarUrl = rawAvatarUrl.takeIf { it.isNotBlank() }?.toFullMediaUrl()
+
     androidx.compose.foundation.layout.Row(
         modifier = modifier,
         horizontalArrangement = if (isUserMe) Arrangement.End else Arrangement.Start,
@@ -105,7 +130,7 @@ private fun MessageRow(
     ) {
         if (!isUserMe) {
             MessageAvatar(
-                name = msg.nickName.ifBlank { stringResource(R.string.chat_unknown_user) },
+                avatarUrl = fullAvatarUrl,
                 visible = showAuthor
             )
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(SpaceHorizontalSmall))
@@ -143,7 +168,7 @@ private fun MessageRow(
         if (isUserMe) {
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(SpaceHorizontalSmall))
             MessageAvatar(
-                name = msg.nickName.ifBlank { stringResource(R.string.chat_me) },
+                avatarUrl = fullAvatarUrl,
                 visible = showAuthor
             )
         }
@@ -152,7 +177,7 @@ private fun MessageRow(
 
 @Composable
 private fun MessageAvatar(
-    name: String,
+    avatarUrl: String?,
     visible: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -161,18 +186,9 @@ private fun MessageAvatar(
         return
     }
 
-    Box(
+    AppAvatar(
+        avatarUrl = avatarUrl,
+        size = 34.dp,
         modifier = modifier
-            .size(34.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primaryContainer),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = name.take(1),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            maxLines = 1
-        )
-    }
+    )
 }

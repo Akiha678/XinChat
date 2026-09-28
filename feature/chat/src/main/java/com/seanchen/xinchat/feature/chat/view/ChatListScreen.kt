@@ -41,7 +41,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.seanchen.xinchat.core.designsystem.component.AppAvatar
 import com.seanchen.xinchat.core.designsystem.theme.Primary
+import com.seanchen.xinchat.core.util.media.toFullMediaUrl
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingLarge
 import com.seanchen.xinchat.core.designsystem.theme.SpacePaddingMedium
 import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalSmall
@@ -54,6 +56,7 @@ import com.seanchen.widget.ui.error.BaseNetworkView
 import com.seanchen.xinchat.feature.chat.R
 import com.seanchen.xinchat.feature.chat.state.ChatListUiState
 import com.seanchen.xinchat.feature.chat.state.ChatSessionItemUiState
+import com.seanchen.xinchat.feature.chat.state.toWidgetState
 import com.seanchen.xinchat.feature.chat.viewmodel.ChatListViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -181,33 +184,23 @@ private fun ChatSessionItem(
     val title = session.name.ifBlank { stringResource(R.string.chat_unknown_conversation) }
     val description = session.preview.ifBlank { stringResource(R.string.chat_no_messages) }
     val timeText = formatConversationTime(session.lastMessageAt)
-    val avatarColor = Color.hsv(
-        hue = Math.floorMod(session.colorSeed, 360).toFloat(),
-        saturation = 0.35f,
-        value = 0.85f
-    )
-
+    val itemBackground = if (session.isPinned) {
+        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+    } else {
+        androidx.compose.ui.graphics.Color.Transparent
+    }
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .background(itemBackground)
             .clickable(onClick = onClick)
             .padding(horizontal = SpacePaddingLarge, vertical = SpacePaddingMedium),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(avatarColor.copy(alpha = 0.18f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = title.take(1),
-                color = Primary,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        AppAvatar(
+            avatarUrl = session.avatarUrl.toFullMediaUrl(),
+            size = 48.dp
+        )
 
         Column(
             modifier = Modifier
@@ -246,8 +239,13 @@ private fun ChatSessionItem(
                     overflow = TextOverflow.Ellipsis
                 )
                 if (session.unreadCount > 0) {
+                    val badgeColor = if (session.isMuted) {
+                        MaterialTheme.colorScheme.outline.copy(alpha = 0.7f)
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    }
                     Badge(
-                        containerColor = MaterialTheme.colorScheme.error
+                        containerColor = badgeColor
                     ) {
                         Text(
                             text = session.unreadCount.coerceAtMost(99).toString(),

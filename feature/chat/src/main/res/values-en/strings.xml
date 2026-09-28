@@ -43,5 +43,17 @@
     <string name="create_session_failed">Failed to create session</string>
     <string name="send_message_failed">Failed to send message</string>
     <string name="normal_close">Normal close</string>
+
+    <!-- Chat Info Screen -->
+    <string name="chat_info_title">Chat Details</string>
+    <string name="chat_info_pin_chat">Sticky on Top</string>
+    <string name="chat_info_mute_notifications">Mute Notifications</string>
+    <string name="chat_info_clear_history">Clear Chat History</string>
+    <string name="chat_info_clear_history_title">Clear Chat History</string>
+    <string name="chat_info_clear_history_message">Are you sure you want to clear all chat history? This cannot be undone.</string>
+    <string name="chat_info_clear_confirm">Clear</string>
+    <string name="chat_info_clear_history_success">Chat history cleared</string>
+    <string name="chat_more_options">More options</string>
+    <string name="cancel">Cancel</string>
 </resources>
 
