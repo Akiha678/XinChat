@@ -31,7 +31,7 @@ class UserInfoNetworkDataSourceImpl @Inject constructor(
         return userInfoService.logoff(params)
     }
 
-    override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<Any> {
+    override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<User> {
         return userInfoService.bindPhone(params)
     }
 

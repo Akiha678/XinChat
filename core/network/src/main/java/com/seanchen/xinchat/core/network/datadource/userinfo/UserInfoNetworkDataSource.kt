@@ -56,7 +56,7 @@ interface UserInfoNetworkDataSource {
      * @return 绑定结果响应
      * @author Joker.X
      */
-    suspend fun bindPhone(params: Map<String, String>): NetworkResponse<Any>
+    suspend fun bindPhone(params: Map<String, String>): NetworkResponse<User>
 
     /**
      * 获取用户个人信息

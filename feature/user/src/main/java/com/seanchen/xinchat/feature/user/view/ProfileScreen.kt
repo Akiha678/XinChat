@@ -82,8 +82,10 @@ fun ProfileRoute(
     val isUploadingAvatar by viewModel.isUploadingAvatar.collectAsStateWithLifecycle()
     val previewAvatarUri by viewModel.previewAvatarUri.collectAsStateWithLifecycle()
     val isUpdatingNickname by viewModel.isUpdatingNickname.collectAsStateWithLifecycle()
+    val isBindingPhone by viewModel.isBindingPhone.collectAsStateWithLifecycle()
 
     var isEditNicknameDialogVisible by remember { mutableStateOf(false) }
+    var isBindPhoneDialogVisible by remember { mutableStateOf(false) }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -160,6 +162,31 @@ fun ProfileRoute(
         }
     )
 
+    AppInputDialog(
+        visible = isBindPhoneDialogVisible,
+        title = stringResource(id = R.string.profile_bind_phone),
+        placeholder = stringResource(id = R.string.profile_bind_phone_hint),
+        maxLength = 11,
+        confirmLoading = isBindingPhone,
+        onDismiss = { isBindPhoneDialogVisible = false },
+        onConfirm = { phone ->
+            viewModel.bindPhone(
+                phone = phone,
+                onSuccess = {
+                    isBindPhoneDialogVisible = false
+                    Toast.makeText(context, R.string.profile_bind_phone_success, Toast.LENGTH_SHORT).show()
+                },
+                onError = { errorMsg ->
+                    Toast.makeText(
+                        context,
+                        errorMsg ?: context.getString(R.string.profile_bind_phone_failed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+    )
+
     ProfileScreen(
         sharedTransitionScope = sharedTransitionScope,
         animatedContentScope = animatedContentScope,
@@ -176,6 +203,9 @@ fun ProfileRoute(
         },
         onNicknameClick = {
             isEditNicknameDialogVisible = true
+        },
+        onBindPhoneClick = {
+            isBindPhoneDialogVisible = true
         },
         onBackClick = { navigateBack() },
         onLogoutClick = {
@@ -199,6 +229,7 @@ internal fun ProfileScreen(
     userInfo: User? = null,
     onAvatarClick: () -> Unit = {},
     onNicknameClick: () -> Unit = {},
+    onBindPhoneClick: () -> Unit = {},
     onBackClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
 ) {
@@ -215,6 +246,7 @@ internal fun ProfileScreen(
             previewAvatarUri = previewAvatarUri,
             onAvatarClick = onAvatarClick,
             onNicknameClick = onNicknameClick,
+            onBindPhoneClick = onBindPhoneClick,
             onLogoutClick = onLogoutClick,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope,
@@ -232,6 +264,7 @@ private fun ProfileContentView(
     previewAvatarUri: Uri? = null,
     onAvatarClick: () -> Unit,
     onNicknameClick: () -> Unit = {},
+    onBindPhoneClick: () -> Unit = {},
     onLogoutClick: () -> Unit,
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
@@ -254,6 +287,7 @@ private fun ProfileContentView(
             isUploadingAvatar = isUploadingAvatar,
             onAvatarClick = onAvatarClick,
             onNicknameClick = onNicknameClick,
+            onBindPhoneClick = onBindPhoneClick,
             sharedTransitionScope = sharedTransitionScope,
             animatedContentScope = animatedContentScope
         )
@@ -273,6 +307,7 @@ private fun ProfileInfoSection(
     isUploadingAvatar: Boolean,
     onAvatarClick: () -> Unit,
     onNicknameClick: () -> Unit = {},
+    onBindPhoneClick: () -> Unit = {},
     sharedTransitionScope: SharedTransitionScope? = null,
     animatedContentScope: AnimatedContentScope? = null,
 ) {
@@ -326,14 +361,24 @@ private fun ProfileInfoSection(
             showArrow = true,
             onClick = onNicknameClick
         )
-        ProfileValueItem(
-            title = R.string.profile_account_id,
-            value = accountValue(userInfo)
-        )
+//        ProfileValueItem(
+//            title = R.string.profile_account_id,
+//            value = accountValue(userInfo)
+//        )
+        val isPhoneBound = !userInfo?.phone.isNullOrBlank()
         ProfileValueItem(
             title = R.string.profile_phone,
-            value = userInfo?.phone?.takeIf { it.isNotBlank() }?.maskPhone()
-                ?: stringResource(id = R.string.profile_not_set)
+            value = if (isPhoneBound) {
+                userInfo!!.phone!!.maskPhone()
+            } else {
+                stringResource(id = R.string.profile_phone_unbound)
+            },
+            showArrow = !isPhoneBound,
+            onClick = {
+                if (!isPhoneBound) {
+                    onBindPhoneClick()
+                }
+            }
         )
         ProfileValueItem(
             title = R.string.profile_login_type,

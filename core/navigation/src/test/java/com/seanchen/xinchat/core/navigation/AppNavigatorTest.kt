@@ -226,7 +226,7 @@ private class FakeUserInfoNetworkDataSource : UserInfoNetworkDataSource {
         return NetworkResponse()
     }
 
-    override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<Any> {
+    override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<User> {
         return NetworkResponse()
     }
 

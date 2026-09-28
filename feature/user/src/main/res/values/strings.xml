@@ -40,4 +40,11 @@
     <string name="profile_nickname_update_failed">昵称修改失败，请重试</string>
     <string name="profile_cancel">取消</string>
     <string name="profile_confirm">保存</string>
+    <string name="profile_phone_unbound">未绑定</string>
+    <string name="profile_bind_phone">绑定手机号</string>
+    <string name="profile_bind_phone_hint">请输入11位手机号</string>
+    <string name="profile_phone_empty_error">手机号不能为空</string>
+    <string name="profile_phone_format_error">请输入正确的11位手机号</string>
+    <string name="profile_bind_phone_success">手机号绑定成功</string>
+    <string name="profile_bind_phone_failed">绑定失败，请重试</string>
 </resources>

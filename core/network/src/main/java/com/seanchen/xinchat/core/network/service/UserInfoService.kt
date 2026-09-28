@@ -48,10 +48,10 @@ interface UserInfoService {
     suspend fun logoff(@Body params: Map<String, Any>): NetworkResponse<Boolean>
 
     /**
-     * 绑定手机号，服务端暂未开放
+     * 绑定手机号
      */
     @POST("user/info/bindPhone")
-    suspend fun bindPhone(@Body params: Map<String, String>): NetworkResponse<Any>
+    suspend fun bindPhone(@Body params: Map<String, String>): NetworkResponse<User>
 
     /**
      * 查询当前登录用户的个人资料

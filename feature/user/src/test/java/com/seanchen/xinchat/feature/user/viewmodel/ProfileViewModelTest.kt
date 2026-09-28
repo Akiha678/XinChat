@@ -195,9 +195,53 @@ class ProfileViewModelTest {
         assertEquals("OldNick", fakeAppState.userInfo.value?.nickName)
     }
 
+    @Test
+    fun bindPhone_success_updatesUserInfo_andCallsSuccessCallback() = runTest(testDispatcher) {
+        val initialUser = User(id = 1, nickName = "Alice", phone = null)
+        fakeAppState.updateUserInfo(initialUser)
+        val updatedUser = User(id = 1, nickName = "Alice", phone = "13800138000")
+        fakeUserInfoNetworkDataSource.bindPhoneResult = NetworkResponse(code = 1000, message = "success", data = updatedUser)
+
+        val viewModel = ProfileViewModel(fakeAppState, userInfoRepository)
+
+        var isSuccessCalled = false
+        var errorMessage: String? = null
+
+        viewModel.bindPhone(
+            phone = "13800138000",
+            onSuccess = { isSuccessCalled = true },
+            onError = { msg -> errorMessage = msg }
+        )
+
+        testScheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.isBindingPhone.value)
+        assertTrue(isSuccessCalled)
+        assertEquals(null, errorMessage)
+        assertEquals("13800138000", fakeAppState.userInfo.value?.phone)
+    }
+
+    @Test
+    fun bindPhone_invalidFormat_failsValidation() = runTest(testDispatcher) {
+        val viewModel = ProfileViewModel(fakeAppState, userInfoRepository)
+
+        var isSuccessCalled = false
+        var errorMessage: String? = null
+
+        viewModel.bindPhone(
+            phone = "12345",
+            onSuccess = { isSuccessCalled = true },
+            onError = { msg -> errorMessage = msg }
+        )
+
+        assertFalse(isSuccessCalled)
+        assertEquals("请输入正确的11位手机号", errorMessage)
+    }
+
     private class FakeUserInfoNetworkDataSource : UserInfoNetworkDataSource {
         var uploadAvatarResult: NetworkResponse<User> = NetworkResponse()
         var updateNicknameResult: NetworkResponse<User> = NetworkResponse()
+        var bindPhoneResult: NetworkResponse<User> = NetworkResponse()
 
         override suspend fun uploadAvatar(file: MultipartBody.Part): NetworkResponse<User> = uploadAvatarResult
         override suspend fun updateNickname(request: com.seanchen.xinchat.core.model.request.UpdateNicknameRequest): NetworkResponse<User> = updateNicknameResult
@@ -205,7 +249,7 @@ class ProfileViewModelTest {
         override suspend fun updatePersonInfo(params: Map<String, Any>): NetworkResponse<Any> = NetworkResponse(data = true)
         override suspend fun updatePassword(params: Map<String, String>): NetworkResponse<Any> = NetworkResponse(data = true)
         override suspend fun logoff(params: Map<String, Any>): NetworkResponse<Boolean> = NetworkResponse(data = true)
-        override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<Any> = NetworkResponse(data = true)
+        override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<User> = bindPhoneResult
     }
 
     private fun createFakeAppState(

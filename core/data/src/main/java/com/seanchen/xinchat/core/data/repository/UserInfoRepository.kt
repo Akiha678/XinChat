@@ -80,7 +80,7 @@ class UserInfoRepository @Inject constructor(
      * @return 绑定结果Flow
      * @author Joker.X
      */
-    fun bindPhone(params: Map<String, String>): Flow<NetworkResponse<Any>> = flow {
+    fun bindPhone(params: Map<String, String>): Flow<NetworkResponse<User>> = flow {
         emit(userInfoNetworkDataSource.bindPhone(params))
     }.flowOn(Dispatchers.IO)
 

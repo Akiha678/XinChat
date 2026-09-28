@@ -208,8 +208,8 @@ class SmsLoginViewModelTest {
                 NetworkResponse(data = true)
             override suspend fun logoff(params: Map<String, Any>): NetworkResponse<Boolean> =
                 NetworkResponse(data = true)
-            override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<Any> =
-                NetworkResponse(data = true)
+            override suspend fun bindPhone(params: Map<String, String>): NetworkResponse<User> =
+                NetworkResponse(data = User(id = 1, nickName = "test"))
         }
 
         return AppState(

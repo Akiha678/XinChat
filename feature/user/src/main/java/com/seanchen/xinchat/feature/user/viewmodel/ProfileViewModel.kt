@@ -154,6 +154,56 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
+    private val _isBindingPhone = MutableStateFlow(false)
+    val isBindingPhone: StateFlow<Boolean> = _isBindingPhone.asStateFlow()
+
+    /**
+     * 绑定手机号
+     *
+     * @param phone 用户输入的手机号
+     * @param onSuccess 成功回调
+     * @param onError 失败回调，携带错误原因
+     */
+    fun bindPhone(
+        phone: String,
+        onSuccess: () -> Unit = {},
+        onError: (String?) -> Unit = {}
+    ) {
+        val trimmed = phone.trim()
+        if (trimmed.isEmpty()) {
+            onError("手机号不能为空")
+            return
+        }
+        if (!trimmed.matches(Regex("^1[3-9]\\d{9}$"))) {
+            onError("请输入正确的11位手机号")
+            return
+        }
+        if (_isBindingPhone.value) return
+        _isBindingPhone.value = true
+        viewModelScope.launch {
+            try {
+                userInfoRepository.bindPhone(mapOf("phone" to trimmed))
+                    .catch { throwable ->
+                        _isBindingPhone.value = false
+                        onError(throwable.message)
+                    }
+                    .collect { response ->
+                        _isBindingPhone.value = false
+                        val updatedUser = response.data
+                        if (response.isSucceeded && updatedUser != null) {
+                            appState.updateUserInfo(updatedUser)
+                            onSuccess()
+                        } else {
+                            onError(response.message)
+                        }
+                    }
+            } catch (e: Exception) {
+                _isBindingPhone.value = false
+                onError(e.message)
+            }
+        }
+    }
+
     suspend fun logout() {
         _isLoggingOut.value = true
         try {
