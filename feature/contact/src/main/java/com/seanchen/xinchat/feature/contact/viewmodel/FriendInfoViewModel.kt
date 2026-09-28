@@ -3,7 +3,7 @@ package com.seanchen.xinchat.feature.contact.viewmodel
 import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.ContactRepository
-import com.seanchen.xinchat.feature.contact.view.FriendInfoUiState
+import com.seanchen.xinchat.feature.contact.state.FriendInfoUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,6 +20,7 @@ class FriendInfoViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(FriendInfoUiState())
     val uiState: StateFlow<FriendInfoUiState> = _uiState.asStateFlow()
 
+    // 加载朋友信息
     fun loadFriendInfo(userId: Long) {
         if (userId <= 0L) return
         _uiState.update { it.copy(id = userId) }

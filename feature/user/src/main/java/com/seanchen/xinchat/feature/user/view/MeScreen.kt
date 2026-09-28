@@ -117,8 +117,8 @@ private fun MeContentView(
             animatedContentScope = animatedContentScope
         )
 
-        MeFeatureMenuSection()
-        MeSettingsSection()
+//        MeFeatureMenuSection()
+//        MeSettingsSection()
     }
 }
 
@@ -179,52 +179,52 @@ private fun UserInfoSection(
     }
 }
 
-@Composable
-private fun MeFeatureMenuSection() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-    ) {
-        AppListItem(
-            title = stringResource(id = R.string.profile_menu_services),
-            leadingIcon = R.drawable.ic_menu_list,
-            leadingIconTint = MaterialTheme.colorScheme.primary
-        )
-        AppListItem(
-            title = stringResource(id = R.string.profile_menu_favorites),
-            leadingIcon = R.drawable.ic_star_fill,
-            leadingIconTint = ColorWarning
-        )
-        AppListItem(
-            title = stringResource(id = R.string.profile_menu_cards),
-            leadingIcon = R.drawable.ic_coupon,
-            leadingIconTint = ColorSuccess
-        )
-        AppListItem(
-            title = stringResource(id = R.string.profile_menu_stickers),
-            leadingIcon = R.drawable.ic_my_fill,
-            leadingIconTint = ColorDanger,
-            showDivider = false
-        )
-    }
-}
+//@Composable
+//private fun MeFeatureMenuSection() {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .background(MaterialTheme.colorScheme.surface)
+//    ) {
+//        AppListItem(
+//            title = stringResource(id = R.string.profile_menu_services),
+//            leadingIcon = R.drawable.ic_menu_list,
+//            leadingIconTint = MaterialTheme.colorScheme.primary
+//        )
+//        AppListItem(
+//            title = stringResource(id = R.string.profile_menu_favorites),
+//            leadingIcon = R.drawable.ic_star_fill,
+//            leadingIconTint = ColorWarning
+//        )
+//        AppListItem(
+//            title = stringResource(id = R.string.profile_menu_cards),
+//            leadingIcon = R.drawable.ic_coupon,
+//            leadingIconTint = ColorSuccess
+//        )
+//        AppListItem(
+//            title = stringResource(id = R.string.profile_menu_stickers),
+//            leadingIcon = R.drawable.ic_my_fill,
+//            leadingIconTint = ColorDanger,
+//            showDivider = false
+//        )
+//    }
+//}
 
-@Composable
-private fun MeSettingsSection() {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
-    ) {
-        AppListItem(
-            title = stringResource(id = R.string.settings),
-            leadingIcon = R.drawable.ic_menu,
-            leadingIconTint = MaterialTheme.colorScheme.onSurfaceVariant,
-            showDivider = false
-        )
-    }
-}
+//@Composable
+//private fun MeSettingsSection() {
+//    Column(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .background(MaterialTheme.colorScheme.surface)
+//    ) {
+//        AppListItem(
+//            title = stringResource(id = R.string.settings),
+//            leadingIcon = R.drawable.ic_menu,
+//            leadingIconTint = MaterialTheme.colorScheme.onSurfaceVariant,
+//            showDivider = false
+//        )
+//    }
+//}
 
 /**
  * 昵称展示：登录后昵称为空时回退到默认昵称，避免误显示为未登录。
