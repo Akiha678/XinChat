@@ -42,4 +42,26 @@
     <string name="sort_by_last_seen">按上线时间排序</string>
     <string name="add_contact">添加联系人</string>
     <string name="new_group">新建群组</string>
+
+    <!-- 好友资料界面 -->
+    <string name="friend_info_title">详细资料</string>
+    <string name="friend_info_remark_and_tag">设置备注和标签</string>
+    <string name="friend_info_permission">朋友权限</string>
+    <string name="friend_info_more">更多信息</string>
+    <string name="friend_info_source">来源</string>
+    <string name="friend_info_source_search">通过搜索添加</string>
+    <string name="friend_info_xin_id">微信号：%1$s</string>
+    <string name="friend_info_username">XinChat号：%1$s</string>
+    <string name="friend_info_region">地区</string>
+    <string name="friend_info_region_default">中国大陆</string>
+    <string name="friend_info_signature">个性签名</string>
+    <string name="friend_info_signature_empty">这家伙很懒，什么都没留下</string>
+    <string name="friend_info_audio_video_call">音视频通话</string>
+    <string name="friend_info_voice_call">语音通话</string>
+    <string name="friend_info_video_call">视频通话</string>
+    <string name="friend_info_more_options">更多选项</string>
+    <string name="friend_info_menu_star">标为星标朋友</string>
+    <string name="friend_info_menu_remark">设置备注和标签</string>
+    <string name="friend_info_menu_blacklist">加入黑名单</string>
+    <string name="friend_info_menu_delete">删除联系人</string>
 </resources>

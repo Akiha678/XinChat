@@ -50,7 +50,7 @@
     <string name="chat_info_mute_notifications">消息免打扰</string>
     <string name="chat_info_clear_history">删除聊天记录</string>
     <string name="chat_info_clear_history_title">清空聊天记录</string>
-    <string name="chat_info_clear_history_message">确定清空此聊天的所有记录吗？清空后将无法找回。</string>
+    <string name="chat_info_clear_history_message">确定清空此聊天的所有记录吗？</string>
     <string name="chat_info_clear_confirm">清空</string>
     <string name="chat_info_clear_history_success">聊天记录已清空</string>
     <string name="chat_more_options">更多选项</string>

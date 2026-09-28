@@ -85,7 +85,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.res.stringResource
 import com.seanchen.widget.ui.icon.CommonIcon
 import com.seanchen.xinchat.core.navigation.chat.ChatNavigator
-import com.seanchen.widget.ui.appbar.CenterTopAppBar
+import com.seanchen.widget.ui.appbar.MenuAppBar
 
 @Composable
 internal fun ChatMessageRoute(
@@ -161,19 +161,11 @@ internal fun ChatMessageScreen(
     Scaffold(
         topBar = {
             // 组件库使用方案
-            CenterTopAppBar(
+            MenuAppBar(
                 title = R.string.messages_title,
                 onBackClick = onBackClick,
-                actions = {
-                    IconButton(onClick = onMenuClick) {
-                        CommonIcon(
-                            resId = R.drawable.ic_more,
-                            contentDescription = stringResource(R.string.chat_more_options),
-                            size = 24.dp,
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
+                onMenuClick = onMenuClick,
+                scrollBehavior = scrollBehavior
             )
         },
         contentWindowInsets = ScaffoldDefaults
