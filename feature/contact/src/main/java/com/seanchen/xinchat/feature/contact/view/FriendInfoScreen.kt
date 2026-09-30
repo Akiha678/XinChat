@@ -183,7 +183,7 @@ fun FriendInfoScreen(
 }
 
 /**
- * 好友资料内容组件（从上到下按四段规划，除去顶部AppBar后包含：信息、朋友资料、发消息与音视频通话）
+ * 好友资料内容组件
  */
 @Composable
 fun FriendInfoContentView(
@@ -202,10 +202,10 @@ fun FriendInfoContentView(
             .padding(horizontal = SpacePaddingMedium, vertical = SpaceVerticalMedium),
         verticalArrangement = Arrangement.spacedBy(SpaceVerticalMedium)
     ) {
-        // 第二段：信息（头像、昵称、微信号/XinChat号、地区）
+        // 第二段：信息
         FriendProfileHeaderSection(uiState = uiState)
 
-        // 第三段：朋友资料（设置备注和标签、朋友权限、个性签名、来源等）
+        // 第三段：朋友资料
         FriendDetailsSection(
             uiState = uiState,
             onRemarkClick = onRemarkClick,
@@ -286,8 +286,7 @@ private fun FriendProfileHeaderSection(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-
-                // XinChat号 / 微信号
+                // 用户名
                 if (uiState.username.isNotBlank()) {
                     Text(
                         text = stringResource(R.string.friend_info_username, uiState.username),
@@ -299,7 +298,7 @@ private fun FriendProfileHeaderSection(
                 // 地区
                 Text(
                     text = stringResource(R.string.friend_info_region) + "：" + uiState.region,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
