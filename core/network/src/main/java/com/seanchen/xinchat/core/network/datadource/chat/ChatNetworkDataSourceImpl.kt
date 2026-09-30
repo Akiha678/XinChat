@@ -3,6 +3,7 @@ package com.seanchen.xinchat.core.network.datadource.chat
 import com.seanchen.xinchat.core.model.entity.Conversation
 import com.seanchen.xinchat.core.model.entity.ChatSession
 import com.seanchen.xinchat.core.model.entity.Msg
+import com.seanchen.xinchat.core.model.request.CreateDirectConversationRequest
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
 import com.seanchen.xinchat.core.model.request.ReadMessageRequest
 import com.seanchen.xinchat.core.model.response.NetworkPageData
@@ -16,6 +17,10 @@ class ChatNetworkDataSourceImpl @Inject constructor(
 ) : BaseNetworkDataSource(), ChatNetworkDataSource {
     override suspend fun getSessions(): NetworkResponse<List<Conversation>> {
         return chatService.getSessions()
+    }
+
+    override suspend fun createDirectConversation(params: CreateDirectConversationRequest): NetworkResponse<Conversation> {
+        return chatService.createDirectConversation(params)
     }
 
     override suspend fun createSession(): NetworkResponse<ChatSession> {

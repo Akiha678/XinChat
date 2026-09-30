@@ -3,6 +3,7 @@ package com.seanchen.xinchat.core.data.repository
 import com.seanchen.xinchat.core.model.entity.Conversation
 import com.seanchen.xinchat.core.model.entity.ChatSession
 import com.seanchen.xinchat.core.model.entity.Msg
+import com.seanchen.xinchat.core.model.request.CreateDirectConversationRequest
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
 import com.seanchen.xinchat.core.model.request.ReadMessageRequest
 import com.seanchen.xinchat.core.model.response.NetworkPageData
@@ -22,6 +23,13 @@ class ChatRepository @Inject constructor(
      */
     fun getSessions(): Flow<NetworkResponse<List<Conversation>>> = flow {
         emit(chatNetworkDataSource.getSessions())
+    }.flowOn(Dispatchers.IO)
+
+    /**
+     * 创建或获取与好友的单聊会话（已存在则复用）
+     */
+    fun createDirectConversation(friendId: Long): Flow<NetworkResponse<Conversation>> = flow {
+        emit(chatNetworkDataSource.createDirectConversation(CreateDirectConversationRequest(friendId)))
     }.flowOn(Dispatchers.IO)
 
     /**

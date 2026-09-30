@@ -72,7 +72,9 @@ fun ContactRoute(
         onToggleSearch = viewModel::toggleSearch,
         onToggleSort = viewModel::toggleSortOrder,
         onFriendClick = { user ->
-            ChatNavigator.toChatMessage(sessionId = user.id)
+            viewModel.startChatWithFriend(user.id) { sessionId ->
+                ChatNavigator.toChatMessage(sessionId = sessionId)
+            }
         },
         onAvatarClick = { user ->
             ContactNavigator.toFriendInfo(userId = user.id)

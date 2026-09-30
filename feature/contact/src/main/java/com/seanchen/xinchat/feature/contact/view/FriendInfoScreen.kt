@@ -91,7 +91,11 @@ fun FriendInfoRoute(
     FriendInfoScreen(
         uiState = uiState,
         onBackClick = onBackClick,
-        onSendMessageClick = { onSendMessage(uiState.id) },
+        onSendMessageClick = {
+            viewModel.startChatWithFriend(uiState.id) { sessionId ->
+                onSendMessage(sessionId)
+            }
+        },
         onAudioVideoCallClick = { onAudioVideoCall(uiState.id) }
     )
 }

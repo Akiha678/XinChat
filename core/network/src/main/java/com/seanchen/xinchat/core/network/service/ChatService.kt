@@ -3,6 +3,7 @@ package com.seanchen.xinchat.core.network.service
 import com.seanchen.xinchat.core.model.entity.Conversation
 import com.seanchen.xinchat.core.model.entity.ChatSession
 import com.seanchen.xinchat.core.model.entity.Msg
+import com.seanchen.xinchat.core.model.request.CreateDirectConversationRequest
 import com.seanchen.xinchat.core.model.request.MessagePageRequest
 import com.seanchen.xinchat.core.model.request.ReadMessageRequest
 import com.seanchen.xinchat.core.model.response.NetworkPageData
@@ -17,6 +18,14 @@ interface ChatService {
      */
     @GET("chat/session")
     suspend fun getSessions(): NetworkResponse<List<Conversation>>
+
+    /**
+     * 创建或获取与好友的单聊会话（已存在则复用）
+     */
+    @POST("chat/conversation")
+    suspend fun createDirectConversation(
+        @Body params: CreateDirectConversationRequest
+    ): NetworkResponse<Conversation>
 
     /**
      * 创建兼容旧聊天入口的默认会话。

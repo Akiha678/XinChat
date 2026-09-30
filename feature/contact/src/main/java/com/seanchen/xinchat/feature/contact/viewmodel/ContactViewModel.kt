@@ -2,6 +2,7 @@ package com.seanchen.xinchat.feature.contact.viewmodel
 
 import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
+import com.seanchen.xinchat.core.data.repository.ChatRepository
 import com.seanchen.xinchat.core.data.repository.ContactRepository
 import com.seanchen.xinchat.core.model.request.CreateFriendRequest
 import com.seanchen.xinchat.core.result.ResultHandler
@@ -26,6 +27,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ContactViewModel @Inject constructor(
     private val contactRepository: ContactRepository,
+    private val chatRepository: ChatRepository? = null,
 ) : BaseViewModel() {
 
     companion object {
@@ -207,5 +209,26 @@ class ContactViewModel @Inject constructor(
 
     fun clearError() {
         _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    /**
+     * 发起与好友聊天：创建或获取单聊会话成功后回调真正的 sessionId
+     */
+    fun startChatWithFriend(friendId: Long, onSessionReady: (Long) -> Unit) {
+        if (friendId <= 0L) return
+        val repo = chatRepository ?: return
+        viewModelScope.launch {
+            try {
+                val response = repo.createDirectConversation(friendId).first()
+                val conversation = response.data
+                if (response.isSucceeded && conversation != null) {
+                    onSessionReady(conversation.id)
+                } else {
+                    runCatching { ToastUtils.showError(response.message ?: "创建会话失败") }
+                }
+            } catch (exception: Exception) {
+                runCatching { ToastUtils.showError(exception.message ?: "创建会话失败") }
+            }
+        }
     }
 }
