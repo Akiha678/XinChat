@@ -5,9 +5,15 @@ import kotlinx.serialization.Serializable
 
 object ContactRoutes {
 
+    /**
+     * 联系人界面
+     */
     @Serializable
     data object Contact : NavKey
 
+    /**
+     * 添加好友界面
+     */
     @Serializable
     data object AddFriend : NavKey
 
