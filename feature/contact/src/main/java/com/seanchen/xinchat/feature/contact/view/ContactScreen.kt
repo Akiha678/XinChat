@@ -456,7 +456,7 @@ fun TelegramAvatar(
                 modifier = Modifier
                     .size(12.dp)
                     .align(Alignment.BottomEnd)
-                    .background(Color.White, CircleShape)
+                    .background(MaterialTheme.colorScheme.surface, CircleShape)
                     .padding(2.dp)
                     .background(ColorOnline, CircleShape)
             )

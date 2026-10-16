@@ -4,7 +4,7 @@ package com.seanchen.xinchat.feature.auth.view
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,19 +33,19 @@ internal fun RegisterRoute(
     viewModel: RegisterViewModel = hiltViewModel(),
 ) {
     // 收集邮箱输入
-    val email by viewModel.email.collectAsState()
+    val email by viewModel.email.collectAsStateWithLifecycle()
     // 收集验证码输入
-    val verificationCode by viewModel.verificationCode.collectAsState()
+    val verificationCode by viewModel.verificationCode.collectAsStateWithLifecycle()
     // 收集密码输入
-    val password by viewModel.password.collectAsState()
+    val password by viewModel.password.collectAsStateWithLifecycle()
     // 收集确认密码输入
-    val confirmPassword by viewModel.confirmPassword.collectAsState()
+    val confirmPassword by viewModel.confirmPassword.collectAsStateWithLifecycle()
     // 收集验证码加载状态
-    val isLoadingCaptcha by viewModel.isLoadingCaptcha.collectAsState()
+    val isLoadingCaptcha by viewModel.isLoadingCaptcha.collectAsStateWithLifecycle()
     // 收集邮箱验证状态
-    val isEmailValid by viewModel.isEmailValid.collectAsState(initial = false)
+    val isEmailValid by viewModel.isEmailValid.collectAsStateWithLifecycle(initialValue = false)
     // 收集注册按钮启动状态
-    val isRegisterEnabled by viewModel.isRegisterEnabled.collectAsState(initial = false)
+    val isRegisterEnabled by viewModel.isRegisterEnabled.collectAsStateWithLifecycle(initialValue = false)
 
     RegisterScreen(
         email = email,

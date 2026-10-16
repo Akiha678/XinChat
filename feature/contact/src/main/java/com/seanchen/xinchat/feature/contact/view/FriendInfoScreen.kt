@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import com.seanchen.widget.ui.appbar.MenuAppBar
 import com.seanchen.widget.ui.image.LetterAvatar
 import com.seanchen.widget.ui.list.AppListItem
+import com.seanchen.widget.ui.theme.ColorOnline
 import com.seanchen.widget.ui.theme.ShapeLarge
 import com.seanchen.widget.ui.theme.ShapeMedium
 import com.seanchen.widget.ui.theme.SpaceHorizontalMedium
@@ -265,9 +266,11 @@ private fun FriendProfileHeaderSection(
                 if (uiState.isOnline) {
                     Box(
                         modifier = Modifier
-                            .size(14.dp)
+                            .size(16.dp)
                             .align(Alignment.BottomEnd)
-                            .background(Color(0xFF00C853), CircleShape)
+                            .background(MaterialTheme.colorScheme.surface, CircleShape)
+                            .padding(2.dp)
+                            .background(ColorOnline, CircleShape)
                     )
                 }
             }

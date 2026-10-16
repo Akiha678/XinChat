@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,13 +33,13 @@ import com.seanchen.xinchat.feature.auth.viewmodel.ResetPasswordViewModel
 internal fun ResetPasswordRoute(
     viewModel: ResetPasswordViewModel = hiltViewModel()
 ){
-    val email by viewModel.email.collectAsState()
-    val newPassword by viewModel.newPassword.collectAsState()
-    val confirmPassword by viewModel.confirmPassword.collectAsState()
-    val verificationCode by viewModel.verificationCode.collectAsState()
-    val isEmailValid by viewModel.isEmailValid.collectAsState(initial = false)
-    val isLoadingCode by viewModel.isLoadingCode.collectAsState()
-    val isResetEnabled by viewModel.isResetEnabled.collectAsState(initial = false)
+    val email by viewModel.email.collectAsStateWithLifecycle()
+    val newPassword by viewModel.newPassword.collectAsStateWithLifecycle()
+    val confirmPassword by viewModel.confirmPassword.collectAsStateWithLifecycle()
+    val verificationCode by viewModel.verificationCode.collectAsStateWithLifecycle()
+    val isEmailValid by viewModel.isEmailValid.collectAsStateWithLifecycle(initialValue = false)
+    val isLoadingCode by viewModel.isLoadingCode.collectAsStateWithLifecycle()
+    val isResetEnabled by viewModel.isResetEnabled.collectAsStateWithLifecycle(initialValue = false)
 
     ResetPasswordScreen(
         email = email,

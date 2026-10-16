@@ -3,7 +3,7 @@ package com.seanchen.xinchat.feature.auth.view
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.seanchen.xinchat.feature.auth.viewmodel.AccountLoginViewModel
 import androidx.compose.runtime.getValue
@@ -37,11 +37,11 @@ internal fun AccountLoginRoute(
 ){
 
     // 收集账号输入
-    val account by viewModel.account.collectAsState()
+    val account by viewModel.account.collectAsStateWithLifecycle()
     // 收集密码输入
-    val password by viewModel.password.collectAsState()
+    val password by viewModel.password.collectAsStateWithLifecycle()
     // 收集登录按钮启用状态
-    val isLoginEnabled by viewModel.isLoginEnabled.collectAsState(initial = false)
+    val isLoginEnabled by viewModel.isLoginEnabled.collectAsStateWithLifecycle(initialValue = false)
 
     AccountLoginScreen(
         account = account,

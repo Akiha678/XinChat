@@ -37,7 +37,7 @@ fun FunctionMenuSection(
                 else -> null
             },
             showArrow = isLoggedIn && !isLoggingOut,
-            onClick = if (isLoggedIn && !isLoggingOut) onLogoutClick else ({})
+            onClick = if (isLoggedIn && !isLoggingOut) onLogoutClick else null
         )
     }
 }
