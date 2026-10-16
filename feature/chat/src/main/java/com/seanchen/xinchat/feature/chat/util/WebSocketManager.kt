@@ -4,13 +4,19 @@ import com.seanchen.xinchat.core.model.entity.Msg
 import com.seanchen.xinchat.core.util.log.LogUtils
 import com.seanchen.xinchat.feature.chat.BuildConfig
 import com.seanchen.xinchat.feature.chat.state.WebSocketConnectionState
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,9 +24,37 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.util.concurrent.TimeUnit
+import kotlin.math.pow
+import kotlin.random.Random
 
 private const val TAG = "WebSocketManager"
 private const val SOCKET_IO_PATH = "socket.io/?EIO=4&transport=websocket"
+
+/** 契约日志前缀：验收正则按字面量匹配，不得改动。注意**不含尾随空格** —— 消息模板统一写成 "$WS_LOG_PREFIX xxx"，多一个空格就会让契约正则失配 */
+private const val WS_LOG_PREFIX = "[XinChat-WS]"
+
+// 心跳保活与重连的默认参数，取值即《01-WebSocket-心跳与重连协议规范》的规格值
+private const val DEFAULT_PING_INTERVAL_MS = 30_000L
+private const val DEFAULT_PONG_TIMEOUT_MS = 10_000L
+private const val DEFAULT_RETRY_BASE_DELAY_MS = 1_000L
+private const val DEFAULT_RETRY_MULTIPLIER = 2.0
+private const val DEFAULT_RETRY_MAX_DELAY_MS = 30_000L
+private const val DEFAULT_MAX_RETRIES = 5
+
+/**
+ * 心跳保活与指数退避重连的策略参数。
+ *
+ * 生产默认值即协议规格值；单测传入毫秒级短间隔，把 30s 级行为压到秒级，
+ * 从而在不牺牲生产默认值的前提下做确定性验证。
+ */
+data class WsConfig(
+    val pingIntervalMs: Long = DEFAULT_PING_INTERVAL_MS,
+    val pongTimeoutMs: Long = DEFAULT_PONG_TIMEOUT_MS,
+    val retryBaseDelayMs: Long = DEFAULT_RETRY_BASE_DELAY_MS,
+    val retryMultiplier: Double = DEFAULT_RETRY_MULTIPLIER,
+    val retryMaxDelayMs: Long = DEFAULT_RETRY_MAX_DELAY_MS,
+    val maxRetries: Int = DEFAULT_MAX_RETRIES,
+)
 
 /**
  * 管理单个页面持有的 WebSocket 实时连接。
@@ -28,7 +62,12 @@ private const val SOCKET_IO_PATH = "socket.io/?EIO=4&transport=websocket"
  * 连接被服务端关闭或网络失败时，只要页面仍期望保持连接（未调用 [disconnect]），
  * 就会按退避策略自动重连，避免会话列表页/聊天页长时间静默断线后收不到新消息。
  */
-class WebSocketManager {
+class WebSocketManager(
+    private val baseUrl: String = BuildConfig.BASE_URL,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val config: WsConfig = WsConfig(),
+    private val random: Random = Random.Default,
+) {
     private val _connectionState = MutableStateFlow<WebSocketConnectionState>(WebSocketConnectionState.Disconnected)
     val connectionState: StateFlow<WebSocketConnectionState> = _connectionState.asStateFlow()
 
@@ -51,11 +90,19 @@ class WebSocketManager {
     private var retryJob: Job? = null
 
     /**
-     * 重试计数器与上限；重连退避间隔为 [retryBaseDelayMs] 与当前尝试次数的乘积
+     * 心跳保活任务；仅在 CONNECTED 期间存活
+     */
+    private var heartbeatJob: Job? = null
+
+    /**
+     * 当前等待的 PONG 信号；发出 Ping 时创建，收到 PONG 或超时后置空
+     */
+    private var pongSignal: CompletableDeferred<Unit>? = null
+
+    /**
+     * 重试计数器；退避延迟按 [WsConfig] 的指数公式计算
      */
     private var retryCount = 0
-    private val maxRetries = 5
-    private val retryBaseDelayMs = 1_000L
 
     private var onMessageReceived: ((Msg) -> Unit)? = null
     private var onConnectionStateChanged: ((WebSocketConnectionState) -> Unit)? = null
@@ -64,6 +111,13 @@ class WebSocketManager {
      * 保护连接状态切换的锁；OkHttp 回调线程与调用方线程共用
      */
     private val lock = Any()
+
+    /**
+     * 协程兜底异常处理：断网/重连期间的异常不得逃逸导致进程 Crash
+     */
+    private val exceptionHandler = CoroutineExceptionHandler { _, t ->
+        LogUtils.e(TAG, "$WS_LOG_PREFIX 协程异常: ${t.message}", t)
+    }
 
     /**
      * 设置消息接收回调
@@ -127,7 +181,7 @@ class WebSocketManager {
             return
         }
 
-        scope.launch {
+        scope.launch(ioDispatcher + exceptionHandler) {
             LogUtils.d(TAG, "开始建立WebSocket连接")
             LogUtils.d(TAG, "用户Token: ${token.take(15)}...")
 
@@ -165,11 +219,16 @@ class WebSocketManager {
                             LogUtils.e(TAG, "心跳响应发送失败")
                         }
                     }
+                    // 应用层心跳应答：完成当前 Ping 的等待信号
+                    if (text.contains("\"PONG\"")) {
+                        pongSignal?.complete(Unit)
+                    }
                     handleWebSocketMessage(text)
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     LogUtils.e(TAG, "WebSocket连接失败: ${t.message}", t)
+                    stopHeartbeat()
                     updateConnectionState(WebSocketConnectionState.Error(t.message ?: "连接错误"))
                     synchronized(lock) {
                         scheduleReconnect()
@@ -178,6 +237,7 @@ class WebSocketManager {
 
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                     LogUtils.d(TAG, "WebSocket连接关闭: code=$code, reason=$reason")
+                    stopHeartbeat()
                     updateConnectionState(WebSocketConnectionState.Disconnected)
                     // 连接被服务端关闭（重复登录被顶掉、空闲超时等）后尝试恢复连接
                     synchronized(lock) {
@@ -189,29 +249,98 @@ class WebSocketManager {
     }
 
     /**
-     * 连接失败或被关闭后按退避策略安排一次重连；需持锁调用。
+     * 计算第 [attempt] 次重连的退避延迟：min(base * multiplier^(attempt-1), max) + 抖动。
+     *
+     * 抖动上界取封顶值的 50%，用于打散多客户端的重连时刻，避免惊群。
+     */
+    private fun computeBackoffDelayMs(attempt: Int): Long {
+        val raw = config.retryBaseDelayMs * config.retryMultiplier.pow((attempt - 1).toDouble())
+        val capped = minOf(raw, config.retryMaxDelayMs.toDouble()).toLong()
+        val jitterBound = (capped / 2).coerceAtLeast(1L)
+        return capped + random.nextLong(0L, jitterBound)
+    }
+
+    /**
+     * 连接失败或被关闭后按指数退避策略安排一次重连；需持锁调用。
      */
     private fun scheduleReconnect() {
         if (!keepConnected) {
             return
         }
-        if (retryCount >= maxRetries) {
-            LogUtils.e(TAG, "WebSocket重连次数达到上限，停止自动重连")
+        if (retryCount >= config.maxRetries) {
+            LogUtils.e(TAG, "$WS_LOG_PREFIX 重连次数达到上限，停止自动重连")
             updateConnectionState(WebSocketConnectionState.Error("连接已断开，请稍后重试"))
             return
         }
         retryCount++
         val attempt = retryCount
         val scope = connectScope ?: return
+        val delayMs = computeBackoffDelayMs(attempt)
         retryJob?.cancel()
-        retryJob = scope.launch {
-            LogUtils.d(TAG, "WebSocket连接失败，${retryBaseDelayMs * attempt}毫秒后尝试重连 (第${attempt}次)")
-            delay(retryBaseDelayMs * attempt)
+        updateConnectionState(WebSocketConnectionState.Reconnecting)
+        retryJob = scope.launch(ioDispatcher + exceptionHandler) {
+            LogUtils.d(TAG, "$WS_LOG_PREFIX Reconnect attempt $attempt/${config.maxRetries} in ${delayMs}ms")
+            delay(delayMs)
             synchronized(lock) {
                 if (keepConnected && _connectionState.value != WebSocketConnectionState.Connecting) {
                     openConnection()
                 }
             }
+        }
+    }
+
+    /**
+     * 启动心跳保活循环；进入 CONNECTED 时调用。
+     *
+     * delay 与 withTimeoutOrNull 全部运行在 [ioDispatcher] 上，主线程零阻塞。
+     */
+    private fun startHeartbeat(scope: CoroutineScope) {
+        heartbeatJob?.cancel()
+        heartbeatJob = scope.launch(ioDispatcher + exceptionHandler) {
+            while (isActive && keepConnected) {
+                delay(config.pingIntervalMs)
+                val timestamp = System.currentTimeMillis()
+                val payload = """{"type":"PING","timestamp":$timestamp}"""
+                val sent = webSocket?.send(payload) ?: false
+                if (!sent) {
+                    LogUtils.e(TAG, "$WS_LOG_PREFIX Ping send failed")
+                    onLinkDead()
+                    return@launch
+                }
+                LogUtils.d(TAG, "$WS_LOG_PREFIX Ping sent at $timestamp")
+
+                val signal = CompletableDeferred<Unit>()
+                pongSignal = signal
+                val pong = withTimeoutOrNull(config.pongTimeoutMs) { signal.await() }
+                pongSignal = null
+                if (pong == null) {
+                    LogUtils.e(TAG, "$WS_LOG_PREFIX Pong timeout after ${config.pongTimeoutMs}ms, reconnecting")
+                    onLinkDead()
+                    return@launch
+                }
+                LogUtils.d(TAG, "$WS_LOG_PREFIX Pong received")
+            }
+        }
+    }
+
+    /**
+     * 停止心跳保活循环并清空待应答信号。
+     */
+    private fun stopHeartbeat() {
+        heartbeatJob?.cancel()
+        heartbeatJob = null
+        pongSignal = null
+    }
+
+    /**
+     * 判定链路假死：停心跳、关闭旧 socket、按退避策略安排重连。
+     */
+    private fun onLinkDead() {
+        stopHeartbeat()
+        runCatching { webSocket?.close(1000, "心跳超时") }
+        webSocket = null
+        synchronized(lock) {
+            scheduleReconnect()
         }
     }
 
@@ -308,6 +437,7 @@ class WebSocketManager {
             keepConnected = false
             retryJob?.cancel()
             retryJob = null
+            stopHeartbeat()
 
             LogUtils.d(TAG, "断开WebSocket连接")
             webSocket?.close(1000, "正常关闭")
@@ -317,10 +447,17 @@ class WebSocketManager {
     }
 
     /**
-     * 更新连接状态
+     * 更新连接状态：状态真正变化时打印契约日志，并在进入 CONNECTED 时启动心跳保活。
      */
     private fun updateConnectionState(state: WebSocketConnectionState) {
+        val changed = _connectionState.value != state
         _connectionState.value = state
+        if (changed) {
+            LogUtils.d(TAG, "$WS_LOG_PREFIX Connection status: ${state.label}")
+            if (state == WebSocketConnectionState.Connected) {
+                connectScope?.let { startHeartbeat(it) }
+            }
+        }
         onConnectionStateChanged?.invoke(state)
     }
 
@@ -332,10 +469,10 @@ class WebSocketManager {
     }
 
     private fun createWebSocketUrl(): String {
-        val baseUrl = BuildConfig.BASE_URL
+        val normalized = baseUrl
             .replaceFirst("https://", "wss://")
             .replaceFirst("http://", "ws://")
             .trimEnd('/')
-        return "$baseUrl/$SOCKET_IO_PATH"
+        return "$normalized/$SOCKET_IO_PATH"
     }
 }
