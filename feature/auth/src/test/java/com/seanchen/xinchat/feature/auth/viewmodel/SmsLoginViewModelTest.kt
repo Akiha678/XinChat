@@ -95,11 +95,16 @@ class SmsLoginViewModelTest {
     }
 
     @Test
-    fun testUpdatePhone_filtersNonDigits_andLimitsLength() {
+    fun testUpdateEmail_and_canSendCode() {
         val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
 
-        viewModel.updatePhone("138-0013-8000999")
-        assertEquals("13800138000", viewModel.uiState.value.phone)
+        assertFalse(viewModel.uiState.value.canSendCode)
+        viewModel.updateEmail("invalid-email")
+        assertFalse(viewModel.uiState.value.canSendCode)
+
+        viewModel.updateEmail("  user@example.com  ")
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertTrue(viewModel.uiState.value.canSendCode)
     }
 
     @Test
@@ -117,7 +122,7 @@ class SmsLoginViewModelTest {
         assertFalse(viewModel.uiState.value.canSendCode)
         assertFalse(viewModel.uiState.value.canLogin)
 
-        viewModel.updatePhone("13800138000")
+        viewModel.updateEmail("user@example.com")
         assertTrue(viewModel.uiState.value.canSendCode)
         assertFalse(viewModel.uiState.value.canLogin)
 
@@ -137,7 +142,7 @@ class SmsLoginViewModelTest {
     fun testSendVerificationCode_startsCountdown() = runTest(testDispatcher) {
         val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
 
-        viewModel.updatePhone("13800138000")
+        viewModel.updateEmail("user@example.com")
         viewModel.sendVerificationCode()
 
         awaitCondition { !viewModel.uiState.value.isSendingCode && viewModel.uiState.value.verificationCode.isNotEmpty() }
@@ -160,7 +165,7 @@ class SmsLoginViewModelTest {
     fun testLogin_success() = runTest(testDispatcher) {
         val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
 
-        viewModel.updatePhone("13800138000")
+        viewModel.updateEmail("user@example.com")
         viewModel.updateVerificationCode("1234")
 
         viewModel.login()
@@ -172,6 +177,32 @@ class SmsLoginViewModelTest {
 
         // 让后续异步刷新任务执行完毕，避免泄漏到下一个测试
         testScheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun testInitEmail_updatesEmailWhenEmpty() {
+        val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
+        viewModel.initEmail("test@example.com")
+        assertEquals("test@example.com", viewModel.uiState.value.email)
+
+        // 当已经有邮箱时不会被外部空串覆盖
+        viewModel.initEmail("")
+        assertEquals("test@example.com", viewModel.uiState.value.email)
+    }
+
+    @Test
+    fun testSendVerificationCode_triggersOnSuccessCallback() = runTest(testDispatcher) {
+        val viewModel = SmsLoginViewModel(fakeAppState, authRepository)
+        viewModel.updateEmail("user@example.com")
+
+        var successCallbackCalled = false
+        viewModel.sendVerificationCode(onSuccess = {
+            successCallbackCalled = true
+        })
+
+        awaitCondition { successCallbackCalled }
+        assertTrue(successCallbackCalled)
+        assertEquals(60, viewModel.uiState.value.resendCountdown)
     }
 
     private fun createFakeAppState(coroutineScope: CoroutineScope): AppState {

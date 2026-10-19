@@ -6,23 +6,32 @@ import kotlinx.serialization.Serializable
 object AuthRoutes {
 
     /**
-     * 登录主页路由
+     * 登录主页路由（邮箱验证码登录）
      */
     @Serializable
     data object Login : NavKey
 
     /**
-     * 账号密码
+     * 邮箱密码登录（第一步：输入邮箱）
      */
     @Serializable
     data object AccountLogin : NavKey
 
+    /**
+     * 验证码登录别名
+     */
     @Serializable
     data object SmsLogin : NavKey
 
+    /**
+     * 验证码输入界面（第二步：输入验证码）
+     */
     @Serializable
-    data object Register : NavKey
+    data class SmsCodeVerify(val phone: String) : NavKey
 
+    /**
+     * 密码输入界面（第二步：输入密码）
+     */
     @Serializable
-    data object ResetPassword : NavKey
+    data class PasswordInput(val account: String) : NavKey
 }

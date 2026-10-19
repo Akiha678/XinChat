@@ -6,7 +6,7 @@
     <!-- 登录/注册页面共用 -->
     <string name="welcome_login">你好，\n欢迎登录</string>
     <string name="welcome_register">你好，\n欢迎注册</string>
-    <string name="phone_hint">请输入手机号</string>
+    <string name="phone_hint">请输入</string>
     <string name="email_hint">请输入邮箱</string>
     <string name="account_hint">请输入邮箱或用户名</string>
     <string name="phone_code">+86</string>
@@ -29,11 +29,23 @@
     <!-- 登录主页 -->
     <string name="sms_login">验证码登录</string>
     <string name="email_register">邮箱注册</string>
-    <string name="account_login">账号密码登录</string>
+    <string name="account_login">密码登录</string>
     <string name="other_login_methods">其他登录方式</string>
     <string name="wechat">微信</string>
     <string name="qq">QQ</string>
     <string name="alipay">支付宝</string>
+    <string name="login_by_apple">通过Apple登录</string>
+    <string name="login_by_wechat">微信登录</string>
+    <string name="account_recovery">账号找回</string>
+    <string name="read_and_agree_prefix">我已阅读并同意</string>
+    <string name="next_step">下一步</string>
+    <string name="input_sms_code_title">输入验证码</string>
+    <string name="sms_code_sent_to">验证码已发送至 %s</string>
+    <string name="resend_countdown_format">%ds后重新获取</string>
+    <string name="resend_verification_code">重新获取验证码</string>
+    <string name="please_agree_agreement">请先阅读并同意用户协议和隐私政策</string>
+    <string name="input_password_title">输入密码</string>
+    <string name="account_label">账号：%s</string>
 
     <!-- 注册页面 -->
     <string name="register">注册</string>

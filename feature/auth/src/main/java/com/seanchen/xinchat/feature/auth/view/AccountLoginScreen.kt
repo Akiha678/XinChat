@@ -1,134 +1,162 @@
 package com.seanchen.xinchat.feature.auth.view
 
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.seanchen.xinchat.feature.auth.viewmodel.AccountLoginViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.seanchen.xinchat.core.designsystem.component.BottomNavigationRow
-import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalMedium
-import com.seanchen.xinchat.core.designsystem.theme.SpaceVerticalXLarge
+import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.seanchen.xinchat.core.navigation.auth.AuthNavigator
 import com.seanchen.xinchat.core.navigation.common.CommonNavigator
 import com.seanchen.xinchat.core.navigation.navigateBack
-import com.seanchen.widget.ui.button.AppButton
+import com.seanchen.xinchat.core.util.toast.ToastUtils
+import com.seanchen.xinchat.core.util.validation.ValidationUtil
 import com.seanchen.xinchat.feature.auth.R
-import com.seanchen.xinchat.feature.auth.component.AnimatedAuthPage
-import com.seanchen.xinchat.feature.auth.component.AuthInputField
-import com.seanchen.xinchat.feature.auth.component.PasswordInputField
-import com.seanchen.xinchat.feature.auth.component.UserAgreement
-
+import com.seanchen.xinchat.feature.auth.component.ModernAuthAgreement
+import com.seanchen.xinchat.feature.auth.component.ModernAuthBranding
+import com.seanchen.xinchat.feature.auth.component.ModernAuthButton
+import com.seanchen.xinchat.feature.auth.component.ModernAuthScaffold
+import com.seanchen.xinchat.feature.auth.component.ModernEmailInput
+import com.seanchen.xinchat.feature.auth.viewmodel.AccountLoginViewModel
 
 /**
- * 账号密码登录
+ * 邮箱密码登录 - 第一步（输入邮箱）
  */
 @Composable
 internal fun AccountLoginRoute(
-    viewModel: AccountLoginViewModel = hiltViewModel()
-){
-
-    // 收集账号输入
+    viewModel: AccountLoginViewModel = run {
+        val activity = LocalContext.current as? ComponentActivity
+        if (activity != null) hiltViewModel(activity) else hiltViewModel()
+    }
+) {
     val account by viewModel.account.collectAsStateWithLifecycle()
-    // 收集密码输入
-    val password by viewModel.password.collectAsStateWithLifecycle()
-    // 收集登录按钮启用状态
-    val isLoginEnabled by viewModel.isLoginEnabled.collectAsStateWithLifecycle(initialValue = false)
+    val context = LocalContext.current
 
     AccountLoginScreen(
         account = account,
-        password = password,
-        isLoginEnabled = isLoginEnabled,
         onAccountChange = viewModel::updateAccount,
-        onPasswordChange = viewModel::updatePassword,
-        onLoginClick = viewModel::login
+        onCloseClick = {
+            val activity = context as? ComponentActivity
+            if (activity != null) {
+                activity.onBackPressedDispatcher.onBackPressed()
+            } else {
+                navigateBack()
+            }
+        },
+        onToSmsLoginClick = { AuthNavigator.toLogin() },
+        onNextClick = { targetAccount -> AuthNavigator.toPasswordInput(targetAccount) }
     )
 }
 
 @Composable
 internal fun AccountLoginScreen(
     account: String = "",
-    password: String = "",
-    isLoginEnabled: Boolean = false,
     onAccountChange: (String) -> Unit = {},
-    onPasswordChange: (String) -> Unit = {},
-    onLoginClick: () -> Unit = {}
-){
-    AnimatedAuthPage(
-        title = "欢迎登录XinChat",
-        onBackClick = { navigateBack() }
+    onCloseClick: () -> Unit = {},
+    onToSmsLoginClick: () -> Unit = {},
+    onNextClick: (String) -> Unit = {}
+) {
+    var isAgreed by remember { mutableStateOf(false) }
+    val isEmailValid = ValidationUtil.isValidEmail(account)
+
+    ModernAuthScaffold(
+        title = stringResource(id = R.string.account_login),
+        isCloseAction = true,
+        onNavigationClick = onCloseClick
     ) {
-        AccountLoginContentView(
-            account = account,
-            password = password,
-            isLoginEnabled = isLoginEnabled,
-            onAccountChange = onAccountChange,
-            onPasswordChange = onPasswordChange,
-            onLoginClick = onLoginClick
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // 邮箱输入框
+        ModernEmailInput(
+            email = account,
+            onEmailChange = onAccountChange,
+            placeholder = stringResource(id = R.string.email_hint),
+            onDone = {
+                if (isEmailValid) {
+                    if (!isAgreed) {
+                        ToastUtils.showError(R.string.please_agree_agreement)
+                    } else {
+                        onNextClick(account)
+                    }
+                }
+            }
         )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // 下一步主按钮
+        ModernAuthButton(
+            text = stringResource(id = R.string.next_step),
+            enabled = isEmailValid,
+            onClick = {
+                if (!isAgreed) {
+                    ToastUtils.showError(R.string.please_agree_agreement)
+                } else {
+                    onNextClick(account)
+                }
+            }
+        )
+
+        // 辅助链接：切换到“验证码登录”
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(
+                text = stringResource(id = R.string.sms_login),
+                color = Color(0xFF646A73),
+                fontSize = 14.sp,
+                modifier = Modifier.clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onToSmsLoginClick
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // 协议勾选行
+        ModernAuthAgreement(
+            isAgreed = isAgreed,
+            onAgreedChange = { isAgreed = it },
+            onUserAgreementClick = CommonNavigator::toUserAgreement,
+            onPrivacyPolicyClick = CommonNavigator::toPrivacyPolicy
+        )
+
+        // 底部品牌标识（Logo + XinChat）
+        ModernAuthBranding()
     }
 }
 
+@Preview(name = "邮箱密码登录默认状态", showBackground = true)
 @Composable
-private fun AccountLoginContentView(
-    account: String,
-    password: String,
-    isLoginEnabled: Boolean,
-    onAccountChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onLoginClick: () -> Unit,
-){
-    val accountFieldFocused = remember { mutableStateOf(false) }
-    val passwordFieldFocused = remember { mutableStateOf(false) }
+private fun AccountLoginScreenPreview() {
+    AccountLoginScreen()
+}
 
-    AuthInputField(
-        value = account,
-        onValueChange = onAccountChange,
-        fieldFocused = accountFieldFocused,
-        placeholder = stringResource(id = R.string.account_hint),
-        keyboardType = KeyboardType.Text,
-        nextAction = ImeAction.Next
-    )
-
-    Spacer(modifier = Modifier.height(42.dp))
-
-    PasswordInputField(
-        password = password,
-        onPasswordChange = onPasswordChange,
-        passwordFieldFocused = passwordFieldFocused,
-        placeholder = stringResource(id = R.string.password_hint),
-        nextAction = ImeAction.Done
-    )
-
-    SpaceVerticalMedium()
-
-    UserAgreement(
-        prefix = stringResource(id = R.string.login_agreement_prefix),
-        onUserAgreementClick = CommonNavigator::toUserAgreement,
-        onPrivacyPolicyClick = CommonNavigator::toPrivacyPolicy
-    )
-
-    SpaceVerticalXLarge()
-
-    AppButton(
-        text = stringResource(id = R.string.login),
-        onClick = onLoginClick,
-        enabled = isLoginEnabled
-    )
-
-    BottomNavigationRow(
-        messageText = stringResource(id = R.string.go_register),
-        actionText = stringResource(id = R.string.forgot_password),
-        onCancelClick = { AuthNavigator.toRegister() },
-        onActionClick = { AuthNavigator.toResetPassword() },
-        divider = true
-    )
+@Preview(name = "邮箱密码登录已输入状态", showBackground = true)
+@Composable
+private fun AccountLoginScreenFilledPreview() {
+    AccountLoginScreen(account = "test@example.com")
 }

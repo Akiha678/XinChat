@@ -4,23 +4,22 @@ import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.AuthRepository
 import com.seanchen.xinchat.core.data.state.AppState
+import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.navigation.NavigationOptions
 import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
 import com.seanchen.xinchat.core.navigation.main.MainRoutes
 import com.seanchen.xinchat.core.navigation.navigate
-import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.result.ResultHandler
 import com.seanchen.xinchat.core.result.asResult
-import com.seanchen.xinchat.core.util.storage.MMKVUtils
 import com.seanchen.xinchat.core.util.toast.ToastUtils
 import com.seanchen.xinchat.core.util.validation.ValidationUtil
 import com.seanchen.xinchat.feature.auth.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
 class AccountLoginViewModel @Inject constructor(
@@ -28,14 +27,8 @@ class AccountLoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : BaseViewModel() {
 
-//    companion object {
-//        private const val KEY_SAVED_ACCOUNT = "saved_account"
-//
-//        private const val KEY_SAVED_PASSWORD = "saved_password"
-//    }
-
     /**
-     * 账号输入
+     * 邮箱/账号输入
      */
     private val _account = MutableStateFlow("")
     val account: StateFlow<String> = _account
@@ -46,23 +39,33 @@ class AccountLoginViewModel @Inject constructor(
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password
 
-//    init {
-        // 只回填账号，历史版本保存过明文密码时在这里清理。
-//        loadSavedAccount()
-//    }
+    /**
+     * 是否正在登录
+     */
+    private val _isLoggingIn = MutableStateFlow(false)
+    val isLoggingIn: StateFlow<Boolean> = _isLoggingIn
 
     /**
-     * 登录按钮是否可用
+     * 登录按钮是否可用（邮箱有效且密码不少于6位）
      */
     val isLoginEnabled = _account.combine(_password) { account, password ->
-        account.isNotBlank() && password.length >= 6
+        ValidationUtil.isValidEmail(account.trim()) && password.length >= 6
+    }
+
+    /**
+     * 初始化账号
+     */
+    fun initAccount(value: String) {
+        if (_account.value.isEmpty() && value.isNotEmpty()) {
+            _account.value = value.trim()
+        }
     }
 
     /**
      * 更新账号输入
      */
     fun updateAccount(value: String) {
-        _account.value = value
+        _account.value = value.trim()
     }
 
     /**
@@ -73,30 +76,40 @@ class AccountLoginViewModel @Inject constructor(
     }
 
     /**
-     * 执行登录操作
+     * 执行邮箱密码登录
      */
-    fun login() {
-        // 验证账号
-        if (_account.value.isBlank()) {
-            ToastUtils.showError(R.string.invalid_account)
+    fun login(onSuccess: (() -> Unit)? = null) {
+        val email = _account.value.trim()
+
+        // 验证邮箱
+        if (!ValidationUtil.isValidEmail(email)) {
+            runCatching { ToastUtils.showError(R.string.invalid_email) }
             return
         }
 
         // 验证密码
         if (!ValidationUtil.isValidPassword(_password.value)) {
-            ToastUtils.showError(R.string.invalid_password)
+            runCatching { ToastUtils.showError(R.string.invalid_password) }
             return
         }
 
+        _isLoggingIn.value = true
         val params = mapOf(
-            "account" to account.value,
+            "account" to email,
+            "email" to email,
             "password" to password.value
         )
 
         ResultHandler.handleResultWithData(
             scope = viewModelScope,
             flow = authRepository.loginByPassword(params).asResult(),
-            onData = { authData -> loginSuccess(authData) }
+            onData = { authData -> 
+                loginSuccess(authData)
+                onSuccess?.invoke()
+            },
+            onFinally = {
+                _isLoggingIn.value = false
+            }
         )
     }
 
@@ -105,8 +118,7 @@ class AccountLoginViewModel @Inject constructor(
      */
     private fun loginSuccess(authData: Auth) {
         viewModelScope.launch {
-//            saveAccount(_account.value)
-            ToastUtils.showSuccess(R.string.login_success)
+            runCatching { ToastUtils.showSuccess(R.string.login_success) }
             appState.updateAuth(authData)
             appState.refreshUserInfo()
             navigate(
@@ -119,24 +131,4 @@ class AccountLoginViewModel @Inject constructor(
             )
         }
     }
-
-    /**
-     * 加载已经保存的账号
-     */
-//    private fun loadSavedAccount() {
-//        val savedAccount = MMKVUtils.getString(KEY_SAVED_ACCOUNT, "")
-//
-//        if (savedAccount.isNotEmpty()){
-//            _account.value = savedAccount
-//        }
-//
-//        MMKVUtils.putString(KEY_SAVED_PASSWORD, "")
-//    }
-//
-//    /**
-//     * 保存账号
-//     */
-//    private fun saveAccount(account: String) {
-//        MMKVUtils.putString(KEY_SAVED_ACCOUNT, account)
-//    }
 }

@@ -29,11 +29,23 @@
     <!-- Login Home -->
     <string name="sms_login">SMS Login</string>
     <string name="email_register">Email Register</string>
-    <string name="account_login">Account Login</string>
+    <string name="account_login">Password Login</string>
     <string name="other_login_methods">Other Login Methods</string>
     <string name="wechat">WeChat</string>
     <string name="qq">QQ</string>
     <string name="alipay">Alipay</string>
+    <string name="login_by_apple">Sign in with Apple</string>
+    <string name="login_by_wechat">WeChat Login</string>
+    <string name="account_recovery">Account Recovery</string>
+    <string name="read_and_agree_prefix">I have read and agree to </string>
+    <string name="next_step">Next</string>
+    <string name="input_sms_code_title">Enter Verification Code</string>
+    <string name="sms_code_sent_to">Verification code sent to %s</string>
+    <string name="resend_countdown_format">Resend in %ds</string>
+    <string name="resend_verification_code">Resend code</string>
+    <string name="please_agree_agreement">Please agree to User Agreement and Privacy Policy</string>
+    <string name="input_password_title">Enter Password</string>
+    <string name="account_label">Account: %s</string>
 
     <!-- Register page -->
     <string name="register">Register</string>

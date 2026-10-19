@@ -33,7 +33,7 @@ class SmsLoginViewModel @Inject constructor(
 ) : BaseViewModel() {
 
     companion object {
-        private const val KEY_SAVED_PHONE = "saved_phone"
+        private const val KEY_SAVED_EMAIL = "saved_email"
         private const val COUNTDOWN_SECONDS = 60
     }
 
@@ -43,19 +43,41 @@ class SmsLoginViewModel @Inject constructor(
     private var countdownJob: Job? = null
 
     init {
-        loadSavedPhone()
+        loadSavedEmail()
     }
 
     /**
-     * 更新手机号输入，限制最多 11 位且纯数字
+     * 更新邮箱输入
+     */
+    fun updateEmail(input: String) {
+        _uiState.update { it.copy(email = input.trim()) }
+    }
+
+    /**
+     * 兼容手机号更新别名
      */
     fun updatePhone(input: String) {
-        val digitsOnly = input.filter { it.isDigit() }.take(11)
-        _uiState.update { it.copy(phone = digitsOnly) }
+        updateEmail(input)
     }
 
     /**
-     * 更新验证码输入，限制最多 4 位且纯数字
+     * 初始化邮箱（当外部传入且本地未输入时回填）
+     */
+    fun initEmail(email: String) {
+        if (_uiState.value.email.isEmpty() && email.isNotEmpty()) {
+            updateEmail(email)
+        }
+    }
+
+    /**
+     * 兼容手机号初始化别名
+     */
+    fun initPhone(phone: String) {
+        initEmail(phone)
+    }
+
+    /**
+     * 更新验证码输入，限制最多 4 位纯数字
      */
     fun updateVerificationCode(input: String) {
         val digitsOnly = input.filter { it.isDigit() }.take(4)
@@ -63,12 +85,12 @@ class SmsLoginViewModel @Inject constructor(
     }
 
     /**
-     * 发送短信验证码
+     * 发送验证码
      */
-    fun sendVerificationCode() {
-        val currentPhone = _uiState.value.phone
-        if (!ValidationUtil.isValidPhone(currentPhone)) {
-            runCatching { ToastUtils.showError(R.string.invalid_phone_number) }
+    fun sendVerificationCode(onSuccess: (() -> Unit)? = null) {
+        val currentEmail = _uiState.value.email
+        if (!ValidationUtil.isValidEmail(currentEmail)) {
+            runCatching { ToastUtils.showError(R.string.invalid_email) }
             return
         }
 
@@ -78,7 +100,11 @@ class SmsLoginViewModel @Inject constructor(
 
         _uiState.update { it.copy(isSendingCode = true) }
 
-        val params = mapOf("phone" to currentPhone)
+        val params = mapOf(
+            "email" to currentEmail,
+            "phone" to currentEmail,
+            "account" to currentEmail
+        )
         ResultHandler.handleResultWithData(
             scope = viewModelScope,
             flow = authRepository.getSmsCode(params).asResult(),
@@ -89,6 +115,7 @@ class SmsLoginViewModel @Inject constructor(
                 runCatching { ToastUtils.showSuccess("【XinChat】验证码：$code") }
                 _uiState.update { it.copy(resendCountdown = COUNTDOWN_SECONDS) }
                 startCountdown()
+                onSuccess?.invoke()
             },
             onFinally = {
                 _uiState.update { it.copy(isSendingCode = false) }
@@ -113,14 +140,14 @@ class SmsLoginViewModel @Inject constructor(
     }
 
     /**
-     * 执行短信验证码登录
+     * 执行邮箱验证码登录
      */
-    fun login() {
-        val currentPhone = _uiState.value.phone
+    fun login(onSuccess: (() -> Unit)? = null) {
+        val currentEmail = _uiState.value.email
         val currentCode = _uiState.value.verificationCode
 
-        if (!ValidationUtil.isValidPhone(currentPhone)) {
-            runCatching { ToastUtils.showError(R.string.invalid_phone_number) }
+        if (!ValidationUtil.isValidEmail(currentEmail)) {
+            runCatching { ToastUtils.showError(R.string.invalid_email) }
             return
         }
 
@@ -132,7 +159,9 @@ class SmsLoginViewModel @Inject constructor(
         _uiState.update { it.copy(isLoggingIn = true) }
 
         val params = mapOf(
-            "phone" to currentPhone,
+            "email" to currentEmail,
+            "phone" to currentEmail,
+            "account" to currentEmail,
             "code" to currentCode
         )
 
@@ -140,7 +169,8 @@ class SmsLoginViewModel @Inject constructor(
             scope = viewModelScope,
             flow = authRepository.loginByPhone(params).asResult(),
             onData = { authData ->
-                loginSuccess(currentPhone, authData)
+                loginSuccess(currentEmail, authData)
+                onSuccess?.invoke()
             },
             onFinally = {
                 _uiState.update { it.copy(isLoggingIn = false) }
@@ -148,9 +178,9 @@ class SmsLoginViewModel @Inject constructor(
         )
     }
 
-    private fun loginSuccess(phone: String, authData: Auth) {
+    private fun loginSuccess(email: String, authData: Auth) {
         viewModelScope.launch {
-            savePhone(phone)
+            saveEmail(email)
             runCatching { ToastUtils.showSuccess(R.string.login_success) }
             appState.updateAuth(authData)
             appState.refreshUserInfo()
@@ -165,19 +195,19 @@ class SmsLoginViewModel @Inject constructor(
         }
     }
 
-    private fun loadSavedPhone() {
+    private fun loadSavedEmail() {
         runCatching {
-            MMKVUtils.getString(KEY_SAVED_PHONE, "")
-        }.getOrNull()?.let { savedPhone ->
-            if (savedPhone.isNotBlank()) {
-                _uiState.update { it.copy(phone = savedPhone) }
+            MMKVUtils.getString(KEY_SAVED_EMAIL, "")
+        }.getOrNull()?.let { savedEmail ->
+            if (savedEmail.isNotBlank()) {
+                _uiState.update { it.copy(email = savedEmail) }
             }
         }
     }
 
-    private fun savePhone(phone: String) {
+    private fun saveEmail(email: String) {
         runCatching {
-            MMKVUtils.putString(KEY_SAVED_PHONE, phone)
+            MMKVUtils.putString(KEY_SAVED_EMAIL, email)
         }
     }
 

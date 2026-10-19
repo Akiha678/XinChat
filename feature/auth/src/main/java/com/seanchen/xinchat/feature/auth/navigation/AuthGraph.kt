@@ -2,48 +2,46 @@ package com.seanchen.xinchat.feature.auth.navigation
 
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.seanchen.xinchat.core.model.entity.Auth
 import com.seanchen.xinchat.core.navigation.auth.AuthRoutes
-import com.seanchen.xinchat.feature.auth.view.LoginRoute
 import com.seanchen.xinchat.feature.auth.view.AccountLoginRoute
-import com.seanchen.xinchat.feature.auth.view.RegisterRoute
-import com.seanchen.xinchat.feature.auth.view.ResetPasswordRoute
+import com.seanchen.xinchat.feature.auth.view.LoginRoute
+import com.seanchen.xinchat.feature.auth.view.PasswordInputRoute
+import com.seanchen.xinchat.feature.auth.view.SmsCodeVerifyRoute
 import com.seanchen.xinchat.feature.auth.view.SmsLoginRoute
-import com.seanchen.xinchat.feature.auth.view.SmsLoginScreen
 
 fun EntryProviderScope<NavKey>.authGraph() {
     /**
-     * 登录界面
+     * 登录主界面（邮箱验证码登录）
      */
     entry<AuthRoutes.Login> {
         LoginRoute()
     }
 
     /**
-     * 账号密码登录
+     * 密码登录界面（第一步：输入邮箱）
      */
-    entry<AuthRoutes.AccountLogin>{
+    entry<AuthRoutes.AccountLogin> {
         AccountLoginRoute()
     }
 
     /**
-     * 验证码登录
+     * 验证码登录界面（第一步：输入邮箱）
      */
     entry<AuthRoutes.SmsLogin> {
         SmsLoginRoute()
     }
 
     /**
-     * 注册界面
+     * 验证码输入界面（第二步：输入验证码）
      */
-    entry<AuthRoutes.Register> {
-        RegisterRoute()
+    entry<AuthRoutes.SmsCodeVerify> { route ->
+        SmsCodeVerifyRoute(phone = route.phone)
     }
 
     /**
-     * 重置密码界面
+     * 密码输入界面（第二步：输入密码）
      */
-    entry<AuthRoutes.ResetPassword> {
-        ResetPasswordRoute()
+    entry<AuthRoutes.PasswordInput> { route ->
+        PasswordInputRoute(account = route.account)
     }
 }

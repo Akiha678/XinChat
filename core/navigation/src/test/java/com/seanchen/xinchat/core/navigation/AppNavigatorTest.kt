@@ -68,13 +68,13 @@ class AppNavigatorTest {
 
     @Test
     fun `navigateTo queues command until controller attached`() {
-        navigator.navigateTo(AuthRoutes.Register)
+        navigator.navigateTo(AuthRoutes.AccountLogin)
 
         assertEquals(listOf<NavKey>(MainRoutes.Main), backStack.toList())
 
         attachController()
 
-        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.Register), backStack.toList())
+        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.AccountLogin), backStack.toList())
     }
 
     @Test
