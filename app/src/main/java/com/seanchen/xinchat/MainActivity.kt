@@ -44,7 +44,7 @@ class MainActivity : ComponentActivity() {
             if (appState.isLoggedIn.value) {
                 MainRoutes.Main
             } else {
-                AuthRoutes.Login
+                AuthRoutes.SmsLogin
             }
         }
     }

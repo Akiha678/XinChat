@@ -83,7 +83,7 @@ class AppNavigatorTest {
 
         navigator.navigateTo(UserRoutes.Profile)
 
-        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.Login), backStack.toList())
+        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.SmsLogin), backStack.toList())
     }
 
     @Test
@@ -105,7 +105,7 @@ class AppNavigatorTest {
         runBlocking { appState.logout() }
 
         assertFalse(appState.isLoggedIn.value)
-        assertEquals(listOf<NavKey>(AuthRoutes.Login), backStack.toList())
+        assertEquals(listOf<NavKey>(AuthRoutes.SmsLogin), backStack.toList())
     }
 
     @Test
@@ -117,7 +117,7 @@ class AppNavigatorTest {
         SessionExpiryNotifier.notifyExpired()
 
         assertFalse(appState.isLoggedIn.value)
-        assertEquals(listOf<NavKey>(AuthRoutes.Login), backStack.toList())
+        assertEquals(listOf<NavKey>(AuthRoutes.SmsLogin), backStack.toList())
     }
 
     @Test

@@ -26,7 +26,7 @@ object ValidationUtil {
      * - 验证码为4位
      * - 每位都为数字
      */
-    fun isValidSmsCode(code: String): Boolean {
+    fun isValidCode(code: String): Boolean {
         return code.length == 4 && code.all { it.isDigit() }
     }
 

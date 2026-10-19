@@ -7,7 +7,7 @@ object AuthNavigator {
      * 跳转到登录主页（邮箱验证码登录）
      */
     fun toLogin() {
-        navigate(AuthRoutes.Login)
+        navigate(AuthRoutes.SmsLogin)
     }
 
     /**
@@ -27,14 +27,14 @@ object AuthNavigator {
     /**
      * 跳转到验证码输入页
      */
-    fun toSmsCodeVerify(phone: String) {
-        navigate(AuthRoutes.SmsCodeVerify(phone))
+    fun toSmsCodeVerify(email: String) {
+        navigate(AuthRoutes.SmsCodeVerify(email))
     }
 
     /**
      * 跳转到密码输入页
      */
-    fun toPasswordInput(account: String) {
-        navigate(AuthRoutes.PasswordInput(account))
+    fun toPasswordInput(email: String) {
+        navigate(AuthRoutes.PasswordInput(email))
     }
 }

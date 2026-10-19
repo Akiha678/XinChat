@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,14 +68,14 @@ fun ModernAuthScaffold(
                 if (isCloseAction) {
                     Icon(
                         painter = painterResource(id = com.seanchen.xinchat.core.designsystem.R.drawable.ic_close),
-                        contentDescription = "关闭",
+                        contentDescription = stringResource(id = R.string.close),
                         tint = Color(0xFF1F2329),
                         modifier = Modifier.size(20.dp)
                     )
                 } else {
                     Icon(
                         painter = painterResource(id = com.seanchen.xinchat.core.designsystem.R.drawable.ic_left),
-                        contentDescription = "返回",
+                        contentDescription = stringResource(id = R.string.back),
                         tint = Color(0xFF1F2329),
                         modifier = Modifier.size(24.dp)
                     )

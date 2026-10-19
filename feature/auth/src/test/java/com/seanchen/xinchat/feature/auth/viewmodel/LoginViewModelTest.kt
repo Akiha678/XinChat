@@ -21,8 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -35,8 +35,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+/**
+ * 统一 LoginViewModel 单元测试（全面覆盖验证码登录与密码登录全流程）
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
-class AccountLoginViewModelTest {
+class LoginViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var scope: CoroutineScope
@@ -58,10 +61,10 @@ class AccountLoginViewModelTest {
             NetworkResponse(data = "1234")
 
         override suspend fun loginByPhone(params: Map<String, String>): NetworkResponse<Auth> =
-            NetworkResponse(data = Auth("tok", "ref", 100, 100, 0))
+            NetworkResponse(data = Auth("phone_tok", "ref", 100, 100, 0))
 
         override suspend fun loginByPassword(params: Map<String, String>): NetworkResponse<Auth> =
-            NetworkResponse(data = Auth("tok", "ref", 100, 100, 0))
+            NetworkResponse(data = Auth("pwd_tok", "ref", 100, 100, 0))
 
         override suspend fun verifyCaptcha(params: Map<String, String>): NetworkResponse<Boolean> =
             NetworkResponse(data = true)
@@ -95,67 +98,132 @@ class AccountLoginViewModelTest {
     }
 
     @Test
-    fun testUpdateAccountAndPassword() {
-        val viewModel = AccountLoginViewModel(fakeAppState, authRepository)
+    fun testUpdateEmailAndPassword() {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
 
-        viewModel.updateAccount("user@example.com")
+        viewModel.updateEmail("user@example.com")
         viewModel.updatePassword("password123")
+        viewModel.updateAgreed(true)
 
-        assertEquals("user@example.com", viewModel.account.value)
-        assertEquals("password123", viewModel.password.value)
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertEquals("password123", viewModel.uiState.value.password)
+        assertTrue(viewModel.uiState.value.isAgreed)
+        assertTrue(viewModel.uiState.value.isEmailValid)
+        assertTrue(viewModel.uiState.value.isPasswordValid)
+        assertTrue(viewModel.uiState.value.canPasswordLogin)
     }
 
     @Test
-    fun testInitAccount() {
-        val viewModel = AccountLoginViewModel(fakeAppState, authRepository)
+    fun testInitEmail_whenEmpty() {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
 
-        viewModel.initAccount("user@example.com")
-        assertEquals("user@example.com", viewModel.account.value)
+        viewModel.initEmail("user@example.com")
+        assertEquals("user@example.com", viewModel.uiState.value.email)
 
         // 再次传入空串不覆盖
-        viewModel.initAccount("")
-        assertEquals("user@example.com", viewModel.account.value)
+        viewModel.initEmail("")
+        assertEquals("user@example.com", viewModel.uiState.value.email)
     }
 
     @Test
-    fun testIsLoginEnabled() = runTest(testDispatcher) {
-        val viewModel = AccountLoginViewModel(fakeAppState, authRepository)
+    fun testValidationFlags_forCodeLoginAndGoNext() {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
 
-        assertFalse(viewModel.isLoginEnabled.first())
+        assertFalse(viewModel.uiState.value.canSendCode)
+        assertFalse(viewModel.uiState.value.canGoNext)
+        assertFalse(viewModel.uiState.value.canCodeLogin)
 
-        // 格式非法
-        viewModel.updateAccount("not-an-email")
-        viewModel.updatePassword("123456")
-        assertFalse(viewModel.isLoginEnabled.first())
+        // 输入不合法邮箱
+        viewModel.updateEmail("invalid-email")
+        assertFalse(viewModel.uiState.value.isEmailValid)
+        assertFalse(viewModel.uiState.value.canSendCode)
+        assertFalse(viewModel.uiState.value.canGoNext)
 
-        // 密码少于6位
-        viewModel.updateAccount("user@example.com")
-        viewModel.updatePassword("12345")
-        assertFalse(viewModel.isLoginEnabled.first())
+        // 输入合法邮箱
+        viewModel.updateEmail("user@example.com")
+        assertTrue(viewModel.uiState.value.isEmailValid)
+        assertTrue(viewModel.uiState.value.canSendCode)
+        assertTrue(viewModel.uiState.value.canGoNext)
+        assertFalse(viewModel.uiState.value.canCodeLogin)
 
-        // 邮箱与密码均合法
-        viewModel.updatePassword("123456")
-        assertTrue(viewModel.isLoginEnabled.first())
+        // 输入有效验证码
+        viewModel.updateVerificationCode("1234")
+        assertTrue(viewModel.uiState.value.canCodeLogin)
+        assertTrue(viewModel.uiState.value.canLogin)
     }
 
     @Test
-    fun testLogin_success() = runTest(testDispatcher) {
-        val viewModel = AccountLoginViewModel(fakeAppState, authRepository)
+    fun testUpdateVerificationCode_filterNonDigitsAndLimit4Digits() {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
 
-        viewModel.updateAccount("user@example.com")
-        viewModel.updatePassword("password123")
+        viewModel.updateVerificationCode("12ab345")
+        assertEquals("1234", viewModel.uiState.value.verificationCode)
+        assertTrue(viewModel.uiState.value.isVerificationCodeValid)
+    }
 
-        var callbackTriggered = false
-        viewModel.login(onSuccess = {
-            callbackTriggered = true
-        })
+    @Test
+    fun testSendVerificationCode_startsCountdownAndTriggersCallback() = runTest(testDispatcher) {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
+        viewModel.updateEmail("user@example.com")
 
-        awaitCondition { callbackTriggered && fakeAppState.isLoggedIn.value }
-        assertTrue(callbackTriggered)
+        var successCallbackCalled = false
+        viewModel.sendVerificationCode(onSuccess = { successCallbackCalled = true })
+
+        awaitCondition { successCallbackCalled && !viewModel.uiState.value.isSendingCode }
+        assertTrue(successCallbackCalled)
+        assertEquals("1234", viewModel.uiState.value.verificationCode)
+        assertEquals(60, viewModel.uiState.value.resendCountdown)
+        assertFalse(viewModel.uiState.value.canSendCode)
+
+        advanceTimeBy(1000)
+        testScheduler.runCurrent()
+        assertEquals(59, viewModel.uiState.value.resendCountdown)
+
+        advanceTimeBy(60_000)
+        testScheduler.runCurrent()
+        assertEquals(0, viewModel.uiState.value.resendCountdown)
+        assertTrue(viewModel.uiState.value.canSendCode)
+    }
+
+    @Test
+    fun testLoginByCode_success() = runTest(testDispatcher) {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
+        viewModel.updateEmail("user@example.com")
+        viewModel.updateVerificationCode("1234")
+
+        viewModel.loginByCode()
+        awaitCondition { !viewModel.uiState.value.isLoggingIn && fakeAppState.isLoggedIn.value }
+
         assertTrue(fakeAppState.isLoggedIn.value)
-        assertEquals("tok", fakeAppState.auth.value?.token)
+        assertEquals("phone_tok", fakeAppState.auth.value?.token)
 
         testScheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun testLoginByPassword_success() = runTest(testDispatcher) {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
+        viewModel.updateEmail("user@example.com")
+        viewModel.updatePassword("password123")
+
+        var callbackCalled = false
+        viewModel.loginByPassword(onSuccess = { callbackCalled = true })
+
+        awaitCondition { callbackCalled && fakeAppState.isLoggedIn.value }
+        assertTrue(callbackCalled)
+        assertTrue(fakeAppState.isLoggedIn.value)
+        assertEquals("pwd_tok", fakeAppState.auth.value?.token)
+
+        testScheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun testInitEmail_withAutoStartCountdown() {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
+
+        viewModel.initEmail("test@example.com", autoStartCountdown = true)
+        assertEquals("test@example.com", viewModel.uiState.value.email)
+        assertEquals(60, viewModel.uiState.value.resendCountdown)
     }
 
     private fun awaitCondition(timeoutMs: Long = 2000, condition: () -> Boolean) {
