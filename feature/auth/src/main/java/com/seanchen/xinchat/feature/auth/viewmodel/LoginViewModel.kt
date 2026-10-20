@@ -271,7 +271,7 @@ open class LoginViewModel @Inject constructor(
             navigate(
                 route = MainRoutes.Main,
                 navOptions = NavigationOptions(
-                    popUpToRoute = AuthRoutes.SmsLogin,
+                    popUpToRoute = AuthRoutes.CodeLogin,
                     inclusive = true,
                     allowPopToEmpty = true
                 )
@@ -300,7 +300,3 @@ open class LoginViewModel @Inject constructor(
         countdownJob?.cancel()
     }
 }
-
-/** 兼容旧代码类型别名，已统一合并至 [LoginViewModel] */
-typealias SmsLoginViewModel = LoginViewModel
-typealias AccountLoginViewModel = LoginViewModel

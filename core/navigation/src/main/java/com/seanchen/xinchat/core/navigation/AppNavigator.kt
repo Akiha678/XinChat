@@ -71,11 +71,11 @@ class AppNavigator @Inject constructor(
     private fun navigateToLogin() {
         synchronized(lock) {
             // 已经在登录页时不再重复入栈
-            if (controller?.currentRoute == AuthRoutes.SmsLogin) return
+            if (controller?.currentRoute == AuthRoutes.CodeLogin) return
         }
         executeOrEnqueue(
             NavigationCommand.NavigateTo(
-                route = AuthRoutes.SmsLogin,
+                route = AuthRoutes.CodeLogin,
                 navOptions = NavigationOptions(
                     popUpToRoute = MainRoutes.Main,
                     inclusive = true,

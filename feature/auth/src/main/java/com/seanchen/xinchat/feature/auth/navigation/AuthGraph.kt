@@ -10,28 +10,28 @@ import com.seanchen.xinchat.feature.auth.view.CodeLoginRoute
 
 fun EntryProviderScope<NavKey>.authGraph() {
     /**
-     * 验证码登录界面（第一步：输入邮箱）
+     * 验证码登录界面
      */
-    entry<AuthRoutes.SmsLogin> {
+    entry<AuthRoutes.CodeLogin> {
         CodeLoginRoute()
     }
 
     /**
-     * 验证码输入界面（第二步：输入验证码）
+     * 验证码输入界面
      */
-    entry<AuthRoutes.SmsCodeVerify> { route ->
+    entry<AuthRoutes.CodeVerify> { route ->
         CodeVerifyRoute(email = route.email)
     }
 
     /**
-     * 密码登录界面（第一步：输入邮箱）
+     * 密码登录界面
      */
-    entry<AuthRoutes.AccountLogin> {
+    entry<AuthRoutes.PasswordLogin> {
         PasswordLoginRoute()
     }
 
     /**
-     * 密码输入界面（第二步：输入密码）
+     * 密码输入界面
      */
     entry<AuthRoutes.PasswordInput> { route ->
         PasswordInputRoute(email = route.email)

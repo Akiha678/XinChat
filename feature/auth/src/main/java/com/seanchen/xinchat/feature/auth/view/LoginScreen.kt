@@ -38,12 +38,10 @@ import com.seanchen.xinchat.feature.auth.component.ModernPasswordInput
 import com.seanchen.xinchat.feature.auth.state.LoginUiState
 import com.seanchen.xinchat.feature.auth.viewmodel.LoginViewModel
 
-// ======================================================================================
-// 1. 验证码登录流程 (Email Code Login)
-// ======================================================================================
+// ================== 验证码登录 ==================
 
 /**
- * 验证码登录路由（第一步：输入邮箱）
+ * 验证码登录路由
  */
 @Composable
 fun CodeLoginRoute(
@@ -57,11 +55,11 @@ fun CodeLoginRoute(
         onAgreedChange = viewModel::updateAgreed,
         onSendVerificationCode = {
             viewModel.sendVerificationCode(requireAgreement = true) {
-                AuthNavigator.toSmsCodeVerify(uiState.email)
+                AuthNavigator.toCodeVerify(uiState.email)
             }
         },
         onToPasswordLoginClick = {
-            AuthNavigator.toAccountLogin()
+            AuthNavigator.toPasswordLogin()
         },
         onCloseClick = {
             navigateBack()
@@ -69,7 +67,7 @@ fun CodeLoginRoute(
     )
 }
 /**
- * 验证码登录界面（输入邮箱）
+ * 验证码登录界面
  */
 @Composable
 fun CodeLoginScreen(
@@ -145,7 +143,7 @@ fun CodeLoginScreen(
 }
 
 /**
- * 验证码输入路由（第二步：输入验证码）
+ * 验证码输入路由
  */
 @Composable
 fun CodeVerifyRoute(
@@ -253,12 +251,10 @@ fun CodeVerifyScreen(
     }
 }
 
-// ======================================================================================
-// 2. 密码登录流程 (Email Password Login)
-// ======================================================================================
+// ================== 密码登录 ==================
 
 /**
- * 密码登录路由（第一步：输入邮箱）
+ * 密码登录路由
  */
 @Composable
 fun PasswordLoginRoute(
@@ -278,7 +274,7 @@ fun PasswordLoginRoute(
             }
         },
         onToSmsLoginClick = {
-            AuthNavigator.toSmsLogin()
+            AuthNavigator.toCodeLogin()
         },
         onCloseClick = {
             navigateBack()
@@ -287,7 +283,7 @@ fun PasswordLoginRoute(
 }
 
 /**
- * 密码登录界面（第一步：输入邮箱）
+ * 密码登录界面
  */
 @Composable
 fun PasswordLoginScreen(
@@ -365,7 +361,7 @@ fun PasswordLoginScreen(
 
 
 /**
- * 输入密码路由（第二步：输入密码）
+ * 输入密码路由
  */
 @Composable
 fun PasswordInputRoute(

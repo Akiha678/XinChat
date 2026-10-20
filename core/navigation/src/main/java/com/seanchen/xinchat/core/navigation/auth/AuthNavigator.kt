@@ -3,32 +3,26 @@ package com.seanchen.xinchat.core.navigation.auth
 import com.seanchen.xinchat.core.navigation.navigate
 
 object AuthNavigator {
-    /**
-     * 跳转到登录主页（邮箱验证码登录）
-     */
-    fun toLogin() {
-        navigate(AuthRoutes.SmsLogin)
-    }
 
     /**
      * 跳转到邮箱密码登录页
      */
-    fun toAccountLogin() {
-        navigate(AuthRoutes.AccountLogin)
+    fun toPasswordLogin() {
+        navigate(AuthRoutes.PasswordLogin)
     }
 
     /**
      * 跳转到短信/邮箱验证码登录页
      */
-    fun toSmsLogin() {
-        navigate(AuthRoutes.SmsLogin)
+    fun toCodeLogin() {
+        navigate(AuthRoutes.CodeLogin)
     }
 
     /**
      * 跳转到验证码输入页
      */
-    fun toSmsCodeVerify(email: String) {
-        navigate(AuthRoutes.SmsCodeVerify(email))
+    fun toCodeVerify(email: String) {
+        navigate(AuthRoutes.CodeVerify(email))
     }
 
     /**

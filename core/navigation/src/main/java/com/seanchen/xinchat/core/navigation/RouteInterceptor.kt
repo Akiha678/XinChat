@@ -36,5 +36,5 @@ class RouteInterceptor {
     /**
      * 获取登录页面路由对象
      */
-    fun getLoginRoute(): NavKey = AuthRoutes.SmsLogin
+    fun getLoginRoute(): NavKey = AuthRoutes.CodeLogin
 }
