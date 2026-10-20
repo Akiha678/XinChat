@@ -68,13 +68,13 @@ class AppNavigatorTest {
 
     @Test
     fun `navigateTo queues command until controller attached`() {
-        navigator.navigateTo(AuthRoutes.AccountLogin)
+        navigator.navigateTo(AuthRoutes.PasswordLogin)
 
         assertEquals(listOf<NavKey>(MainRoutes.Main), backStack.toList())
 
         attachController()
 
-        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.AccountLogin), backStack.toList())
+        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.PasswordLogin), backStack.toList())
     }
 
     @Test
@@ -83,7 +83,7 @@ class AppNavigatorTest {
 
         navigator.navigateTo(UserRoutes.Profile)
 
-        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.SmsLogin), backStack.toList())
+        assertEquals(listOf<NavKey>(MainRoutes.Main, AuthRoutes.CodeLogin), backStack.toList())
     }
 
     @Test
@@ -105,7 +105,7 @@ class AppNavigatorTest {
         runBlocking { appState.logout() }
 
         assertFalse(appState.isLoggedIn.value)
-        assertEquals(listOf<NavKey>(AuthRoutes.SmsLogin), backStack.toList())
+        assertEquals(listOf<NavKey>(AuthRoutes.CodeLogin), backStack.toList())
     }
 
     @Test
@@ -117,7 +117,7 @@ class AppNavigatorTest {
         SessionExpiryNotifier.notifyExpired()
 
         assertFalse(appState.isLoggedIn.value)
-        assertEquals(listOf<NavKey>(AuthRoutes.SmsLogin), backStack.toList())
+        assertEquals(listOf<NavKey>(AuthRoutes.CodeLogin), backStack.toList())
     }
 
     @Test

@@ -38,7 +38,7 @@ fun ModernAuthScaffold(
     title: String,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
-    isCloseAction: Boolean = true,
+    showNavigationIcon: Boolean = false,
     onNavigationClick: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -48,31 +48,24 @@ fun ModernAuthScaffold(
             .background(Color.White)
             .statusBarsPadding()
     ) {
-        // 顶部导航栏按钮（关闭或返回）
+        // 顶部导航栏按钮（仅支持返回箭头，已移除X关闭按钮）
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 14.dp, vertical = 6.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = true, radius = 20.dp),
-                        onClick = onNavigationClick
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                if (isCloseAction) {
-                    Icon(
-                        painter = painterResource(id = com.seanchen.xinchat.core.designsystem.R.drawable.ic_close),
-                        contentDescription = stringResource(id = R.string.close),
-                        tint = Color(0xFF1F2329),
-                        modifier = Modifier.size(20.dp)
-                    )
-                } else {
+            if (showNavigationIcon) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(bounded = true, radius = 20.dp),
+                            onClick = onNavigationClick
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(
                         painter = painterResource(id = com.seanchen.xinchat.core.designsystem.R.drawable.ic_left),
                         contentDescription = stringResource(id = R.string.back),
@@ -80,6 +73,9 @@ fun ModernAuthScaffold(
                         modifier = Modifier.size(24.dp)
                     )
                 }
+            } else {
+                // 占位保持页面顶部留白高度一致
+                Spacer(modifier = Modifier.size(40.dp))
             }
         }
 

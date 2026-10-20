@@ -3,6 +3,16 @@ package com.seanchen.xinchat.feature.auth.state
 import com.seanchen.xinchat.core.util.validation.ValidationUtil
 
 /**
+ * 登录方式枚举
+ */
+enum class LoginMode {
+    /** 邮箱验证码登录 */
+    CODE,
+    /** 邮箱密码登录 */
+    PASSWORD
+}
+
+/**
  * 统一登录界面 UI 状态（涵盖验证码登录与密码登录全流程）。
  *
  * @param email 登录邮箱（用户名）
@@ -12,6 +22,7 @@ import com.seanchen.xinchat.core.util.validation.ValidationUtil
  * @param isSendingCode 是否正在请求验证码
  * @param isLoggingIn 是否正在执行登录
  * @param isAgreed 是否同意用户协议与隐私政策
+ * @param loginMode 当前选择的登录方式
  */
 data class LoginUiState(
     val email: String = "",
@@ -20,7 +31,8 @@ data class LoginUiState(
     val resendCountdown: Int = 0,
     val isSendingCode: Boolean = false,
     val isLoggingIn: Boolean = false,
-    val isAgreed: Boolean = false
+    val isAgreed: Boolean = false,
+    val loginMode: LoginMode = LoginMode.CODE
 ) {
     /** 邮箱格式是否合法 */
     val isEmailValid: Boolean

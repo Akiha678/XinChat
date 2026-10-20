@@ -16,6 +16,7 @@ import com.seanchen.xinchat.core.navigation.AppNavigator
 import com.seanchen.xinchat.core.navigation.NavigationService
 import com.seanchen.xinchat.core.network.datadource.auth.AuthNetworkDataSource
 import com.seanchen.xinchat.core.network.datadource.userinfo.UserInfoNetworkDataSource
+import com.seanchen.xinchat.feature.auth.state.LoginMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -95,6 +96,32 @@ class LoginViewModelTest {
         NavigationService.unbind(appNavigator)
         scope.cancel()
         Dispatchers.resetMain()
+    }
+
+    @Test
+    fun testSwitchAndToggleLoginMode() {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
+        viewModel.updateEmail("user@example.com")
+        viewModel.updateAgreed(true)
+
+        // 默认是验证码登录
+        assertEquals(LoginMode.CODE, viewModel.uiState.value.loginMode)
+
+        // 切换到密码登录
+        viewModel.switchLoginMode(LoginMode.PASSWORD)
+        assertEquals(LoginMode.PASSWORD, viewModel.uiState.value.loginMode)
+        // 验证输入的邮箱和协议依然保留
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertTrue(viewModel.uiState.value.isAgreed)
+
+        // 互切
+        viewModel.toggleLoginMode()
+        assertEquals(LoginMode.CODE, viewModel.uiState.value.loginMode)
+        assertEquals("user@example.com", viewModel.uiState.value.email)
+        assertTrue(viewModel.uiState.value.isAgreed)
+
+        viewModel.toggleLoginMode()
+        assertEquals(LoginMode.PASSWORD, viewModel.uiState.value.loginMode)
     }
 
     @Test

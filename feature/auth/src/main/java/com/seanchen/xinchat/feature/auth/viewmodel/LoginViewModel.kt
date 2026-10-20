@@ -15,6 +15,7 @@ import com.seanchen.xinchat.core.util.storage.MMKVUtils
 import com.seanchen.xinchat.core.util.toast.ToastUtils
 import com.seanchen.xinchat.core.util.validation.ValidationUtil
 import com.seanchen.xinchat.feature.auth.R
+import com.seanchen.xinchat.feature.auth.state.LoginMode
 import com.seanchen.xinchat.feature.auth.state.LoginUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -50,7 +51,7 @@ open class LoginViewModel @Inject constructor(
     }
 
     // ==================================================================================
-    // 输入项更新
+    // 输入项更新与模式切换
     // ==================================================================================
 
     /**
@@ -95,6 +96,26 @@ open class LoginViewModel @Inject constructor(
      */
     fun updateAgreed(agreed: Boolean) {
         _uiState.update { it.copy(isAgreed = agreed) }
+    }
+
+    /**
+     * 切换登录方式（验证码登录 / 密码登录）
+     */
+    fun switchLoginMode(mode: LoginMode) {
+        if (_uiState.value.loginMode != mode) {
+            _uiState.update { it.copy(loginMode = mode) }
+        }
+    }
+
+    /**
+     * 在验证码登录与密码登录之间互切（保持已输入的邮箱与勾选状态）
+     */
+    fun toggleLoginMode() {
+        _uiState.update {
+            it.copy(
+                loginMode = if (it.loginMode == LoginMode.CODE) LoginMode.PASSWORD else LoginMode.CODE
+            )
+        }
     }
 
     // ==================================================================================

@@ -1,5 +1,9 @@
 package com.seanchen.xinchat.feature.auth.view
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -35,56 +39,93 @@ import com.seanchen.xinchat.feature.auth.component.ModernAuthScaffold
 import com.seanchen.xinchat.feature.auth.component.ModernCodeBoxes
 import com.seanchen.xinchat.feature.auth.component.ModernEmailInput
 import com.seanchen.xinchat.feature.auth.component.ModernPasswordInput
+import com.seanchen.xinchat.feature.auth.state.LoginMode
 import com.seanchen.xinchat.feature.auth.state.LoginUiState
 import com.seanchen.xinchat.feature.auth.viewmodel.LoginViewModel
 
-// ================== 邮箱验证码登录 ==================
+// ======================================================================================
+// 1. 登录主界面（统一承载验证码登录与密码登录，支持同页平滑切换，避免反复创建页面导致返回栈堆叠）
+// ======================================================================================
 
 /**
- * 验证码登录路由（第一步：输入邮箱）
+ * 统一登录路由
+ *
+ * @param initialMode 初始展示的登录方式（验证码登录 / 密码登录）
  */
 @Composable
-fun CodeLoginRoute(
+fun LoginRoute(
+    initialMode: LoginMode = LoginMode.CODE,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(initialMode) {
+        viewModel.switchLoginMode(initialMode)
+    }
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    CodeLoginScreen(
+    LoginScreen(
         uiState = uiState,
         onEmailChange = viewModel::updateEmail,
         onAgreedChange = viewModel::updateAgreed,
+        onToggleModeClick = viewModel::toggleLoginMode,
         onSendVerificationCode = {
             viewModel.sendVerificationCode(requireAgreement = true) {
                 AuthNavigator.toCodeVerify(uiState.email)
             }
         },
-        onToPasswordLoginClick = {
-            AuthNavigator.toPasswordLogin()
-        },
-        onCloseClick = {
-            navigateBack()
+        onNextClick = {
+            if (!uiState.isAgreed) {
+                runCatching { ToastUtils.showError(R.string.please_agree_agreement) }
+            } else {
+                AuthNavigator.toPasswordInput(uiState.email)
+            }
         }
     )
 }
 
 /**
- * 验证码登录界面（输入邮箱）
+ * 兼容旧路由入口：验证码登录
  */
 @Composable
-fun CodeLoginScreen(
+fun CodeLoginRoute(
+    viewModel: LoginViewModel = hiltViewModel()
+) {
+    LoginRoute(initialMode = LoginMode.CODE, viewModel = viewModel)
+}
+
+/**
+ * 兼容旧路由入口：密码登录
+ */
+@Composable
+fun PasswordLoginRoute(
+    viewModel: LoginViewModel = hiltViewModel()
+) {
+    LoginRoute(initialMode = LoginMode.PASSWORD, viewModel = viewModel)
+}
+
+/**
+ * 统一登录界面
+ */
+@Composable
+fun LoginScreen(
     uiState: LoginUiState = LoginUiState(),
     onEmailChange: (String) -> Unit = {},
     onAgreedChange: (Boolean) -> Unit = {},
+    onToggleModeClick: () -> Unit = {},
     onSendVerificationCode: () -> Unit = {},
-    onToPasswordLoginClick: () -> Unit = {},
+    onNextClick: () -> Unit = {},
     onCloseClick: () -> Unit = {},
     onUserAgreementClick: () -> Unit = {},
     onPrivacyPolicyClick: () -> Unit = {}
 ) {
+    val isCodeMode = uiState.loginMode == LoginMode.CODE
+    val pageTitle = if (isCodeMode) stringResource(id = R.string.code_login) else stringResource(id = R.string.password_login)
+    val buttonText = if (isCodeMode) stringResource(id = R.string.get_verification_code) else stringResource(id = R.string.next_step)
+    val switchText = if (isCodeMode) stringResource(id = R.string.password_login) else stringResource(id = R.string.code_login)
+
     ModernAuthScaffold(
-        title = stringResource(id = R.string.code_login),
-        isCloseAction = true,
-        onNavigationClick = onCloseClick
+        title = pageTitle,
+        showNavigationIcon = false
     ) {
         ModernEmailInput(
             email = uiState.email,
@@ -92,7 +133,7 @@ fun CodeLoginScreen(
             placeholder = stringResource(id = R.string.email_hint),
             onDone = {
                 if (uiState.isEmailValid) {
-                    onSendVerificationCode()
+                    if (isCodeMode) onSendVerificationCode() else onNextClick()
                 }
             }
         )
@@ -109,15 +150,17 @@ fun CodeLoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 获取验证码按钮
+        // 主操作按钮
         ModernAuthButton(
-            text = stringResource(id = R.string.get_verification_code),
+            text = buttonText,
             enabled = uiState.isEmailValid,
-            isLoading = uiState.isSendingCode,
-            onClick = onSendVerificationCode
+            isLoading = if (isCodeMode) uiState.isSendingCode else false,
+            onClick = {
+                if (isCodeMode) onSendVerificationCode() else onNextClick()
+            }
         )
 
-        // 切换到密码登录
+        // 切换登录方式（在当前界面无缝切换，不入导航栈，保持输入内容）
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,13 +168,13 @@ fun CodeLoginScreen(
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = stringResource(id = R.string.password_login),
+                text = switchText,
                 color = PrimaryDefault,
                 fontSize = 14.sp,
                 modifier = Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = onToPasswordLoginClick
+                    onClick = onToggleModeClick
                 )
             )
         }
@@ -143,8 +186,60 @@ fun CodeLoginScreen(
     }
 }
 
+/** 兼容旧单独组件：验证码登录界面 */
+@Composable
+fun CodeLoginScreen(
+    uiState: LoginUiState = LoginUiState(),
+    onEmailChange: (String) -> Unit = {},
+    onAgreedChange: (Boolean) -> Unit = {},
+    onSendVerificationCode: () -> Unit = {},
+    onToPasswordLoginClick: () -> Unit = {},
+    onCloseClick: () -> Unit = {},
+    onUserAgreementClick: () -> Unit = {},
+    onPrivacyPolicyClick: () -> Unit = {}
+) {
+    LoginScreen(
+        uiState = uiState.copy(loginMode = LoginMode.CODE),
+        onEmailChange = onEmailChange,
+        onAgreedChange = onAgreedChange,
+        onToggleModeClick = onToPasswordLoginClick,
+        onSendVerificationCode = onSendVerificationCode,
+        onCloseClick = onCloseClick,
+        onUserAgreementClick = onUserAgreementClick,
+        onPrivacyPolicyClick = onPrivacyPolicyClick
+    )
+}
+
+/** 兼容旧单独组件：密码登录界面 */
+@Composable
+fun PasswordLoginScreen(
+    uiState: LoginUiState = LoginUiState(),
+    onEmailChange: (String) -> Unit = {},
+    onAgreedChange: (Boolean) -> Unit = {},
+    onNextClick: (String) -> Unit = {},
+    onToCodeLoginClick: () -> Unit = {},
+    onCloseClick: () -> Unit = {},
+    onUserAgreementClick: () -> Unit = {},
+    onPrivacyPolicyClick: () -> Unit = {}
+) {
+    LoginScreen(
+        uiState = uiState.copy(loginMode = LoginMode.PASSWORD),
+        onEmailChange = onEmailChange,
+        onAgreedChange = onAgreedChange,
+        onToggleModeClick = onToCodeLoginClick,
+        onNextClick = { onNextClick(uiState.email) },
+        onCloseClick = onCloseClick,
+        onUserAgreementClick = onUserAgreementClick,
+        onPrivacyPolicyClick = onPrivacyPolicyClick
+    )
+}
+
+// ======================================================================================
+// 2. 验证码输入步骤（第二步：输入 4 位验证码并执行登录）
+// ======================================================================================
+
 /**
- * 验证码输入路由（第二步：输入验证码并执行登录）
+ * 验证码输入路由
  */
 @Composable
 fun CodeVerifyRoute(
@@ -190,7 +285,7 @@ fun CodeVerifyScreen(
     ModernAuthScaffold(
         title = stringResource(id = R.string.input_code_title),
         subtitle = subtitleText,
-        isCloseAction = false,
+        showNavigationIcon = true,
         onNavigationClick = onBackClick
     ) {
         ModernCodeBoxes(
@@ -252,116 +347,12 @@ fun CodeVerifyScreen(
     }
 }
 
-// ================== 邮箱密码登录 ==================
+// ======================================================================================
+// 3. 密码输入步骤（第二步：输入密码并登录）
+// ======================================================================================
 
 /**
- * 密码登录路由（第一步：输入邮箱）
- */
-@Composable
-fun PasswordLoginRoute(
-    viewModel: LoginViewModel = hiltViewModel()
-) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    PasswordLoginScreen(
-        uiState = uiState,
-        onEmailChange = viewModel::updateEmail,
-        onAgreedChange = viewModel::updateAgreed,
-        onNextClick = {
-            if (!uiState.isAgreed) {
-                runCatching { ToastUtils.showError(R.string.please_agree_agreement) }
-            } else {
-                AuthNavigator.toPasswordInput(uiState.email)
-            }
-        },
-        onToCodeLoginClick = {
-            AuthNavigator.toCodeLogin()
-        },
-        onCloseClick = {
-            navigateBack()
-        }
-    )
-}
-
-/**
- * 密码登录界面（第一步：输入邮箱）
- */
-@Composable
-fun PasswordLoginScreen(
-    uiState: LoginUiState = LoginUiState(),
-    onEmailChange: (String) -> Unit = {},
-    onAgreedChange: (Boolean) -> Unit = {},
-    onNextClick: (String) -> Unit = {},
-    onToCodeLoginClick: () -> Unit = {},
-    onCloseClick: () -> Unit = {},
-    onUserAgreementClick: () -> Unit = {},
-    onPrivacyPolicyClick: () -> Unit = {}
-) {
-    ModernAuthScaffold(
-        title = stringResource(id = R.string.password_login),
-        isCloseAction = true,
-        onNavigationClick = onCloseClick
-    ) {
-        ModernEmailInput(
-            email = uiState.email,
-            onEmailChange = onEmailChange,
-            placeholder = stringResource(id = R.string.email_hint),
-            onDone = {
-                if (uiState.isEmailValid) {
-                    onNextClick(uiState.email)
-                }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // 用户协议与隐私政策
-        ModernAuthAgreement(
-            isAgreed = uiState.isAgreed,
-            onAgreedChange = onAgreedChange,
-            onUserAgreementClick = onUserAgreementClick,
-            onPrivacyPolicyClick = onPrivacyPolicyClick
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 下一步按钮
-        ModernAuthButton(
-            text = stringResource(id = R.string.next_step),
-            enabled = uiState.isEmailValid,
-            onClick = {
-                onNextClick(uiState.email)
-            }
-        )
-
-        // 切换到验证码登录
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            contentAlignment = Alignment.CenterStart
-        ) {
-            Text(
-                text = stringResource(id = R.string.code_login),
-                color = PrimaryDefault,
-                fontSize = 14.sp,
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onToCodeLoginClick
-                )
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // 底部品牌
-        ModernAuthBranding(modifier = Modifier.align(Alignment.CenterHorizontally))
-    }
-}
-
-/**
- * 输入密码路由（第二步：输入密码并登录）
+ * 输入密码路由
  */
 @Composable
 fun PasswordInputRoute(
@@ -401,7 +392,7 @@ fun PasswordInputScreen(
     ModernAuthScaffold(
         title = stringResource(id = R.string.input_password_title),
         subtitle = stringResource(id = R.string.account_label, email),
-        isCloseAction = false,
+        showNavigationIcon = true,
         onNavigationClick = onBackClick
     ) {
         ModernPasswordInput(
