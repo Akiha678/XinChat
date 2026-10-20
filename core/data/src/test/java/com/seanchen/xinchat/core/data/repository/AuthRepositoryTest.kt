@@ -27,9 +27,9 @@ class AuthRepositoryTest {
 
     private val fakeNetworkDataSource = object : AuthNetworkDataSource {
         var lastRegisterParams: Map<String, String>? = null
-        var lastLoginPhoneParams: Map<String, String>? = null
+        var lastLoginEmailParams: Map<String, String>? = null
         var lastLoginPasswordParams: Map<String, String>? = null
-        var lastSmsCodeParams: Map<String, String>? = null
+        var lastEmailCodeParams: Map<String, String>? = null
         var lastVerifyCaptchaParams: Map<String, String>? = null
         var lastUpdatePasswordParams: Map<String, String>? = null
         var lastRefreshTokenParams: Map<String, String>? = null
@@ -56,17 +56,17 @@ class AuthRepositoryTest {
             return NetworkResponse(code = 200, message = "ok", data = true)
         }
 
-        override suspend fun getSmsCode(params: Map<String, String>): NetworkResponse<String> {
-            lastSmsCodeParams = params
+        override suspend fun getEmailCode(params: Map<String, String>): NetworkResponse<String> {
+            lastEmailCodeParams = params
             return NetworkResponse(code = 200, message = "ok", data = "3333")
         }
 
-        override suspend fun loginByPhone(params: Map<String, String>): NetworkResponse<Auth> {
-            lastLoginPhoneParams = params
+        override suspend fun loginByEmail(params: Map<String, String>): NetworkResponse<Auth> {
+            lastLoginEmailParams = params
             return NetworkResponse(
                 code = 200,
                 message = "ok",
-                data = Auth(token = "phone_tok", refreshToken = "ref_tok", expire = 3600, refreshExpire = 7200, createdAt = 0)
+                data = Auth(token = "email_tok", refreshToken = "ref_tok", expire = 3600, refreshExpire = 7200, createdAt = 0)
             )
         }
 
@@ -129,21 +129,20 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun testSendVerificationCode_and_getSmsCode() = runTest(testDispatcher) {
+    fun testSendVerificationCode_and_getEmailCode() = runTest(testDispatcher) {
         val result = authRepository.sendVerificationCode("user@example.com").first()
         assertEquals(200, result.code)
         assertEquals("3333", result.data)
-        assertEquals("user@example.com", fakeNetworkDataSource.lastSmsCodeParams?.get("email"))
-        assertEquals("user@example.com", fakeNetworkDataSource.lastSmsCodeParams?.get("account"))
+        assertEquals("user@example.com", fakeNetworkDataSource.lastEmailCodeParams?.get("email"))
     }
 
     @Test
-    fun testLoginByCode_delegatesCorrectly() = runTest(testDispatcher) {
-        val result = authRepository.loginByCode("user@example.com", "1234").first()
+    fun testLoginByEmail_delegatesCorrectly() = runTest(testDispatcher) {
+        val result = authRepository.loginByEmail("user@example.com", "1234").first()
         assertEquals(200, result.code)
-        assertEquals("phone_tok", result.data?.token)
-        assertEquals("1234", fakeNetworkDataSource.lastLoginPhoneParams?.get("code"))
-        assertEquals("user@example.com", fakeNetworkDataSource.lastLoginPhoneParams?.get("email"))
+        assertEquals("email_tok", result.data?.token)
+        assertEquals("1234", fakeNetworkDataSource.lastLoginEmailParams?.get("code"))
+        assertEquals("user@example.com", fakeNetworkDataSource.lastLoginEmailParams?.get("email"))
     }
 
     @Test
@@ -152,7 +151,7 @@ class AuthRepositoryTest {
         assertEquals(200, result.code)
         assertEquals("pwd_tok", result.data?.token)
         assertEquals("secret123", fakeNetworkDataSource.lastLoginPasswordParams?.get("password"))
-        assertEquals("user@example.com", fakeNetworkDataSource.lastLoginPasswordParams?.get("account"))
+        assertEquals("user@example.com", fakeNetworkDataSource.lastLoginPasswordParams?.get("email"))
     }
 
     @Test
@@ -172,7 +171,7 @@ class AuthRepositoryTest {
         val result = authRepository.updatePassword("user@example.com", "new_pwd", "8888").first()
         assertEquals(200, result.code)
         assertTrue(result.data == true)
-        assertEquals("new_pwd", fakeNetworkDataSource.lastUpdatePasswordParams?.get("password"))
+        assertEquals("new_pwd", fakeNetworkDataSource.lastUpdatePasswordParams?.get("newPassword"))
         assertEquals("8888", fakeNetworkDataSource.lastUpdatePasswordParams?.get("code"))
     }
 
@@ -183,7 +182,7 @@ class AuthRepositoryTest {
 
         val verify = authRepository.verifyCaptcha("captcha_id_999", "ABCD").first()
         assertTrue(verify.data == true)
-        assertEquals("captcha_id_999", fakeNetworkDataSource.lastVerifyCaptchaParams?.get("id"))
+        assertEquals("captcha_id_999", fakeNetworkDataSource.lastVerifyCaptchaParams?.get("captchaId"))
         assertEquals("ABCD", fakeNetworkDataSource.lastVerifyCaptchaParams?.get("code"))
     }
 

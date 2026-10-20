@@ -38,10 +38,10 @@ import com.seanchen.xinchat.feature.auth.component.ModernPasswordInput
 import com.seanchen.xinchat.feature.auth.state.LoginUiState
 import com.seanchen.xinchat.feature.auth.viewmodel.LoginViewModel
 
-// ================== 验证码登录 ==================
+// ================== 邮箱验证码登录 ==================
 
 /**
- * 验证码登录路由
+ * 验证码登录路由（第一步：输入邮箱）
  */
 @Composable
 fun CodeLoginRoute(
@@ -66,8 +66,9 @@ fun CodeLoginRoute(
         }
     )
 }
+
 /**
- * 验证码登录界面
+ * 验证码登录界面（输入邮箱）
  */
 @Composable
 fun CodeLoginScreen(
@@ -81,7 +82,7 @@ fun CodeLoginScreen(
     onPrivacyPolicyClick: () -> Unit = {}
 ) {
     ModernAuthScaffold(
-        title = stringResource(id = R.string.sms_login),
+        title = stringResource(id = R.string.code_login),
         isCloseAction = true,
         onNavigationClick = onCloseClick
     ) {
@@ -124,7 +125,7 @@ fun CodeLoginScreen(
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = stringResource(id = R.string.account_login),
+                text = stringResource(id = R.string.password_login),
                 color = PrimaryDefault,
                 fontSize = 14.sp,
                 modifier = Modifier.clickable(
@@ -143,7 +144,7 @@ fun CodeLoginScreen(
 }
 
 /**
- * 验证码输入路由
+ * 验证码输入路由（第二步：输入验证码并执行登录）
  */
 @Composable
 fun CodeVerifyRoute(
@@ -184,10 +185,10 @@ fun CodeVerifyScreen(
     onLoginClick: () -> Unit = {},
     onBackClick: () -> Unit = {}
 ) {
-    val subtitleText = stringResource(id = R.string.sms_code_sent_to, email)
+    val subtitleText = stringResource(id = R.string.code_sent_to, email)
 
     ModernAuthScaffold(
-        title = stringResource(id = R.string.input_sms_code_title),
+        title = stringResource(id = R.string.input_code_title),
         subtitle = subtitleText,
         isCloseAction = false,
         onNavigationClick = onBackClick
@@ -230,7 +231,7 @@ fun CodeVerifyScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // 登录按钮
+        // 登录按钮（服务端自动处理：已注册直接登录，未注册自动创建账号并返回Token）
         ModernAuthButton(
             text = if (isLoggingIn) stringResource(id = R.string.logging_in) else stringResource(id = R.string.login),
             enabled = canLogin,
@@ -241,7 +242,7 @@ fun CodeVerifyScreen(
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
-            text = stringResource(id = R.string.sms_code_tip),
+            text = stringResource(id = R.string.code_tip),
             fontSize = 12.sp,
             color = Color(0xFF8F959E),
             modifier = Modifier
@@ -251,10 +252,10 @@ fun CodeVerifyScreen(
     }
 }
 
-// ================== 密码登录 ==================
+// ================== 邮箱密码登录 ==================
 
 /**
- * 密码登录路由
+ * 密码登录路由（第一步：输入邮箱）
  */
 @Composable
 fun PasswordLoginRoute(
@@ -273,7 +274,7 @@ fun PasswordLoginRoute(
                 AuthNavigator.toPasswordInput(uiState.email)
             }
         },
-        onToSmsLoginClick = {
+        onToCodeLoginClick = {
             AuthNavigator.toCodeLogin()
         },
         onCloseClick = {
@@ -283,7 +284,7 @@ fun PasswordLoginRoute(
 }
 
 /**
- * 密码登录界面
+ * 密码登录界面（第一步：输入邮箱）
  */
 @Composable
 fun PasswordLoginScreen(
@@ -291,13 +292,13 @@ fun PasswordLoginScreen(
     onEmailChange: (String) -> Unit = {},
     onAgreedChange: (Boolean) -> Unit = {},
     onNextClick: (String) -> Unit = {},
-    onToSmsLoginClick: () -> Unit = {},
+    onToCodeLoginClick: () -> Unit = {},
     onCloseClick: () -> Unit = {},
     onUserAgreementClick: () -> Unit = {},
     onPrivacyPolicyClick: () -> Unit = {}
 ) {
     ModernAuthScaffold(
-        title = stringResource(id = R.string.account_login),
+        title = stringResource(id = R.string.password_login),
         isCloseAction = true,
         onNavigationClick = onCloseClick
     ) {
@@ -333,7 +334,7 @@ fun PasswordLoginScreen(
             }
         )
 
-        // 辅助链接：切换到“验证码登录”
+        // 切换到验证码登录
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -341,13 +342,13 @@ fun PasswordLoginScreen(
             contentAlignment = Alignment.CenterStart
         ) {
             Text(
-                text = stringResource(id = R.string.sms_login),
+                text = stringResource(id = R.string.code_login),
                 color = PrimaryDefault,
                 fontSize = 14.sp,
                 modifier = Modifier.clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = onToSmsLoginClick
+                    onClick = onToCodeLoginClick
                 )
             )
         }
@@ -359,9 +360,8 @@ fun PasswordLoginScreen(
     }
 }
 
-
 /**
- * 输入密码路由
+ * 输入密码路由（第二步：输入密码并登录）
  */
 @Composable
 fun PasswordInputRoute(

@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * 统一登录 ViewModel（整合验证码登录与密码登录全流程业务逻辑）
+ * 统一登录 ViewModel（仅包含邮箱验证码登录与邮箱密码登录）
  */
 @HiltViewModel
 open class LoginViewModel @Inject constructor(
@@ -128,19 +128,17 @@ open class LoginViewModel @Inject constructor(
 
         _uiState.update { it.copy(isSendingCode = true) }
 
-        val params = mapOf(
-            "email" to currentEmail,
-            "phone" to currentEmail,
-            "account" to currentEmail
-        )
+        val params = mapOf("email" to currentEmail)
         ResultHandler.handleResultWithData(
             scope = viewModelScope,
-            flow = authRepository.getSmsCode(params).asResult(),
-            onData = { code ->
-                if (ValidationUtil.isValidCode(code)) {
-                    _uiState.update { it.copy(verificationCode = code) }
+            flow = authRepository.getEmailCode(params).asResult(),
+            onData = { codeOrMsg ->
+                if (ValidationUtil.isValidCode(codeOrMsg)) {
+                    _uiState.update { it.copy(verificationCode = codeOrMsg) }
+                    runCatching { ToastUtils.showSuccess("【XinChat】验证码：$codeOrMsg") }
+                } else {
+                    runCatching { ToastUtils.showSuccess(codeOrMsg.ifEmpty { "验证码已发送" }) }
                 }
-                runCatching { ToastUtils.showSuccess("【XinChat】验证码：$code") }
                 _uiState.update { it.copy(resendCountdown = COUNTDOWN_SECONDS) }
                 startCountdown()
                 onSuccess?.invoke()
@@ -172,7 +170,7 @@ open class LoginViewModel @Inject constructor(
     // ==================================================================================
 
     /**
-     * 执行邮箱验证码登录
+     * 执行邮箱验证码登录（未注册时服务端自动完成注册创建账号）
      */
     fun loginByCode(onSuccess: (() -> Unit)? = null) {
         val currentEmail = _uiState.value.email
@@ -192,14 +190,12 @@ open class LoginViewModel @Inject constructor(
 
         val params = mapOf(
             "email" to currentEmail,
-            "phone" to currentEmail,
-            "account" to currentEmail,
             "code" to currentCode
         )
 
         ResultHandler.handleResultWithData(
             scope = viewModelScope,
-            flow = authRepository.loginByPhone(params).asResult(),
+            flow = authRepository.loginByEmail(params).asResult(),
             onData = { authData ->
                 loginSuccess(currentEmail, authData)
                 onSuccess?.invoke()
@@ -230,7 +226,6 @@ open class LoginViewModel @Inject constructor(
         _uiState.update { it.copy(isLoggingIn = true) }
 
         val params = mapOf(
-            "account" to currentEmail,
             "email" to currentEmail,
             "password" to currentPassword
         )

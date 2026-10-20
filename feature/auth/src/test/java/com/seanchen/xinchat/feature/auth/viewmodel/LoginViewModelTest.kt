@@ -36,7 +36,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * 统一 LoginViewModel 单元测试（全面覆盖验证码登录与密码登录全流程）
+ * 统一 LoginViewModel 单元测试（全面覆盖邮箱验证码登录与邮箱密码登录全流程）
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
@@ -57,11 +57,11 @@ class LoginViewModelTest {
         override suspend fun updatePassword(params: Map<String, String>): NetworkResponse<Boolean> =
             NetworkResponse(data = true)
 
-        override suspend fun getSmsCode(params: Map<String, String>): NetworkResponse<String> =
+        override suspend fun getEmailCode(params: Map<String, String>): NetworkResponse<String> =
             NetworkResponse(data = "1234")
 
-        override suspend fun loginByPhone(params: Map<String, String>): NetworkResponse<Auth> =
-            NetworkResponse(data = Auth("phone_tok", "ref", 100, 100, 0))
+        override suspend fun loginByEmail(params: Map<String, String>): NetworkResponse<Auth> =
+            NetworkResponse(data = Auth("email_tok", "ref", 100, 100, 0))
 
         override suspend fun loginByPassword(params: Map<String, String>): NetworkResponse<Auth> =
             NetworkResponse(data = Auth("pwd_tok", "ref", 100, 100, 0))
@@ -195,7 +195,7 @@ class LoginViewModelTest {
         awaitCondition { !viewModel.uiState.value.isLoggingIn && fakeAppState.isLoggedIn.value }
 
         assertTrue(fakeAppState.isLoggedIn.value)
-        assertEquals("phone_tok", fakeAppState.auth.value?.token)
+        assertEquals("email_tok", fakeAppState.auth.value?.token)
 
         testScheduler.advanceUntilIdle()
     }

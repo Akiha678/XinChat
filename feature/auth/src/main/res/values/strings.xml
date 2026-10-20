@@ -6,10 +6,8 @@
     <!-- 登录/注册页面共用 -->
     <string name="welcome_login">你好，\n欢迎登录</string>
     <string name="welcome_register">你好，\n欢迎注册</string>
-    <string name="phone_hint">请输入</string>
     <string name="email_hint">请输入邮箱</string>
     <string name="account_hint">请输入邮箱</string>
-    <string name="phone_code">+86</string>
     <string name="verification_code">验证码</string>
     <string name="get_verification_code">获取验证码</string>
     <string name="login_agreement_prefix">登录即代表您同意</string>
@@ -23,10 +21,11 @@
     <string name="go_register">去注册</string>
     <string name="forgot_password">忘记密码</string>
     <string name="password_hint">请输入密码</string>
-    <string name="sms_not_available">短信不可用？</string>
     <string name="use_third_party_login">使用三方登录</string>
 
     <!-- 登录主页 -->
+    <string name="code_login">验证码登录</string>
+    <string name="password_login">密码登录</string>
     <string name="sms_login">验证码登录</string>
     <string name="email_register">邮箱注册</string>
     <string name="account_login">密码登录</string>
@@ -39,7 +38,9 @@
     <string name="account_recovery">账号找回</string>
     <string name="read_and_agree_prefix">我已阅读并同意</string>
     <string name="next_step">下一步</string>
+    <string name="input_code_title">输入验证码</string>
     <string name="input_sms_code_title">输入验证码</string>
+    <string name="code_sent_to">验证码已发送至 %s</string>
     <string name="sms_code_sent_to">验证码已发送至 %s</string>
     <string name="resend_countdown_format">%ds后重新获取</string>
     <string name="resend_verification_code">重新获取验证码</string>
@@ -47,6 +48,7 @@
     <string name="input_password_title">输入密码</string>
     <string name="account_label">邮箱：%s</string>
     <string name="logging_in">登录中...</string>
+    <string name="code_tip">如未收到验证码，请检查邮箱或稍后重试</string>
     <string name="sms_code_tip">如未收到验证码，请检查邮箱或稍后重试</string>
     <string name="close">关闭</string>
     <string name="back">返回</string>
@@ -78,7 +80,6 @@
     <string name="refresh_captcha">点击刷新</string>
 
     <!-- Toast提示 -->
-    <string name="invalid_phone_number">请输入正确的手机号</string>
     <string name="invalid_email">请输入正确的邮箱</string>
     <string name="invalid_account">请输入正确的邮箱</string>
     <string name="invalid_verification_code">请输入4位验证码</string>

@@ -42,23 +42,23 @@ interface AuthService {
     ): NetworkResponse<Boolean>
 
     /**
-     * 获取手机验证码
+     * 获取邮箱登录验证码
      */
-    @POST("auth/login/smsCode")
-    suspend fun getSmsCode(
+    @POST("auth/login/emailCode")
+    suspend fun getEmailCode(
         @Body params: Map<String, String>
     ): NetworkResponse<String>
 
     /**
-     * 手机号登录
+     * 邮箱验证码登录（未注册自动创建账号并返回Token，登录即注册）
      */
-    @POST("auth/login/phone")
-    suspend fun loginByPhone(
+    @POST("auth/login/email")
+    suspend fun loginByEmail(
         @Body params: Map<String, String>
     ): NetworkResponse<Auth>
 
     /**
-     * 密码登录
+     * 邮箱密码登录
      */
     @POST("auth/login/password")
     suspend fun loginByPassword(

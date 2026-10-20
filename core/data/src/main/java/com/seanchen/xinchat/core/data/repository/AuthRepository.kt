@@ -14,11 +14,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * 认证与授权仓储（统一管理远程认证网络接口与本地会话凭证状态）
+ * 认证与授权仓储（管理邮箱登录、密码登录、注册及本地凭据）
  *
  * @param authNetworkDataSource 认证网络数据源
- * @param authStoreRepository 本地认证存储仓储（可选，提供本地 Token 与登录态协同）
- * @param ioDispatcher 协程 I/O 调度器（默认 [Dispatchers.IO]，测试时可注入）
+ * @param authStoreRepository 本地认证存储仓储（可选）
+ * @param ioDispatcher 协程 I/O 调度器（默认 [Dispatchers.IO]）
  */
 @Singleton
 class AuthRepository(
@@ -33,57 +33,57 @@ class AuthRepository(
     ) : this(authNetworkDataSource, authStoreRepository, Dispatchers.IO)
 
     // ==================================================================================
-    // 验证码相关方法
+    // 验证码操作
     // ==================================================================================
 
     /**
-     * 发送登录验证码（便捷强类型方法）
+     * 发送邮箱登录验证码（便捷强类型方法）
      *
-     * @param account 邮箱、手机号或账号标识
+     * @param email 目标邮箱
      */
-    fun sendVerificationCode(account: String): Flow<NetworkResponse<String>> =
-        getSmsCode(account)
+    fun sendVerificationCode(email: String): Flow<NetworkResponse<String>> =
+        getEmailCode(email)
 
     /**
-     * 获取手机/邮箱登录验证码（便捷强类型方法）
+     * 获取邮箱登录验证码
      *
-     * @param account 邮箱或手机号
+     * @param email 目标邮箱
      */
-    fun getSmsCode(account: String): Flow<NetworkResponse<String>> =
-        getSmsCode(mapOf("email" to account, "phone" to account, "account" to account))
+    fun getEmailCode(email: String): Flow<NetworkResponse<String>> =
+        getEmailCode(mapOf("email" to email))
 
     /**
-     * 获取手机/邮箱登录验证码（通用 Map 入参版本，保留向下兼容）
+     * 获取邮箱登录验证码（Map 入参）
      */
-    fun getSmsCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
-        emit(authNetworkDataSource.getSmsCode(params))
+    fun getEmailCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
+        emit(authNetworkDataSource.getEmailCode(params))
     }.flowOn(ioDispatcher)
 
     /**
-     * 获取注册验证码（便捷强类型方法）
+     * 获取注册验证码
      *
-     * @param account 注册账号或邮箱
+     * @param email 注册邮箱
      */
-    fun getRegisterCode(account: String): Flow<NetworkResponse<String>> =
-        getRegisterCode(mapOf("account" to account, "email" to account, "phone" to account))
+    fun getRegisterCode(email: String): Flow<NetworkResponse<String>> =
+        getRegisterCode(mapOf("email" to email))
 
     /**
-     * 获取注册验证码（通用 Map 入参版本，保留向下兼容）
+     * 获取注册验证码（Map 入参）
      */
     fun getRegisterCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
         emit(authNetworkDataSource.getRegisterCode(params))
     }.flowOn(ioDispatcher)
 
     /**
-     * 获取重置密码验证码（便捷强类型方法）
+     * 获取重置密码验证码
      *
-     * @param account 账号或邮箱
+     * @param email 目标邮箱
      */
-    fun getPasswordCode(account: String): Flow<NetworkResponse<String>> =
-        getPasswordCode(mapOf("account" to account, "email" to account, "phone" to account))
+    fun getPasswordCode(email: String): Flow<NetworkResponse<String>> =
+        getPasswordCode(mapOf("email" to email))
 
     /**
-     * 获取修改密码验证码（通用 Map 入参版本，保留向下兼容）
+     * 获取修改密码验证码（Map 入参）
      */
     fun getPasswordCode(params: Map<String, String>): Flow<NetworkResponse<String>> = flow {
         emit(authNetworkDataSource.getPasswordCode(params))
@@ -94,52 +94,39 @@ class AuthRepository(
     // ==================================================================================
 
     /**
-     * 验证码登录（便捷强类型方法，支持手机号与邮箱）
+     * 邮箱验证码登录（未注册自动创建账号并返回Token，登录即注册）
      *
-     * @param account 邮箱或手机号
-     * @param code 4-6 位纯数字验证码
+     * @param email 邮箱地址
+     * @param code 4 位纯数字验证码
      */
-    fun loginByCode(account: String, code: String): Flow<NetworkResponse<Auth>> =
-        loginByPhone(
-            mapOf(
-                "email" to account,
-                "phone" to account,
-                "account" to account,
-                "code" to code
-            )
-        )
+    fun loginByEmail(email: String, code: String): Flow<NetworkResponse<Auth>> =
+        loginByEmail(mapOf("email" to email, "code" to code))
 
     /**
-     * 手机号/验证码登录（通用 Map 入参版本，保留向下兼容）
+     * 邮箱验证码登录（Map 入参）
      */
-    fun loginByPhone(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {
-        emit(authNetworkDataSource.loginByPhone(params))
+    fun loginByEmail(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {
+        emit(authNetworkDataSource.loginByEmail(params))
     }.flowOn(ioDispatcher)
 
     /**
-     * 账号密码登录（便捷强类型方法）
+     * 邮箱密码登录
      *
-     * @param account 账号或邮箱
+     * @param email 邮箱地址
      * @param password 明文密码
      */
-    fun loginByPassword(account: String, password: String): Flow<NetworkResponse<Auth>> =
-        loginByPassword(
-            mapOf(
-                "account" to account,
-                "email" to account,
-                "password" to password
-            )
-        )
+    fun loginByPassword(email: String, password: String): Flow<NetworkResponse<Auth>> =
+        loginByPassword(mapOf("email" to email, "password" to password))
 
     /**
-     * 账号密码登录（通用 Map 入参版本，保留向下兼容）
+     * 邮箱密码登录（Map 入参）
      */
     fun loginByPassword(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {
         emit(authNetworkDataSource.loginByPassword(params))
     }.flowOn(ioDispatcher)
 
     /**
-     * 用户注册（便捷 Flow 异步流方法）
+     * 用户注册
      */
     fun registerFlow(
         username: String,
@@ -151,34 +138,33 @@ class AuthRepository(
     }.flowOn(ioDispatcher)
 
     /**
-     * 用户注册（挂起函数版本，保留向下兼容）
+     * 用户注册（挂起函数）
      */
     suspend fun register(params: Map<String, String>): LoginResponse {
         return authNetworkDataSource.register(params)
     }
 
     /**
-     * 修改密码（便捷强类型方法）
+     * 修改密码
      *
-     * @param account 账号或邮箱
+     * @param email 邮箱地址
      * @param newPassword 新密码
-     * @param code 校验通过的验证码
+     * @param code 邮箱验证码
      */
     fun updatePassword(
-        account: String,
+        email: String,
         newPassword: String,
         code: String
     ): Flow<NetworkResponse<Boolean>> = updatePassword(
         mapOf(
-            "account" to account,
-            "email" to account,
-            "password" to newPassword,
+            "email" to email,
+            "newPassword" to newPassword,
             "code" to code
         )
     )
 
     /**
-     * 修改密码（通用 Map 入参版本，保留向下兼容）
+     * 修改密码（Map 入参）
      */
     fun updatePassword(params: Map<String, String>): Flow<NetworkResponse<Boolean>> = flow {
         emit(authNetworkDataSource.updatePassword(params))
@@ -196,16 +182,16 @@ class AuthRepository(
     }.flowOn(ioDispatcher)
 
     /**
-     * 校验图形验证码（便捷强类型方法）
+     * 校验图形验证码
      *
      * @param captchaId 验证码标识
      * @param captchaCode 用户输入的验证码文字
      */
     fun verifyCaptcha(captchaId: String, captchaCode: String): Flow<NetworkResponse<Boolean>> =
-        verifyCaptcha(mapOf("id" to captchaId, "code" to captchaCode))
+        verifyCaptcha(mapOf("captchaId" to captchaId, "code" to captchaCode))
 
     /**
-     * 校验图形验证码（通用 Map 入参版本，保留向下兼容）
+     * 校验图形验证码（Map 入参）
      */
     fun verifyCaptcha(params: Map<String, String>): Flow<NetworkResponse<Boolean>> = flow {
         emit(authNetworkDataSource.verifyCaptcha(params))
@@ -216,13 +202,13 @@ class AuthRepository(
     // ==================================================================================
 
     /**
-     * 刷新 Token（便捷强类型方法）
+     * 刷新 Token
      */
     fun refreshToken(refreshToken: String): Flow<NetworkResponse<Auth>> =
         refreshToken(mapOf("refreshToken" to refreshToken))
 
     /**
-     * 刷新 Token（通用 Map 入参版本，保留向下兼容）
+     * 刷新 Token（Map 入参）
      */
     fun refreshToken(params: Map<String, String>): Flow<NetworkResponse<Auth>> = flow {
         emit(authNetworkDataSource.refreshToken(params))

@@ -30,12 +30,12 @@ class AuthNetworkDataSourceImpl @Inject constructor(
         return authService.updatePassword(params)
     }
 
-    override suspend fun getSmsCode(params: Map<String, String>): NetworkResponse<String> {
-        return authService.getSmsCode(params)
+    override suspend fun getEmailCode(params: Map<String, String>): NetworkResponse<String> {
+        return authService.getEmailCode(params)
     }
 
-    override suspend fun loginByPhone(params: Map<String, String>): NetworkResponse<Auth> {
-        return authService.loginByPhone(params)
+    override suspend fun loginByEmail(params: Map<String, String>): NetworkResponse<Auth> {
+        return authService.loginByEmail(params)
     }
 
     override suspend fun loginByPassword(params: Map<String, String>): NetworkResponse<Auth> {
