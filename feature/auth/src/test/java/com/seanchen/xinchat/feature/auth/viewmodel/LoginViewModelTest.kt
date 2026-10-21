@@ -253,6 +253,43 @@ class LoginViewModelTest {
         assertEquals(60, viewModel.uiState.value.resendCountdown)
     }
 
+    @Test
+    fun testOpenAndDismissCaptchaDialog() = runTest(testDispatcher) {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
+        viewModel.updateEmail("user@example.com")
+        viewModel.updateAgreed(true)
+
+        assertFalse(viewModel.uiState.value.showCaptchaDialog)
+
+        viewModel.openCaptchaDialog(requireAgreement = true)
+        assertTrue(viewModel.uiState.value.showCaptchaDialog)
+
+        awaitCondition { viewModel.uiState.value.captcha.captchaId.isNotEmpty() }
+        assertEquals("id", viewModel.uiState.value.captcha.captchaId)
+
+        viewModel.dismissCaptchaDialog()
+        assertFalse(viewModel.uiState.value.showCaptchaDialog)
+    }
+
+    @Test
+    fun testVerifyCaptchaAndSendCode_success() = runTest(testDispatcher) {
+        val viewModel = LoginViewModel(fakeAppState, authRepository)
+        viewModel.updateEmail("user@example.com")
+        viewModel.updateAgreed(true)
+
+        viewModel.openCaptchaDialog()
+        awaitCondition { viewModel.uiState.value.captcha.captchaId == "id" }
+
+        var successCalled = false
+        viewModel.verifyCaptchaAndSendCode("ABCD", onSuccess = { successCalled = true })
+
+        awaitCondition { successCalled && !viewModel.uiState.value.showCaptchaDialog }
+        assertTrue(successCalled)
+        assertFalse(viewModel.uiState.value.showCaptchaDialog)
+        assertEquals("1234", viewModel.uiState.value.verificationCode)
+        assertEquals(60, viewModel.uiState.value.resendCountdown)
+    }
+
     private fun awaitCondition(timeoutMs: Long = 2000, condition: () -> Boolean) {
         val start = System.currentTimeMillis()
         while (!condition() && System.currentTimeMillis() - start < timeoutMs) {

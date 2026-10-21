@@ -1,9 +1,5 @@
 package com.seanchen.xinchat.feature.auth.view
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +28,7 @@ import com.seanchen.xinchat.core.navigation.auth.AuthNavigator
 import com.seanchen.xinchat.core.navigation.navigateBack
 import com.seanchen.xinchat.core.util.toast.ToastUtils
 import com.seanchen.xinchat.feature.auth.R
+import com.seanchen.xinchat.feature.auth.component.ImageCaptchaDialog
 import com.seanchen.xinchat.feature.auth.component.ModernAuthAgreement
 import com.seanchen.xinchat.feature.auth.component.ModernAuthBranding
 import com.seanchen.xinchat.feature.auth.component.ModernAuthButton
@@ -69,9 +66,7 @@ fun LoginRoute(
         onAgreedChange = viewModel::updateAgreed,
         onToggleModeClick = viewModel::toggleLoginMode,
         onSendVerificationCode = {
-            viewModel.sendVerificationCode(requireAgreement = true) {
-                AuthNavigator.toCodeVerify(uiState.email)
-            }
+            viewModel.openCaptchaDialog(requireAgreement = true)
         },
         onNextClick = {
             if (!uiState.isAgreed) {
@@ -81,6 +76,25 @@ fun LoginRoute(
             }
         }
     )
+
+    if (uiState.showCaptchaDialog) {
+        ImageCaptchaDialog(
+            visible = uiState.showCaptchaDialog,
+            captcha = uiState.captcha,
+            isLoading = uiState.isLoadingCaptcha,
+            isVerifying = uiState.isVerifyingCaptcha,
+            onDismiss = viewModel::dismissCaptchaDialog,
+            onRefreshCaptcha = viewModel::refreshCaptcha,
+            onConfirm = { captchaCode ->
+                viewModel.verifyCaptchaAndSendCode(
+                    captchaCode = captchaCode,
+                    onSuccess = {
+                        AuthNavigator.toCodeVerify(uiState.email)
+                    }
+                )
+            }
+        )
+    }
 }
 
 /**
@@ -259,10 +273,29 @@ fun CodeVerifyRoute(
         canLogin = uiState.canCodeLogin,
         resendCountdown = uiState.resendCountdown,
         onCodeChange = viewModel::updateVerificationCode,
-        onSendVerificationCode = { viewModel.sendVerificationCode(requireAgreement = false) },
+        onSendVerificationCode = {
+            viewModel.openCaptchaDialog(requireAgreement = false)
+        },
         onLoginClick = { viewModel.loginByCode() },
         onBackClick = { navigateBack() }
     )
+
+    if (uiState.showCaptchaDialog) {
+        ImageCaptchaDialog(
+            visible = uiState.showCaptchaDialog,
+            captcha = uiState.captcha,
+            isLoading = uiState.isLoadingCaptcha,
+            isVerifying = uiState.isVerifyingCaptcha,
+            onDismiss = viewModel::dismissCaptchaDialog,
+            onRefreshCaptcha = viewModel::refreshCaptcha,
+            onConfirm = { captchaCode ->
+                viewModel.verifyCaptchaAndSendCode(
+                    captchaCode = captchaCode,
+                    onSuccess = null
+                )
+            }
+        )
+    }
 }
 
 /**

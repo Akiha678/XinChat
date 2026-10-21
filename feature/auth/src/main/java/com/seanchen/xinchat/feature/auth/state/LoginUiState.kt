@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.feature.auth.state
 
+import com.seanchen.xinchat.core.model.entity.Captcha
 import com.seanchen.xinchat.core.util.validation.ValidationUtil
 
 /**
@@ -23,6 +24,10 @@ enum class LoginMode {
  * @param isLoggingIn 是否正在执行登录
  * @param isAgreed 是否同意用户协议与隐私政策
  * @param loginMode 当前选择的登录方式
+ * @param showCaptchaDialog 是否展示图形验证码防人机弹窗
+ * @param captcha 当前获取到的图形验证码数据
+ * @param isLoadingCaptcha 是否正在加载图形验证码
+ * @param isVerifyingCaptcha 是否正在校验图形验证码
  */
 data class LoginUiState(
     val email: String = "",
@@ -32,7 +37,11 @@ data class LoginUiState(
     val isSendingCode: Boolean = false,
     val isLoggingIn: Boolean = false,
     val isAgreed: Boolean = false,
-    val loginMode: LoginMode = LoginMode.CODE
+    val loginMode: LoginMode = LoginMode.CODE,
+    val showCaptchaDialog: Boolean = false,
+    val captcha: Captcha = Captcha(),
+    val isLoadingCaptcha: Boolean = false,
+    val isVerifyingCaptcha: Boolean = false
 ) {
     /** 邮箱格式是否合法 */
     val isEmailValid: Boolean

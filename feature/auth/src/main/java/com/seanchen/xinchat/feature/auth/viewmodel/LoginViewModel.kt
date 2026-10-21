@@ -1,5 +1,6 @@
 package com.seanchen.xinchat.feature.auth.viewmodel
 
+import android.annotation.SuppressLint
 import androidx.lifecycle.viewModelScope
 import com.seanchen.xinchat.core.common.base.viewmodel.BaseViewModel
 import com.seanchen.xinchat.core.data.repository.AuthRepository
@@ -26,9 +27,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * 统一登录 ViewModel（仅包含邮箱验证码登录与邮箱密码登录）
+ * 统一登录 ViewModel
  */
 @HiltViewModel
 open class LoginViewModel @Inject constructor(
@@ -37,7 +39,9 @@ open class LoginViewModel @Inject constructor(
 ) : BaseViewModel() {
 
     companion object {
+        // 持久化保存上次输入的邮箱
         private const val KEY_SAVED_EMAIL = "saved_email"
+        // 获取验证码倒计时秒数
         private const val COUNTDOWN_SECONDS = 60
     }
 
@@ -119,19 +123,15 @@ open class LoginViewModel @Inject constructor(
     }
 
     // ==================================================================================
-    // 验证码操作
+    // 图形验证码防人机与发送验证码
     // ==================================================================================
 
     /**
-     * 发送邮箱验证码
+     * 打开图形验证码防人机弹窗
      *
-     * @param requireAgreement 是否需要强制先勾选用户协议
-     * @param onSuccess 发送成功回调
+     * @param requireAgreement 是否需要先勾选协议（首次在登录首页获取验证码时传 true）
      */
-    fun sendVerificationCode(
-        requireAgreement: Boolean = false,
-        onSuccess: (() -> Unit)? = null
-    ) {
+    fun openCaptchaDialog(requireAgreement: Boolean = true) {
         if (requireAgreement && !_uiState.value.isAgreed) {
             runCatching { ToastUtils.showError(R.string.please_agree_agreement) }
             return
@@ -143,10 +143,108 @@ open class LoginViewModel @Inject constructor(
             return
         }
 
-        if (!_uiState.value.canSendCode) {
+        if (_uiState.value.resendCountdown > 0 || _uiState.value.isSendingCode) {
             return
         }
 
+        _uiState.update { it.copy(showCaptchaDialog = true) }
+        refreshCaptcha()
+    }
+
+    /**
+     * 关闭图形验证码防人机弹窗
+     */
+    fun dismissCaptchaDialog() {
+        _uiState.update {
+            it.copy(
+                showCaptchaDialog = false,
+                isVerifyingCaptcha = false
+            )
+        }
+    }
+
+    /**
+     * 刷新图形验证码
+     */
+    fun refreshCaptcha() {
+        _uiState.update { it.copy(isLoadingCaptcha = true) }
+        ResultHandler.handleResultWithData(
+            scope = viewModelScope,
+            flow = authRepository.getCaptcha().asResult(),
+            showToast = false,
+            onData = { captcha ->
+                _uiState.update { it.copy(captcha = captcha) }
+            },
+            onError = { errorMsg, _ ->
+                runCatching { ToastUtils.showError(errorMsg.ifEmpty { "获取图形验证码失败，请重试" }) }
+            },
+            onFinally = {
+                _uiState.update { it.copy(isLoadingCaptcha = false) }
+            }
+        )
+    }
+
+    /**
+     * 校验图形验证码，并在校验成功后向邮箱发送验证码
+     *
+     * @param captchaCode 用户输入的 4 位图形验证码
+     * @param onSuccess 邮箱验证码发送成功后的回调（例如跳转到输入验证码页）
+     */
+    fun verifyCaptchaAndSendCode(
+        captchaCode: String,
+        onSuccess: (() -> Unit)? = null
+    ) {
+        val code = captchaCode.trim()
+        if (code.length != 4) {
+            runCatching { ToastUtils.showError(R.string.image_captcha_hint) }
+            return
+        }
+
+        val currentCaptchaId = _uiState.value.captcha.captchaId
+        if (currentCaptchaId.isBlank()) {
+            refreshCaptcha()
+            return
+        }
+
+        if (_uiState.value.isVerifyingCaptcha) return
+
+        _uiState.update { it.copy(isVerifyingCaptcha = true) }
+
+        ResultHandler.handleResultWithData(
+            scope = viewModelScope,
+            flow = authRepository.verifyCaptcha(currentCaptchaId, code).asResult(),
+            showToast = false,
+            onData = { verified ->
+                if (verified == true) {
+                    // 图形验证码校验通过，关闭弹窗并实际发送邮箱验证码
+                    _uiState.update {
+                        it.copy(
+                            showCaptchaDialog = false,
+                            isVerifyingCaptcha = false
+                        )
+                    }
+                    sendVerificationCodeInternal(onSuccess)
+                } else {
+                    runCatching { ToastUtils.showError("图形验证码错误，请重新输入") }
+                    refreshCaptcha()
+                }
+            },
+            onError = { errorMsg, _ ->
+                val displayMsg = if (errorMsg.isNotBlank()) errorMsg else "图形验证码错误或已失效"
+                runCatching { ToastUtils.showError(displayMsg) }
+                refreshCaptcha()
+            },
+            onFinally = {
+                _uiState.update { it.copy(isVerifyingCaptcha = false) }
+            }
+        )
+    }
+
+    /**
+     * 实际调用接口向邮箱发送验证码
+     */
+    private fun sendVerificationCodeInternal(onSuccess: (() -> Unit)? = null) {
+        val currentEmail = _uiState.value.email
         _uiState.update { it.copy(isSendingCode = true) }
 
         val params = mapOf("email" to currentEmail)
@@ -171,13 +269,43 @@ open class LoginViewModel @Inject constructor(
     }
 
     /**
+     * 发送邮箱验证码（兼容直接调用与单元测试）
+     *
+     * @param requireAgreement 是否需要强制先勾选用户协议
+     * @param onSuccess 发送成功回调
+     */
+    fun sendVerificationCode(
+        requireAgreement: Boolean = false,
+        onSuccess: (() -> Unit)? = null
+    ) {
+        if (requireAgreement && !_uiState.value.isAgreed) {
+            runCatching { ToastUtils.showError(R.string.please_agree_agreement) }
+            return
+        }
+
+        val currentEmail = _uiState.value.email
+        if (!ValidationUtil.isValidEmail(currentEmail)) {
+            runCatching { ToastUtils.showError(R.string.invalid_email) }
+            return
+        }
+
+        if (!_uiState.value.canSendCode) {
+            return
+        }
+
+        sendVerificationCodeInternal(onSuccess)
+    }
+
+    /**
      * 启动重新发送倒计时
      */
     private fun startCountdown() {
+        // 取消上一次的倒计时，防止多个协程同时跑
         countdownJob?.cancel()
+        // 启动新协程保存句柄
         countdownJob = viewModelScope.launch {
             while (_uiState.value.resendCountdown > 0) {
-                delay(1000L)
+                delay(1000L.milliseconds)
                 _uiState.update {
                     val nextCountdown = (it.resendCountdown - 1).coerceAtLeast(0)
                     it.copy(resendCountdown = nextCountdown)
@@ -311,6 +439,7 @@ open class LoginViewModel @Inject constructor(
         }
     }
 
+    @SuppressLint("EmptySuperCall")
     override fun onCleared() {
         super.onCleared()
         countdownJob?.cancel()
