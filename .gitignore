@@ -30,3 +30,5 @@ feature/contact/build
 feature/user/build
 core/*/build
 **/build/
+
+.workbuddy-ai
